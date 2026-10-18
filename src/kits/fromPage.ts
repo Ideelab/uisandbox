@@ -23,21 +23,35 @@ import type { KitId } from './engine/detect.mjs'
 import { parseCssColor, formatCssColor } from '../sandbox/cssColor'
 import { pxOf } from '../export/measured'
 
-export function readKitValues(doc: Document, kit: KitId): RoleValues {
-  const cs = (doc.defaultView ?? globalThis).getComputedStyle(doc.documentElement)
+/** The variables a kit's roles live in (roles.mjs MAP), so a page — dropped
+ *  here or running elsewhere — can be asked for exactly those. */
+export function kitVarNames(kit: KitId): string[] {
+  const map = MAP[kit] ?? {}
+  return ROLES.map((r) => map[r.id]?.var).filter((n): n is string => !!n)
+}
+
+/** Those variables' computed values → the engine's role values. One
+ *  translation for both doors: a dropped build reads them off its Document,
+ *  a running app sends them over the bridge. */
+export function roleValuesFromVars(kit: KitId, vars: Record<string, string>): RoleValues {
   const map = MAP[kit] ?? {}
   const out: RoleValues = {}
   for (const role of ROLES) {
     const name = map[role.id]?.var
-    if (!name) continue
     // A custom property's computed value substitutes var() but resolves no
     // units: `1rem` comes back as `1rem`, so lengths still go through pxOf.
-    const raw = cs.getPropertyValue(name).trim()
+    const raw = name ? vars[name]?.trim() : undefined
     if (!raw) continue
     const v = asRole(role.id, raw)
     if (v !== undefined) out[role.id] = v
   }
   return out
+}
+
+export function readKitValues(doc: Document, kit: KitId): RoleValues {
+  const cs = (doc.defaultView ?? globalThis).getComputedStyle(doc.documentElement)
+  const vars = Object.fromEntries(kitVarNames(kit).map((n) => [n, cs.getPropertyValue(n).trim()]))
+  return roleValuesFromVars(kit, vars)
 }
 
 function asRole(id: RoleId, raw: string): string | number | undefined {

@@ -2074,3 +2074,69 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     length dial cannot turn), Material 51% of radii (shape lives in its
     shadow roots), shadcn 81% of radii.
 
+180. The third way in, phase 2c: your RUNNING app, through one script line.
+
+    public/live.js is UIcockpit's bridge, ported: it frames nothing itself, it
+    answers the page that frames it. Built by scripts/live-build.mjs from
+    src/kits/live.template.js with detect.mjs's rules inlined, so a dropped
+    build and an app over postMessage are judged by one set of rules, and a
+    test fails if the served file is ever behind either source.
+
+    What it does here, and what it deliberately does not:
+
+    - It says which kit the app runs on, and — asked by name — the values of
+      that kit's own variables as the app computes them. The door then writes
+      the app's design system in its kit's names, starting from the app's OWN
+      values, pinned the same way as a dropped build (#178d): the theme is a
+      no-op on the app it was read from, 37 of 37 on a Bootstrap app.
+    - It does not turn knobs. An app on another origin cannot be tokenised —
+      there is no stylesheet here to read — and the panel is built on the
+      substitution table of a dropped build. Turning a live app is the
+      one-screen layout's job (phase 3), and it will use the uicockpit:theme
+      message live.js already takes. The door says so on the page.
+
+    Security, each found by asking what a hostile page could do with it:
+
+    - The app's values go to the asking origin only, never to '*'; only
+      custom properties, only by name, at most 400. The first hello on load
+      still goes to '*', as in UIcockpit: it carries the kit, the title and the
+      address, which whoever framed the app already knows.
+    - Allowed origins: https uisandbox.org (and www) and localhost. Refused,
+      and tested: plain http of the domain, a look-alike suffix, a look-alike
+      host, and uicockpit.com — the cutover moves that, not this.
+    - The frame is sandboxed WITHOUT allow-top-navigation, so the app cannot
+      navigate the sandbox away. It needs allow-scripts and allow-same-origin
+      or its own login and API break, and with both, a frame on THIS origin
+      could lift its own sandbox — so an address on UISandbox's own origin is
+      refused before it is framed.
+    - /live.js is served no-cache: an old copy does not know uicockpit:read.
+      No CORP header is set anywhere, which is what lets another origin load
+      it at all.
+
+    Found on the way, in the earlier phases' work:
+
+    The kit export shipped install.md telling Bootstrap users to compile
+    _custom.scss, in a zip that did not contain it. Same for Ant Design's
+    antd.theme.ts and shadcn's components.json. The export listed the five
+    files it knew; generate() writes more for some kits. The package is now a
+    RULE (kitPackage: every file the engine writes, minus the three whole
+    agent files), and the gate holds that every file the engine writes ships
+    and every file install.md names is there. The zip listing from 2a shows
+    _custom.scss absent, so that check would have been red.
+
+    scripts/live-bridge.mjs is the gate: three apps on their own origin — a
+    Bootstrap app with the line, the same app without it, and a plain page on
+    no kit with it — so that a door saying "runs on Bootstrap" to everything
+    could not pass. 18 of 18: the silent one is reported as silent and not as
+    "no kit", neither control offers a download, and the sandbox's own
+    address is refused and never framed.
+
+    Phase 2 is complete. What was found and left, all in the files:
+    the dark block is derived (2a); AdminLTE's screen takes 9.6 s to read,
+    likely CDN fonts through /__ext/ (2a); MANIFEST.md's "What you set"
+    (2a); the Export dialog does not close on Escape (2a); Radix's door
+    defaults are typed until fetch-kits reads themePropDefs (2b); the engine
+    picks "sand" for Radix's grey because its default has no selector (2b);
+    MANIFEST.md says a flat "Nothing" for the three Tailwind-compiled kits,
+    which orphans.mjs says it cannot establish (2b, an engine issue).
+

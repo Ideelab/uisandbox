@@ -19,7 +19,7 @@ import { genDtcg } from '../export/genDtcg'
 import { measure } from '../export/measured'
 import { roleValues } from '../kits/values'
 import type { RoleValues } from '../kits/engine/generate.mjs'
-import { kitExport } from '../kits/kitExport'
+import { kitExport, kitPackage } from '../kits/kitExport'
 import { pinToBuild, lightDeclarations } from '../kits/pin'
 import type { KitId } from '../kits/engine/detect.mjs'
 import { genReadme } from '../export/genReadme'
@@ -128,6 +128,9 @@ interface Item {
  *             not their app's own names, and labelled that way.
  *   NATIVE    Swift + Android.
  */
+/** The kit files that have a tab of their own; anything else the engine writes gets one too. */
+const KIT_COVERED = new Set(['DESIGN.md', 'tokens.json', 'theme.css', 'install.md', 'MANIFEST.md'])
+
 /** The nine, as each calls itself. */
 const KIT_NAME: Record<KitId, string> = {
   antd: 'Ant Design', bootstrap: 'Bootstrap', daisyui: 'daisyUI', mantine: 'Mantine', material: 'Material',
@@ -160,7 +163,7 @@ export function ExportDialog({ cfg, base, table, vars, projectName, files, fontC
       // A build's own variables win; the engine's derivation only fills what
       // the build does not define.
       if (readPageVars && f['theme.css']) f = { ...f, 'theme.css': pinToBuild(f['theme.css'], readPageVars(lightDeclarations(f['theme.css']))).css }
-      if (on) setKitFiles(f)
+      if (on) setKitFiles(kitPackage(f))
     }).catch((e: unknown) => { if (on) { setKitFiles(null); setKitError(e instanceof Error ? e.message : String(e)) } })
     return () => { on = false }
   }, [kit, kitValues, readPageVars, table, vars, cfg, projectName, painted, anchors, movedCount])
@@ -227,6 +230,14 @@ export function ExportDialog({ cfg, base, table, vars, projectName, files, fontC
         how: ['What this theme writes that the kit never reads, and what the kit has no component for. Read it before you trust a knob that seems to do nothing.'],
         make: () => kitFiles['MANIFEST.md']!,
       },
+      // Whatever only this kit needs, and install.md names: Bootstrap's
+      // _custom.scss, Ant Design's antd.theme.ts. Derived from what the engine
+      // wrote, never listed, because a list is how they were left out.
+      ...Object.keys(kitFiles).filter((path) => !KIT_COVERED.has(path) && path !== skillPath).map((path) => ({
+        id: `kit-extra:${path}`, label: path, sub: 'install.md says where it goes', icon: <FileCode2 size={15} strokeWidth={1.75} />, file: path,
+        how: [`${KIT_NAME[kit!]} needs this beside theme.css; install.md says how to use it.`],
+        make: () => kitFiles[path]!,
+      })),
     ] : []),
     {
       id: 'files',
@@ -407,7 +418,7 @@ export function ExportDialog({ cfg, base, table, vars, projectName, files, fontC
               ? 'DESIGN.md and one line in AGENTS.md. No SKILL.md: this build runs on none of the nine kits, so there are no published classes for one to cite'
               : 'DESIGN.md and one line in AGENTS.md. Still reading which kit this build runs on…',
       icon: <Bot size={15} strokeWidth={1.75} />,
-      ids: kitFiles ? ['design-md', 'skill-md', 'agents-md', 'dtcg', 'kit-theme', 'kit-install', 'kit-manifest'] : ['design-md', 'agents-md', 'dtcg'], reco: true,
+      ids: kitFiles ? ['design-md', 'skill-md', 'agents-md', 'dtcg', 'kit-theme', 'kit-install', 'kit-manifest', ...Object.keys(kitFiles).filter((p) => !KIT_COVERED.has(p) && p !== skillPath).map((p) => `kit-extra:${p}`)] : ['design-md', 'agents-md', 'dtcg'], reco: true,
       uses: [[M.claude, 'Claude Code'], [M.cursor, 'Cursor'], [M.openai, 'Codex'], [M.figma, 'Figma']] },
     { title: 'Patch your own files', sub: 'your CSS and HTML with the new values written in, or a find and replace list', icon: <FileCode2 size={15} strokeWidth={1.75} />, ids: ['files', 'sheet-patch'],
       uses: [[M.css, 'CSS'], [M.html, 'HTML'], [null, 'any repo']] },

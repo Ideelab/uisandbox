@@ -44,3 +44,16 @@
 # Sample builds: real open-source builds (MIT), a day of cache is plenty.
 /samples/*
   Cache-Control: public, max-age=86400
+
+# The bridge, loaded by OTHER people's apps through one script line. It must
+# never be stale against the page half it talks to: an old copy does not know
+# uicockpit:read, and the door says "Its live.js may be an old copy". So it is
+# revalidated on every load, the same reasoning as sw.js. No CORP header is set
+# anywhere, which is what lets another origin load it at all.
+/live.js
+  Content-Type: text/javascript; charset=utf-8
+  Cache-Control: no-cache
+
+# The kit door's builds: made from each kit's own package, a day of cache.
+/kits/*
+  Cache-Control: public, max-age=86400

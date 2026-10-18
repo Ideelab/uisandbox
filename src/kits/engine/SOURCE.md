@@ -42,7 +42,11 @@ The six that did not come:
   invariants (FOLLOW, VISIBLE, STATES, CONSUMED) do move, rebuilt against what
   UISandbox renders: `scripts/kit-export.mjs` holds that every kit build is
   ALIVE and that the export is the screen.
-- `live.test.mjs` arrives with `live.js`, phase 2c.
+- `live.test.mjs` read UIcockpit's `live.js` and its page. Its four invariants
+  (inert outside a frame, only the tool's own origins, the message names on
+  both sides, only kits the engine knows) hold for UISandbox's bridge in
+  `src/kits/__tests__/live.test.ts`, which also fails if `public/live.js` is
+  ever out of date with its template or with `detect.mjs`.
 
 `fidelity.mjs` runs from here unchanged (`pnpm kits:fidelity`): eight kits at
 100%, 1271 classes and 28 elements, and every name SKILL.md cites is defined by

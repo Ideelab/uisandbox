@@ -40,6 +40,14 @@ import { fileURLToPath } from 'node:url'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const UNREAD = JSON.parse(readFileSync(join(root, 'src/kits/engine/kits/unread.json'), 'utf8'))
+const { generate } = await import(join(root, 'src/kits/engine/generate.mjs'))
+const KIT_DATA = (id) => JSON.parse(readFileSync(join(root, `src/kits/engine/kits/${id}.json`), 'utf8'))
+/** The files the engine writes for a kit, as a person should receive them:
+ *  everything but the three whole agent files the export replaces with a
+ *  block. Names do not depend on values, so any values will do. */
+const NOT_SHIPPED = new Set(['AGENTS.md', 'CLAUDE.md', '.cursor/rules'])
+const packageOf = (id) => { const f = generate({ brand: '#0d6efd' }, [id], { [id]: KIT_DATA(id) }, { name: 'x' })
+  return Object.keys(f).filter((k) => typeof f[k] === 'string' && !NOT_SHIPPED.has(k) && !k.endsWith('/SKILL.md')) }
 const args = process.argv.slice(2)
 const opt = (n, d) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : d }
 
@@ -58,7 +66,7 @@ const BUILDS = [
 let server = null
 let base = opt('--base', '')
 if (!base) {
-  const port = 5295
+  const port = 5299
   server = spawn('pnpm', ['exec', 'vite', '--port', String(port), '--strictPort'], { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] })
   base = `http://localhost:${port}`
   await new Promise((res, rej) => { const t = setTimeout(() => rej(new Error('vite did not start')), 30000)
@@ -158,7 +166,14 @@ for (const [f, kit] of BUILDS) {
       check(f, 'the measured DESIGN.md still ships', existsSync(join(x, 'DESIGN.md')))
     } else {
       check(f, `SKILL.md for ${kit}`, skills.length === 1, skills.join(', ') || 'none')
-      for (const file of ['theme.css', 'install.md', 'MANIFEST.md', 'tokens.json', 'DESIGN.md']) check(f, `${file} ships`, existsSync(join(x, file)))
+      // Every file the engine writes for this kit is in the zip: install.md
+      // must never name a file the person was not given. (The first export
+      // told Bootstrap users to compile _custom.scss and left it out.)
+      const want = packageOf(kit)
+      const missing = want.filter((file) => !existsSync(join(x, file)))
+      check(f, `every file the engine writes ships (${want.join(', ')})`, missing.length === 0, missing.length ? `missing: ${missing.join(', ')}` : '')
+      const named = [...new Set((readFileSync(join(x, 'install.md'), 'utf8').match(/[\w.-]+\.(scss|ts|css|js|json)\b/g) ?? []))].filter((n) => want.includes(n))
+      check(f, `and every one install.md names is there (${named.join(', ') || 'none named'})`, named.every((n) => existsSync(join(x, n))))
       const theme = readFileSync(join(x, 'theme.css'), 'utf8')
       const design = readFileSync(join(x, 'DESIGN.md'), 'utf8')
       check(f, 'DESIGN.md says the values were read, not chosen', /read off .* own build in UISandbox, not chosen/.test(design))

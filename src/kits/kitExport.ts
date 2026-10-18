@@ -33,3 +33,19 @@ export async function kitExport(kit: KitId, values: RoleValues, name: string, op
   const data = (await KITS[kit]()).default
   return generate(values, [kit], { [kit]: data }, { ...opts, name, unread: UNREAD })
 }
+
+/* What a person downloads, out of what generate() returns: every file it
+ * writes — including what only one kit needs, Bootstrap's _custom.scss for the
+ * brand it compiles and Ant Design's antd.theme.ts because it has no
+ * stylesheet to edit — except the engine's whole AGENTS.md, CLAUDE.md and
+ * .cursor/rules. Unzipped into a repo those would overwrite somebody's build
+ * and test instructions; the export hands over a block to append instead.
+ *
+ * Written as a rule rather than a list because a list is how the first
+ * version shipped install.md telling Bootstrap users to compile _custom.scss,
+ * in a zip that did not contain it. */
+const NOT_SHIPPED = new Set(['AGENTS.md', 'CLAUDE.md', '.cursor/rules'])
+export function kitPackage(files: Record<string, unknown>): Record<string, string> {
+  return Object.fromEntries(Object.entries(files)
+    .filter((e): e is [string, string] => typeof e[1] === 'string' && !NOT_SHIPPED.has(e[0])))
+}

@@ -18,7 +18,8 @@
     "test:kits": "cd src/kits/engine && node --test *.test.mjs",
     "kits:build": "node scripts/kit-builds.mjs",
     "kits:fidelity": "cd src/kits/engine && node fidelity.mjs",
-    "kits:gates": "node scripts/kit-detect.mjs && node scripts/kit-export.mjs"
+    "kits:gates": "node scripts/kit-detect.mjs && node scripts/kit-export.mjs && node scripts/live-bridge.mjs",
+    "kits:live": "node scripts/live-build.mjs"
   },
   "dependencies": {
     "lucide-react": "^1.16.0",

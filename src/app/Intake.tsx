@@ -1,6 +1,6 @@
 import { Mark, DropGlyph } from './Mark'
 import { useEffect, useRef, useState } from 'react'
-import { FileArchive, FolderOpen, GitBranch, Check, Info, ShieldCheck, X } from 'lucide-react'
+import { FileArchive, FolderOpen, GitBranch, Check, Info, ShieldCheck, X, Plug } from 'lucide-react'
 import { archiveFromFiles, isZip, openZip, type Archive } from '../audit/intake/readZip'
 import { filesFromDrop } from '../audit/intake/readFiles'
 import { STAGES, fmtBytes, type Progress } from './progress'
@@ -16,10 +16,11 @@ interface IntakeProps {
   busy: Progress | null
   error: string | null
 }
-type Way = 'zip' | 'folder' | 'repo'
+type Way = 'zip' | 'folder' | 'repo' | 'app'
 
 /** Three real open-source builds (MIT) served from this origin — names people know, with colour everywhere the knobs reach. */
 import DOOR from '../kits/door.json'
+import { LiveAppDoor } from './LiveAppDoor'
 
 const SAMPLES = [
   { path: '/samples/bootstrap-docs.zip', label: 'Bootstrap docs', title: 'getbootstrap.com: the Bootstrap 5.3 docs build (114 screens, 8 MB)' },
@@ -61,6 +62,7 @@ export function Intake({ onArchive, onUrl, onSample, busy, error }: IntakeProps)
     { id: 'zip', label: <><span className="intake__way-long">Upload a </span>zip</>, icon: <FileArchive size={14} strokeWidth={1.75} /> },
     { id: 'folder', label: <><span className="intake__way-long">Upload a </span>codebase</>, icon: <FolderOpen size={14} strokeWidth={1.75} /> },
     { id: 'repo', label: <><span className="intake__way-long">Connect a </span>repo</>, icon: <GitBranch size={14} strokeWidth={1.75} /> },
+    { id: 'app', label: <><span className="intake__way-long">Your </span>running app</>, icon: <Plug size={14} strokeWidth={1.75} /> },
   ]
 
   return (
@@ -114,7 +116,7 @@ export function Intake({ onArchive, onUrl, onSample, busy, error }: IntakeProps)
                 <button key={w.id} type="button" role="tab" aria-selected={way === w.id} className={`intake__way ${way === w.id ? 'intake__way--on' : ''}`} onClick={() => { setWay(w.id); setLocalError(null) }}>{w.icon} {w.label}</button>
               ))}
             </div>
-            {way !== 'repo' ? (
+            {way === 'app' ? <LiveAppDoor /> : way !== 'repo' ? (
               <div
                 className={`intake__drop ${over ? 'intake__drop--over' : ''}`}
                 onDragOver={(e) => { e.preventDefault(); setOver(true) }}
@@ -158,7 +160,7 @@ export function Intake({ onArchive, onUrl, onSample, busy, error }: IntakeProps)
                 <div className="intake__note">GitHub and GitLab do not allow the browser to fetch a repo zip directly, so the URL goes through uisandbox.org to fetch it. Public repos only, nothing stored. Everything else stays in your browser.</div>
               </div>
             )}
-            {way !== 'repo' && (
+            {way !== 'repo' && way !== 'app' && (
               <button type="button" className="intake__privacy" onClick={() => setShowPrivacy(true)}>
                 <ShieldCheck size={13} strokeWidth={2} /> Loaded into this tab, never sent to a server. No database, no account, no analytics. <u>How to verify</u>
               </button>
