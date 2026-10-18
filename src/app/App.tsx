@@ -228,6 +228,14 @@ export function App() {
   const [coverage, setCoverage] = useState<Coverage | null>(null)
   coverageRef.current = coverage
   const coverTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // The kit export asks the live page for exactly the variables its theme
+  // writes, at the moment it writes them, so a build's own values can win.
+  const readPageVars = useCallback((names: string[]): Record<string, string> => {
+    const doc = frameRef.current?.contentDocument
+    if (!doc?.documentElement) return {}
+    const cs = (doc.defaultView ?? window).getComputedStyle(doc.documentElement)
+    return Object.fromEntries(names.map((n) => [n, cs.getPropertyValue(n).trim()]).filter(([, v]) => v))
+  }, [])
   const remeasure = useCallback(() => {
     if (coverTimer.current) clearTimeout(coverTimer.current)
     coverTimer.current = setTimeout(() => {
@@ -458,7 +466,7 @@ export function App() {
       </div>
       {loaded && <Footer />}
       {showExport && loaded && (
-        <ExportDialog cfg={cfg} base={loaded.report.baseline.cfg} table={loaded.project.table} vars={vars} projectName={loaded.project.name} files={loaded.project.raw} fontCss={fontCss} notes={loaded.report.notes} painted={coverage?.painted} anchors={coverage?.anchors} kit={coverage ? coverage.kit : undefined} kitValues={coverage?.kitValues} onClose={() => setShowExport(false)} />
+        <ExportDialog cfg={cfg} base={loaded.report.baseline.cfg} table={loaded.project.table} vars={vars} projectName={loaded.project.name} files={loaded.project.raw} fontCss={fontCss} notes={loaded.report.notes} painted={coverage?.painted} anchors={coverage?.anchors} kit={coverage ? coverage.kit : undefined} kitValues={coverage?.kitValues} readPageVars={readPageVars} onClose={() => setShowExport(false)} />
       )}
     </div>
   )

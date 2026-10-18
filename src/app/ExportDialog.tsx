@@ -20,6 +20,7 @@ import { measure } from '../export/measured'
 import { roleValues } from '../kits/values'
 import type { RoleValues } from '../kits/engine/generate.mjs'
 import { kitExport } from '../kits/kitExport'
+import { pinToBuild, lightDeclarations } from '../kits/pin'
 import type { KitId } from '../kits/engine/detect.mjs'
 import { genReadme } from '../export/genReadme'
 import { zipSync } from '../export/zip'
@@ -53,6 +54,9 @@ interface ExportDialogProps {
    *  These win over anything measured, which only fills the roles the kit has
    *  no variable for. */
   kitValues?: RoleValues
+  /** Reads the live page for the given variables, so theme.css can be pinned
+   *  to what the build already has (src/kits/pin.ts). */
+  readPageVars?: (names: string[]) => Record<string, string>
   onClose: () => void
 }
 
@@ -130,7 +134,7 @@ const KIT_NAME: Record<KitId, string> = {
   openprops: 'Open Props', radix: 'Radix Themes', shadcn: 'shadcn/ui', tailwind: 'Tailwind',
 }
 
-export function ExportDialog({ cfg, base, table, vars, projectName, files, fontCss, notes, painted, anchors, kit, kitValues, onClose }: ExportDialogProps) {
+export function ExportDialog({ cfg, base, table, vars, projectName, files, fontCss, notes, painted, anchors, kit, kitValues, readPageVars, onClose }: ExportDialogProps) {
   const [patched, setPatched] = useState<Array<{ path: string; text: string }> | null>(null)
   useEffect(() => { let on = true; void genPatchedFiles(files, table, vars, fontCss).then((p) => { if (on) setPatched(p) }); return () => { on = false } }, [files, table, vars, fontCss])
   const movedCount = useMemo(() => { const id = table.identityVars(); return Object.keys(vars).filter((k) => vars[k] !== id[k]).length }, [table, vars])
@@ -152,9 +156,14 @@ export function ExportDialog({ cfg, base, table, vars, projectName, files, fontC
     // most-used member, which on AdminLTE was a syntax-highlight green, and a
     // kit default named in MANIFEST.md beats a guess.
     const values = { ...roleValues(m), ...kitValues }
-    void kitExport(kit, values, projectName, { overview }).then((f) => { if (on) setKitFiles(f) }).catch((e: unknown) => { if (on) { setKitFiles(null); setKitError(e instanceof Error ? e.message : String(e)) } })
+    void kitExport(kit, values, projectName, { overview }).then((f) => {
+      // A build's own variables win; the engine's derivation only fills what
+      // the build does not define.
+      if (readPageVars && f['theme.css']) f = { ...f, 'theme.css': pinToBuild(f['theme.css'], readPageVars(lightDeclarations(f['theme.css']))).css }
+      if (on) setKitFiles(f)
+    }).catch((e: unknown) => { if (on) { setKitFiles(null); setKitError(e instanceof Error ? e.message : String(e)) } })
     return () => { on = false }
-  }, [kit, kitValues, table, vars, cfg, projectName, painted, anchors, movedCount])
+  }, [kit, kitValues, readPageVars, table, vars, cfg, projectName, painted, anchors, movedCount])
   const skillPath = kitFiles ? Object.keys(kitFiles).find((k) => k.endsWith('/SKILL.md')) : undefined
 
   const items = useMemo<Item[]>(() => [

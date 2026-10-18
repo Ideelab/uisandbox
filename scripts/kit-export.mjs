@@ -17,6 +17,19 @@
  * light block must equal what the page itself computes for that variable.
  * A theme that "faithfully" writes the painted ground into --bs-body-bg would
  * turn every card that reads it grey, and this is the check that says so.
+ *
+ * What each check can and cannot prove, so none is read for more than it is:
+ *
+ *   no-op / is the screen   src/kits/pin.ts sets every variable the page
+ *                           defines to the page's value, so these hold by
+ *                           construction once pinning runs. They guard the
+ *                           PATH — the real dialog, the real download, colours
+ *                           compared as the browser resolves them — and they
+ *                           were red before pinning existed (11 of 35 on
+ *                           AdminLTE), so they demonstrably catch that fault.
+ *   the brand moved         the one that is not circular: the turn has to
+ *                           reach the page AND the file. If the knob did
+ *                           nothing, "theme equals screen" would still pass.
  */
 import { chromium } from 'playwright'
 import { spawn, execFileSync } from 'node:child_process'
@@ -42,7 +55,7 @@ const BUILDS = [
 let server = null
 let base = opt('--base', '')
 if (!base) {
-  const port = 5269
+  const port = 5275
   server = spawn('pnpm', ['exec', 'vite', '--port', String(port), '--strictPort'], { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] })
   base = `http://localhost:${port}`
   await new Promise((res, rej) => { const t = setTimeout(() => rej(new Error('vite did not start')), 30000)
@@ -53,6 +66,49 @@ if (!base) {
 const lightBlock = (css) => {
   const i = css.indexOf('{'), j = css.indexOf('}', i)
   return i < 0 ? [] : [...css.slice(i + 1, j).matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)].map((m) => [m[1], m[2].trim()])
+}
+
+/** Builds on which a knob is also turned, to hold the export to the screen
+ *  after a change and not only at rest. */
+const TURN = new Set(['s13-adminlte.zip'])
+/** The variable each kit's components read for the brand (roles.mjs MAP). */
+const KIT_BRAND = { bootstrap: '--bs-link-color', mantine: '--mantine-primary-color-filled' }
+
+async function exportZip(page, kit) {
+  await page.click('button:has-text("Export")')
+  await page.waitForSelector('.dialog')
+  if (kit) await page.waitForFunction(() => /SKILL\.md in /.test(document.querySelector('.dialog')?.textContent ?? ''), null, { timeout: 20000 }).catch(() => {})
+  await page.waitForTimeout(600)
+  const [dl] = await Promise.all([page.waitForEvent('download'), page.click('button:has-text("Everything")')])
+  const dir = mkdtempSync(join(tmpdir(), 'kit-export-'))
+  await dl.saveAs(join(dir, 'x.zip'))
+  execFileSync('unzip', ['-q', '-o', join(dir, 'x.zip'), '-d', join(dir, 'x')])
+  return join(dir, 'x')
+}
+
+/** Every light-block declaration the page also sets must equal it, compared
+ *  in the frame so a colour is compared as the browser resolves it. */
+async function agreesWithScreen(page, theme) {
+  const decls = lightBlock(theme)
+  const frame = await (await page.$('.stage__frame iframe')).contentFrame()
+  return frame.evaluate((decls) => {
+    const cs = getComputedStyle(document.documentElement)
+    const probe = document.createElement('span'); document.body.appendChild(probe)
+    const asColour = (v) => { probe.style.color = ''; probe.style.color = v; return probe.style.color ? getComputedStyle(probe).color : null }
+    const asPx = (v) => { const m = String(v).trim().match(/^(-?\d*\.?\d+)(px|rem)?$/); return m ? (m[2] === 'rem' ? parseFloat(m[1]) * 16 : parseFloat(m[1])) : null }
+    const out = []
+    for (const [name, want] of decls) {
+      const have = cs.getPropertyValue(name).trim()
+      if (!have) continue   // the build does not set it: derivation fills it, nothing to compare
+      const cw = asColour(want), ch = asColour(have)
+      const same = cw && ch ? cw === ch
+        : asPx(want) !== null && asPx(have) !== null ? Math.abs(asPx(want) - asPx(have)) < 0.01
+        : want.replace(/\s+/g, ' ') === have.replace(/\s+/g, ' ')
+      if (!same) out.push(`${name}: page ${have} · theme ${want}`)
+    }
+    probe.remove()
+    return { compared: decls.length, out }
+  }, decls)
 }
 
 const browser = await chromium.launch()
@@ -67,15 +123,8 @@ for (const [f, kit] of BUILDS) {
     await page.waitForFunction(() => document.querySelector('.stage__foot'), null, { timeout: 120000 })
     // Wait for the screen to have been READ, as the dialog says it is doing.
     await page.waitForFunction(() => !!window.__us?.coverage, null, { timeout: 60000 })
-    await page.click('button:has-text("Export")')
-    await page.waitForSelector('.dialog')
-    if (kit) await page.waitForFunction(() => /SKILL\.md in /.test(document.querySelector('.dialog')?.textContent ?? ''), null, { timeout: 20000 }).catch(() => {})
+    const x = await exportZip(page, kit)
     const card = await page.evaluate(() => [...document.querySelectorAll('.exp__card')].map((c) => c.textContent).find((t) => /agent/i.test(t)) ?? '')
-    const [dl] = await Promise.all([page.waitForEvent('download'), page.click('button:has-text("Everything")')])
-    const dir = mkdtempSync(join(tmpdir(), 'kit-export-'))
-    await dl.saveAs(join(dir, 'x.zip'))
-    execFileSync('unzip', ['-q', '-o', join(dir, 'x.zip'), '-d', join(dir, 'x')])
-    const x = join(dir, 'x')
     const skills = existsSync(join(x, '.claude/skills')) ? readdirSync(join(x, '.claude/skills')) : []
 
     if (!kit) {
@@ -91,29 +140,22 @@ for (const [f, kit] of BUILDS) {
       check(f, 'MANIFEST.md does not claim nothing is unread', !/^Nothing\. Every variable this theme writes is read/m.test(readFileSync(join(x, 'MANIFEST.md'), 'utf8')))
       check(f, 'tokens.json parses', (() => { try { JSON.parse(readFileSync(join(x, 'tokens.json'), 'utf8')); return true } catch { return false } })())
 
-      // The 1:1 claim, on the export. Compared in the frame, so a colour is
-      // compared as the browser resolves it rather than as two spellings.
-      const decls = lightBlock(theme)
-      const frame = await (await page.$('.stage__frame iframe')).contentFrame()
-      const diffs = await frame.evaluate((decls) => {
-        const root = document.documentElement, cs = getComputedStyle(root)
-        const probe = document.createElement('span'); document.body.appendChild(probe)
-        const asColour = (v) => { probe.style.color = ''; probe.style.color = v; return probe.style.color ? getComputedStyle(probe).color : null }
-        const asPx = (v) => { const m = String(v).trim().match(/^(-?\d*\.?\d+)(px|rem)?$/); return m ? (m[2] === 'rem' ? parseFloat(m[1]) * 16 : parseFloat(m[1])) : null }
-        const out = []
-        for (const [name, want] of decls) {
-          const have = cs.getPropertyValue(name).trim()
-          if (!have) continue   // a variable the page does not set: theme.css adds it, nothing to compare
-          const cw = asColour(want), ch = asColour(have)
-          const same = cw && ch ? cw === ch
-            : asPx(want) !== null && asPx(have) !== null ? Math.abs(asPx(want) - asPx(have)) < 0.01
-            : want.replace(/\s+/g, ' ') === have.replace(/\s+/g, ' ')
-          if (!same) out.push(`${name}: page ${have} · theme ${want}`)
-        }
-        probe.remove()
-        return { compared: decls.length, out }
-      }, decls)
-      check(f, `an untouched build exports a no-op theme (${diffs.compared} vars)`, diffs.out.length === 0, `${diffs.out.length} of ${diffs.compared} differ`)
+      const untouched = await agreesWithScreen(page, theme)
+      check(f, `an untouched build exports a no-op theme (${untouched.compared} vars)`, untouched.out.length === 0, untouched.out.slice(0, 3).join(' | '))
+
+      // And after a knob: the export must still be the screen the person sees.
+      if (TURN.has(f)) {
+        await page.click('.dialog [aria-label="Close"]'); await page.waitForTimeout(400)
+        await page.evaluate(() => window.__us.dispatch({ type: 'SET', patch: { cPrimary: '#c2410c' } }))
+        await page.waitForTimeout(1500)
+        const turned = await exportZip(page, true)
+        const t2 = readFileSync(join(turned, 'theme.css'), 'utf8')
+        const after = await agreesWithScreen(page, t2)
+        check(f, `after turning the brand, theme.css is the screen (${after.compared} vars)`, after.out.length === 0, after.out.slice(0, 3).join(' | '))
+        const brandVar = KIT_BRAND[kit]
+        const brandNow = await (await (await page.$('.stage__frame iframe')).contentFrame()).evaluate((n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim(), brandVar)
+        check(f, `and the brand moved (${brandVar} → ${brandNow})`, brandNow && brandNow.toLowerCase() !== '#0d6efd', brandNow)
+      }
     }
   } catch (e) { check(f, 'ran', false, String(e).split('\n')[0].slice(0, 100)) }
   await page.close()

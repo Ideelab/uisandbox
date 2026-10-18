@@ -30,6 +30,20 @@ Not yet, and arriving with the code that uses them:
 | `wall.test.mjs` `sweep.test.mjs` | the render layer | the kit door (2b) |
 | `live.test.mjs` | `live.js` | the third way in (2c) |
 
+## What is UISandbox's own, beside it
+
+Not from the source, and free to change:
+
+- `detect.mjs` — `detect()` lifted out of `live.js` unchanged, so a dropped
+  build and the bridge answer with the same rules. 2c makes `live.js` inline it.
+- `*.d.mts` — types for the parts UISandbox calls, kept beside the engine so the
+  `.mjs` files stay byte-identical.
+- `kits/unread.json` — which variables each kit's own stylesheet never reads,
+  as uicockpit.com ships it: 16 rows, sha256 of its canonical JSON
+  `a663ccbbb71d…`, fetched 2026-10-18 and identical to a local build of
+  `37ed9bc`. It is built from `orphans.mjs` over the compiled kit sheets, which
+  arrive with 2b; until then this is the list, and 2b's gate must reproduce it.
+
 ## While uicockpit.com is still live
 
 It serves its own copy, so for a while there are two. Any change to an engine

@@ -1921,3 +1921,77 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     under the personal namespace are to be deprecated, not deleted, so anyone
     holding the old name is told where it went.
 
+178. The UIcockpit merge, phase 2a: a build on one of the nine kits exports a
+    design system in that kit's own names, and a build's own variables win.
+
+    The brief is MERGE-INTO-UISANDBOX.md in Ideelab/uicockpit at 37ed9bc:
+    UISandbox is the host and the name, and the engine moves in as modules.
+    It came across byte for byte into src/kits/engine/ (103 tests, 103 pass,
+    the same count as in dsg/), with its own types beside it.
+
+    Four things were decided on the way, and each is the kind that gets paid
+    for twice if it is not written down.
+
+    a. WHICH KIT. detectKit is live.js's detect(), lifted out unchanged. Its
+       gate is eighteen real builds, and the expectations were first written
+       from the repo name: four disagreed, and in all four the detector was
+       right about the PAGE. SB Admin 2 is Bootstrap 4 against a 5.3.8 kit;
+       twcdn is Tailwind v3 against a 4.3.3 kit. Calling those Bootstrap or
+       Tailwind would ship an export in names the build never reads, so `null`
+       is the safe answer, and the question the gate asks is "which kit's
+       vocabulary can this rendered page be addressed in". No false positives.
+
+    b. NO KIT, NO SKILL. Ten of the eighteen came back null, so this is the
+       common case. A SKILL.md's whole worth is that every class it cites is
+       one the kit publishes and fidelity.mjs can check; without a kit there is
+       nothing to cite. Such a build keeps the measured DESIGN.md and tokens,
+       and is told in one line why no skill comes with it. A skill written
+       against THEIR OWN classes is possible and in the doctrine's spirit, but
+       it is new design, not a port, and phase 2 is adopting.
+
+    c. WHERE A ROLE'S VALUE COMES FROM. First from what is painted most, which
+       wrote a success colour of #6a9955 for AdminLTE — 172 inline colours from
+       the syntax highlighting in its docs pages, against a --bs-success of
+       #198754 — and a border of #90a4ae against --bs-border-color #dee2e6.
+       For a recognised kit the authoritative value is the kit's OWN variable
+       as the page computes it (roles.mjs MAP): it is what the kit's
+       components read, and the sandbox has tokenised it, so it follows every
+       turned knob. Measured values only fill the roles a kit has no variable
+       for. No status colours from family centres: a centre is the most-used
+       member, which is how the syntax-highlight green got in.
+
+    d. WHICH PROMISE WINS. The engine was built for a door with no build behind
+       it: one colour, and it derives the rest. Fed a real build, its formulas
+       disagreed with a third of what the build has — 11 of 35 variables on
+       AdminLTE, 13 of 37 on the Bootstrap docs, 15 of 46 on Mantine — so the
+       "faithful" export applied to the untouched build would have moved a
+       third of it, under a dialog titled "Export: exactly what is in the
+       sandbox". Decided: a build's own variables win, and derivation fills
+       only what no build defines. src/kits/pin.ts pins every light-block
+       declaration the page also sets to what the page computes. That holds for
+       both doors: the kit door has no build, so there derivation is everything.
+
+    What the export carries now, for a kit build: theme.css, install.md,
+    MANIFEST.md (with the list of what the kit never reads, as uicockpit.com
+    ships it, rather than "Nothing"), DESIGN.md opening with where its values
+    came from, tokens.json, and .claude/skills/<slug>/SKILL.md. Not the
+    engine's whole AGENTS.md, CLAUDE.md and .cursor/rules: on unzip they would
+    overwrite somebody's build and test instructions, so the block stays.
+
+    scripts/kit-export.mjs is the gate, and it downloads the real zip through
+    the real button, because unit tests caught neither fault it found. 38 of
+    38, including: an untouched build exports a no-op theme, and after turning
+    the brand theme.css is still the screen and the brand reached it.
+
+    Open, and said so in the files:
+    - The DARK block is still derived. The build's own dark values exist only
+      while its dark switch is on, and reading them means switching the frame.
+    - On AdminLTE the screen takes 9.6 s to be read. A debounce ceiling was
+      tried, did not move the number, and was taken out again. The likely
+      cause is CDN fonts requested through /__ext/ that never complete, which
+      would also mean its icons are missing in the sandbox. Not proven, and
+      not this phase.
+    - MANIFEST.md heads one section "What you set", which is slightly wrong for
+      values read off a build. The engine stays byte-identical; phase 3.
+    - The Export dialog does not close on Escape.
+
