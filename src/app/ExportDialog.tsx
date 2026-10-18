@@ -16,6 +16,11 @@ import { genAndroidColorsXml, genAndroidKotlin } from '../export/genAndroid'
 import { genDesignMd } from '../export/genDesignMd'
 import { genAgentsBlock } from '../export/genAgents'
 import { genDtcg } from '../export/genDtcg'
+import { measure } from '../export/measured'
+import { roleValues } from '../kits/values'
+import type { RoleValues } from '../kits/engine/generate.mjs'
+import { kitExport } from '../kits/kitExport'
+import type { KitId } from '../kits/engine/detect.mjs'
 import { genReadme } from '../export/genReadme'
 import { zipSync } from '../export/zip'
 
@@ -36,6 +41,18 @@ interface ExportDialogProps {
    *  a stylesheet census alone calls Bootstrap's body ink a background. */
   painted?: Map<number, PaintRoles>
   anchors?: Anchors
+  /** Which of the nine kits the build runs on. THREE answers, not two:
+   *  `undefined` means the screen has not been read yet, `null` means it runs
+   *  on none of them (or on a major version the kit data does not describe,
+   *  Bootstrap 4 against 5.3.8), and a kit id means the agent files come from
+   *  the kit engine in that kit's own names, with a SKILL.md. Treating
+   *  "not read yet" as "none" told a user that AdminLTE runs on no kit at all,
+   *  because on a busy page the reading takes ten seconds to arrive. */
+  kit?: KitId | null
+  /** With a kit: each role read off that kit's own variable on the page.
+   *  These win over anything measured, which only fills the roles the kit has
+   *  no variable for. */
+  kitValues?: RoleValues
   onClose: () => void
 }
 
@@ -107,20 +124,52 @@ interface Item {
  *             not their app's own names, and labelled that way.
  *   NATIVE    Swift + Android.
  */
-export function ExportDialog({ cfg, base, table, vars, projectName, files, fontCss, notes, painted, anchors, onClose }: ExportDialogProps) {
+/** The nine, as each calls itself. */
+const KIT_NAME: Record<KitId, string> = {
+  antd: 'Ant Design', bootstrap: 'Bootstrap', daisyui: 'daisyUI', mantine: 'Mantine', material: 'Material',
+  openprops: 'Open Props', radix: 'Radix Themes', shadcn: 'shadcn/ui', tailwind: 'Tailwind',
+}
+
+export function ExportDialog({ cfg, base, table, vars, projectName, files, fontCss, notes, painted, anchors, kit, kitValues, onClose }: ExportDialogProps) {
   const [patched, setPatched] = useState<Array<{ path: string; text: string }> | null>(null)
   useEffect(() => { let on = true; void genPatchedFiles(files, table, vars, fontCss).then((p) => { if (on) setPatched(p) }); return () => { on = false } }, [files, table, vars, fontCss])
   const movedCount = useMemo(() => { const id = table.identityVars(); return Object.keys(vars).filter((k) => vars[k] !== id[k]).length }, [table, vars])
 
+  // The kit engine's files for a build on one of the nine. Fetched when the
+  // dialog opens because only the detected kit's values are loaded, and they
+  // are async. Until they arrive the measured files stand in, so nothing is
+  // ever blank; with no kit they simply stay.
+  const [kitFiles, setKitFiles] = useState<Record<string, string> | null>(null)
+  const [kitError, setKitError] = useState<string | null>(null)
+  useEffect(() => {
+    setKitError(null)
+    if (!kit) { setKitFiles(null); return }
+    let on = true
+    const m = measure(table, vars, cfg.cPrimary, { display: cfg.fontDisplay, body: cfg.fontBody }, { painted, anchors })
+    const overview = `These values were read off ${projectName}'s own build in UISandbox, not chosen: ${m.totals.values} design values out of its stylesheets, ${movedCount === 0 ? 'none of them changed' : `${movedCount} of them changed`} in this pass. They are written here in the names this kit publishes, so they are the ones to build against.`
+    // The kit's own variables first; what was measured only fills the roles
+    // it has none for. No family centre goes in for status: a centre is the
+    // most-used member, which on AdminLTE was a syntax-highlight green, and a
+    // kit default named in MANIFEST.md beats a guess.
+    const values = { ...roleValues(m), ...kitValues }
+    void kitExport(kit, values, projectName, { overview }).then((f) => { if (on) setKitFiles(f) }).catch((e: unknown) => { if (on) { setKitFiles(null); setKitError(e instanceof Error ? e.message : String(e)) } })
+    return () => { on = false }
+  }, [kit, kitValues, table, vars, cfg, projectName, painted, anchors, movedCount])
+  const skillPath = kitFiles ? Object.keys(kitFiles).find((k) => k.endsWith('/SKILL.md')) : undefined
+
   const items = useMemo<Item[]>(() => [
     {
       id: 'design-md', label: 'DESIGN.md', sub: 'your design system, as agents read it', icon: <FileText size={15} strokeWidth={1.75} />, file: 'DESIGN.md',
-      how: [
+      how: kitFiles ? [
+        'Save this as DESIGN.md in the root of your repo, and SKILL.md where its tab says.',
+        `It is written in ${KIT_NAME[kit!]}'s own variable names, because that is what this build runs on.`,
+        'Then ask: apply DESIGN.md and SKILL.md, screen by screen.',
+      ] : [
         'Save this as DESIGN.md in the root of your repo.',
         'Add the AGENTS.md block (next tab) so your agent picks it up on every task.',
         'Then ask: apply DESIGN.md to the UI.',
       ],
-      make: () => genDesignMd(table, vars, cfg, projectName, { notes, painted, anchors }),
+      make: () => kitFiles?.['DESIGN.md'] ?? genDesignMd(table, vars, cfg, projectName, { notes, painted, anchors }),
     },
     {
       id: 'agents-md', label: 'AGENTS.md', sub: 'the one line that points at it', icon: <Bot size={15} strokeWidth={1.75} />, file: 'AGENTS.snippet.md',
@@ -138,8 +187,38 @@ export function ExportDialog({ cfg, base, table, vars, projectName, files, fontC
         'Import it in Tokens Studio for Figma, or point Style Dictionary at it to build for any platform.',
         'It describes the app we measured. Values we could not express in the format were left out rather than bent to fit.',
       ],
-      make: () => genDtcg(table, vars, cfg, projectName, { painted, anchors }),
+      make: () => kitFiles?.['tokens.json'] ?? genDtcg(table, vars, cfg, projectName, { painted, anchors }),
     },
+    // What only the kit engine can write: a SKILL.md citing classes the kit's
+    // own stylesheet defines, and the theme in the form that kit takes. A
+    // build on none of the nine gets neither, and the agent card says why
+    // rather than handing over a skill with nothing real to cite.
+    ...(kitFiles && skillPath ? [
+      {
+        id: 'skill-md', label: 'SKILL.md', sub: 'how to build screens in this system', icon: <Bot size={15} strokeWidth={1.75} />, file: skillPath,
+        how: [
+          `Save it at ${skillPath}. Claude Code loads it on its own when the work is UI, so nobody has to remember to paste it.`,
+          `DESIGN.md says what is true; this says what to do: one primary action per view, how controls group, where motion comes from, in ${KIT_NAME[kit!]}'s own classes.`,
+          'Every class it names is one that kit publishes.',
+        ],
+        make: () => kitFiles[skillPath]!,
+      },
+      {
+        id: 'kit-theme', label: 'theme.css', sub: `${KIT_NAME[kit!]}'s own variables, set`, icon: <Braces size={15} strokeWidth={1.75} />, file: 'theme.css',
+        how: ['Import it after the kit, so your values win.', 'Every variable in it belongs to the kit that publishes it; nothing in it is ours.', 'install.md says how, and what has to be rebuilt.'],
+        make: () => kitFiles['theme.css']!,
+      },
+      {
+        id: 'kit-install', label: 'install.md', sub: 'what to run, in order', icon: <FileText size={15} strokeWidth={1.75} />, file: 'install.md',
+        how: ['The steps to make the kit wear these values, including any it compiles rather than reads at runtime.'],
+        make: () => kitFiles['install.md']!,
+      },
+      {
+        id: 'kit-manifest', label: 'MANIFEST.md', sub: 'what could not be set, and why', icon: <FileText size={15} strokeWidth={1.75} />, file: 'MANIFEST.md',
+        how: ['What this theme writes that the kit never reads, and what the kit has no component for. Read it before you trust a knob that seems to do nothing.'],
+        make: () => kitFiles['MANIFEST.md']!,
+      },
+    ] : []),
     {
       id: 'files',
       label: patched === null ? 'Preparing…' : patched.length ? `${patched.length} file${patched.length === 1 ? '' : 's'} changed` : 'Nothing changed yet',
@@ -229,7 +308,7 @@ export function ExportDialog({ cfg, base, table, vars, projectName, files, fontC
       how: ['Drop into your theme package and reference from your Compose theme.'],
       make: () => genAndroidKotlin(cfg),
     },
-  ], [cfg, table, vars, patched, projectName, notes, painted, anchors, movedCount])
+  ], [cfg, table, vars, patched, projectName, notes, painted, anchors, movedCount, kitFiles, skillPath, kit])
 
   // Every dial carries its own unit, and printing them all as a multiplier
   // was wrong for four of them: weight moves in STEPS of 100, hue and gradient
@@ -305,7 +384,21 @@ export function ExportDialog({ cfg, base, table, vars, projectName, files, fontC
   // fastest way to answer "is this the box for me" — a strip under the whole
   // panel could only say "we work with things".
   const DESTS = [
-    { title: 'Hand it to your agent', sub: 'DESIGN.md and one line in AGENTS.md, so Claude Code, Cursor or Codex builds in this look', icon: <Bot size={15} strokeWidth={1.75} />, ids: ['design-md', 'agents-md', 'dtcg'], reco: true,
+    // With a kit this is the whole package the merge brief calls "Design system
+    // + Skill"; without one it says in a line why no skill comes with it, so
+    // nobody goes looking for the file that was never going to be there.
+    { title: 'Hand it to your agent',
+      sub: kitFiles
+        ? `DESIGN.md and a SKILL.md in ${KIT_NAME[kit!]}'s own classes, so Claude Code, Cursor or Codex builds in this look`
+        : kit && kitError
+          ? `DESIGN.md and one line in AGENTS.md. This build runs on ${KIT_NAME[kit]}, but its SKILL.md could not be written: ${kitError}`
+          : kit
+            ? `DESIGN.md and one line in AGENTS.md. Writing the SKILL.md in ${KIT_NAME[kit]}'s own classes…`
+            : kit === null
+              ? 'DESIGN.md and one line in AGENTS.md. No SKILL.md: this build runs on none of the nine kits, so there are no published classes for one to cite'
+              : 'DESIGN.md and one line in AGENTS.md. Still reading which kit this build runs on…',
+      icon: <Bot size={15} strokeWidth={1.75} />,
+      ids: kitFiles ? ['design-md', 'skill-md', 'agents-md', 'dtcg', 'kit-theme', 'kit-install', 'kit-manifest'] : ['design-md', 'agents-md', 'dtcg'], reco: true,
       uses: [[M.claude, 'Claude Code'], [M.cursor, 'Cursor'], [M.openai, 'Codex'], [M.figma, 'Figma']] },
     { title: 'Patch your own files', sub: 'your CSS and HTML with the new values written in, or a find and replace list', icon: <FileCode2 size={15} strokeWidth={1.75} />, ids: ['files', 'sheet-patch'],
       uses: [[M.css, 'CSS'], [M.html, 'HTML'], [null, 'any repo']] },

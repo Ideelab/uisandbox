@@ -11,12 +11,24 @@
  * The number this yields is the honest answer to "how realistically can I play
  * with my own screen here" — a percentage, not a feeling.
  */
+import { detectKit, type KitId } from '../kits/engine/detect.mjs'
+import { readKitValues } from '../kits/fromPage'
+import type { RoleValues } from '../kits/engine/generate.mjs'
 import { parseCssColor } from './cssColor'
 import type { SubstitutionTable } from './table'
 import { varName } from './table'
 import { allElements, inFlatTree } from './verify'
 
 export interface Coverage {
+  /** Which of the nine kits this screen runs on, read from the page the same
+   *  way the bridge reads an app (detectKit). `null` is an answer, not a gap:
+   *  a page that runs on none of them, or on a major version the kit data does
+   *  not describe (Bootstrap 4 against 5.3.8), gets no kit-shaped export. */
+  kit: KitId | null
+  /** With a kit: each role's value read from that kit's OWN variable on this
+   *  page. The authoritative source for the kit export, ahead of what is
+   *  painted most (src/kits/fromPage.ts says why). Empty without a kit. */
+  kitValues: RoleValues
   colours: { hit: number; total: number }
   fonts: { hit: number; total: number }
   sizes: { hit: number; total: number }
@@ -67,6 +79,11 @@ const rgbKey = (css: string): string | null => {
   if (!m) return null
   if (m[4] !== undefined && parseFloat(m[4]) === 0) return 'transparent'
   return key(+m[1]!, +m[2]!, +m[3]!)
+}
+
+function kitReading(doc: Document): { kit: KitId | null; kitValues: RoleValues } {
+  const kit = detectKit(doc)
+  return { kit, kitValues: kit ? readKitValues(doc, kit) : {} }
 }
 
 export function measureCoverage(doc: Document, table: SubstitutionTable, vars: Record<string, string>): Coverage {
@@ -121,7 +138,7 @@ export function measureCoverage(doc: Document, table: SubstitutionTable, vars: R
       }
     }
   } finally { probe.remove() }
-  const cov: Coverage = { colours: { hit: 0, total: 0 }, fonts: { hit: 0, total: 0 }, sizes: { hit: 0, total: 0 }, radii: { hit: 0, total: 0 }, outside: { images: 0, canvas: 0, video: 0, backgroundImages: 0 }, elements: 0, painted, anchors: readAnchors(doc, win) }
+  const cov: Coverage = { colours: { hit: 0, total: 0 }, fonts: { hit: 0, total: 0 }, sizes: { hit: 0, total: 0 }, radii: { hit: 0, total: 0 }, outside: { images: 0, canvas: 0, video: 0, backgroundImages: 0 }, elements: 0, painted, anchors: readAnchors(doc, win), ...kitReading(doc) }
   // Shadow trees included (Spectrum, Lit: what you see is mostly in them);
   // unslotted light DOM excluded (never painted).
   const els = allElements(doc.body).filter(inFlatTree).slice(0, 4000)

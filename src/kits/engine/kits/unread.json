@@ -1,0 +1,229 @@
+[
+ {
+  "kit": "bootstrap",
+  "name": "Bootstrap",
+  "role": "Brand",
+  "names": [
+   "--bs-primary"
+  ],
+  "instead": [
+   "--bs-link-color",
+   "--bs-primary-rgb"
+  ],
+  "tokensOnly": false
+ },
+ {
+  "kit": "bootstrap",
+  "name": "Bootstrap",
+  "role": "Warning",
+  "names": [
+   "--bs-warning"
+  ],
+  "instead": [
+   "--bs-warning-rgb",
+   "--bs-warning-text-emphasis",
+   "--bs-warning-bg-subtle",
+   "--bs-warning-border-subtle"
+  ],
+  "tokensOnly": false
+ },
+ {
+  "kit": "material",
+  "name": "Material 3",
+  "role": "Corner radius",
+  "names": [
+   "--md-sys-shape-corner-large",
+   "--md-sys-shape-corner-extra-large",
+   "--md-sys-shape-corner-xs",
+   "--md-sys-shape-corner-sm",
+   "--md-sys-shape-corner-md",
+   "--md-sys-shape-corner-lg",
+   "--md-sys-shape-corner-xl",
+   "--md-sys-shape-corner-xxl"
+  ],
+  "instead": [
+   "--md-sys-shape-corner-medium",
+   "--md-sys-shape-corner-extra-small",
+   "--md-sys-shape-corner-small"
+  ],
+  "tokensOnly": false
+ },
+ {
+  "kit": "mantine",
+  "name": "Mantine",
+  "role": "Elevation",
+  "names": [
+   "--mantine-shadow-md"
+  ],
+  "instead": [
+   "--mantine-shadow-xs",
+   "--mantine-shadow-sm",
+   "--mantine-shadow-lg",
+   "--mantine-shadow-xl"
+  ],
+  "tokensOnly": false
+ },
+ {
+  "kit": "mantine",
+  "name": "Mantine",
+  "role": "Line height",
+  "names": [
+   "--mantine-line-height-xs",
+   "--mantine-line-height-lg",
+   "--mantine-line-height-xl"
+  ],
+  "instead": [
+   "--mantine-line-height",
+   "--mantine-line-height-sm",
+   "--mantine-line-height-md",
+   "--mantine-h1-line-height",
+   "--mantine-h2-line-height",
+   "--mantine-h3-line-height",
+   "--mantine-h4-line-height",
+   "--mantine-h5-line-height",
+   "--mantine-h6-line-height"
+  ],
+  "tokensOnly": false
+ },
+ {
+  "kit": "mantine",
+  "name": "Mantine",
+  "role": "Heading weight",
+  "names": [
+   "--mantine-heading-font-weight"
+  ],
+  "instead": [
+   "--mantine-h1-font-weight",
+   "--mantine-h2-font-weight",
+   "--mantine-h3-font-weight",
+   "--mantine-h4-font-weight",
+   "--mantine-h5-font-weight",
+   "--mantine-h6-font-weight"
+  ],
+  "tokensOnly": false
+ },
+ {
+  "kit": "mantine",
+  "name": "Mantine",
+  "role": "Corner radius",
+  "names": [
+   "--mantine-radius-xs",
+   "--mantine-radius-lg"
+  ],
+  "instead": [
+   "--mantine-radius-default",
+   "--mantine-radius-sm",
+   "--mantine-radius-md",
+   "--mantine-radius-xl"
+  ],
+  "tokensOnly": false
+ },
+ {
+  "kit": "antd",
+  "name": "Ant Design",
+  "role": "Elevation",
+  "names": [
+   "--ant-box-shadow"
+  ],
+  "instead": [
+   "--ant-box-shadow-secondary",
+   "--ant-box-shadow-tertiary"
+  ],
+  "tokensOnly": false
+ },
+ {
+  "kit": "openprops",
+  "name": "Open Props",
+  "role": "Muted ink",
+  "names": [
+   "--text-2"
+  ],
+  "instead": [],
+  "tokensOnly": true
+ },
+ {
+  "kit": "openprops",
+  "name": "Open Props",
+  "role": "Success",
+  "names": [
+   "--success"
+  ],
+  "instead": [],
+  "tokensOnly": true
+ },
+ {
+  "kit": "openprops",
+  "name": "Open Props",
+  "role": "Warning",
+  "names": [
+   "--warning"
+  ],
+  "instead": [],
+  "tokensOnly": true
+ },
+ {
+  "kit": "openprops",
+  "name": "Open Props",
+  "role": "Danger",
+  "names": [
+   "--danger"
+  ],
+  "instead": [],
+  "tokensOnly": true
+ },
+ {
+  "kit": "openprops",
+  "name": "Open Props",
+  "role": "Headings",
+  "names": [
+   "--font-heading"
+  ],
+  "instead": [],
+  "tokensOnly": true
+ },
+ {
+  "kit": "openprops",
+  "name": "Open Props",
+  "role": "Body",
+  "names": [
+   "--font-sans"
+  ],
+  "instead": [],
+  "tokensOnly": true
+ },
+ {
+  "kit": "openprops",
+  "name": "Open Props",
+  "role": "Line height",
+  "names": [
+   "--font-lineheight-0",
+   "--font-lineheight-2",
+   "--font-lineheight-4",
+   "--font-lineheight-5"
+  ],
+  "instead": [
+   "--font-lineheight-3",
+   "--font-lineheight-1"
+  ],
+  "tokensOnly": true
+ },
+ {
+  "kit": "openprops",
+  "name": "Open Props",
+  "role": "Spacing",
+  "names": [
+   "--size-6",
+   "--size-7",
+   "--size-9"
+  ],
+  "instead": [
+   "--size-3",
+   "--size-1",
+   "--size-2",
+   "--size-4",
+   "--size-5",
+   "--size-8"
+  ],
+  "tokensOnly": true
+ }
+]
