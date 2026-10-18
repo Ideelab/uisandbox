@@ -8,13 +8,14 @@
     "dev": "vite",
     "build": "tsc -p tsconfig.json && vite build",
     "preview": "vite preview",
-    "test": "vitest run && node --test src/audit/__tests__/*.test.mjs",
+    "test": "vitest run && node --test src/audit/__tests__/*.test.mjs && pnpm test:kits",
     "test:watch": "vitest",
     "typecheck": "tsc -p tsconfig.json",
     "holdouts": "node scripts/holdouts.mjs",
     "mcp": "tsx mcp/server.ts",
     "mcp:build": "pnpm build && vite build --config mcp/vite.config.ts && rm -rf mcp/dist/app && cp -R dist mcp/dist/app && rm -f mcp/dist/app/_headers && rm -rf mcp/dist/app/samples",
-    "mcp:pack": "pnpm mcp:build && cd mcp && npm pack"
+    "mcp:pack": "pnpm mcp:build && cd mcp && npm pack",
+    "test:kits": "cd src/kits/engine && node --test *.test.mjs"
   },
   "dependencies": {
     "lucide-react": "^1.16.0",
