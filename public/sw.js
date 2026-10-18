@@ -83,6 +83,32 @@ async function askPage(sid, path, navigate = false) {
   return null
 }
 
+/* A stylesheet resolves its relative references against ITS OWN address. Served
+ * from /__ext/?u=…, a CDN sheet's own address became that path, so
+ *   url("fonts/bootstrap-icons.woff2")  →  /__ext/fonts/bootstrap-icons.woff2
+ * and every webfont, icon font and image it named simply failed. Measured on
+ * AdminLTE against the page as its author ships it: Bootstrap Icons and the
+ * Source Sans 3 body face both `error` here and `loaded` there, every icon a
+ * missing-glyph box, the whole page in a fallback face — and Check 1:1 passed
+ * it, because a computed font-family says which face was asked for, not
+ * whether it arrived.
+ *
+ * So every relative reference is made absolute against the sheet's real URL
+ * before anything else touches it. Fonts and images then come from the CDN,
+ * exactly as on the author's site: this adds no proxying, it gives the sheet
+ * its own base back. data:, blob:, #fragment and already-absolute references
+ * are left as they are. */
+function absolutise(css, base) {
+  const fix = (ref) => {
+    const r = ref.trim()
+    if (!r || /^(data|blob|about|https?):/i.test(r) || r.startsWith('#')) return ref
+    try { return new URL(r, base).href } catch { return ref }
+  }
+  return css
+    .replace(/url\(\s*(['"]?)([^'")]*)\1\s*\)/gi, (m, q, ref) => `url(${q}${fix(ref)}${q})`)
+    .replace(/@import\s+(['"])([^'"]+)\1/gi, (m, q, ref) => `@import ${q}${fix(ref)}${q}`)
+}
+
 /** A cross-origin stylesheet, fetched here and rewritten by the page. */
 async function externalCss(event, url) {
   const target = url.searchParams.get('u')
@@ -91,7 +117,7 @@ async function externalCss(event, url) {
   let res
   try { res = await fetch(target, { mode: 'cors', credentials: 'omit' }) } catch { return new Response('', { status: 502 }) }
   if (!res.ok || !sid) return res
-  const css = await res.text()
+  const css = absolutise(await res.text(), target)
   const answer = await new Promise((resolve) => {
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
       const owner = clients.filter((c) => !c.url.includes(PREFIX) && !c.url.includes('__sb='))

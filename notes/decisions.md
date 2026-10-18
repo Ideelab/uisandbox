@@ -2140,3 +2140,45 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     MANIFEST.md says a flat "Nothing" for the three Tailwind-compiled kits,
     which orphans.mjs says it cannot establish (2b, an engine issue).
 
+
+181. Fonts named by a proxied CDN stylesheet now load: the sheet gets its own
+    base back.
+
+    A stylesheet resolves its relative url()s against its OWN address.
+    proxyExternalStylesheets serves a CDN sheet from /__ext/?u=…, so that
+    became its address, and url("fonts/bootstrap-icons.woff2") went to
+    /__ext/fonts/bootstrap-icons.woff2. Every webfont, icon font and image a
+    CDN sheet named failed on the tokenised side.
+
+    Measured on AdminLTE (s13), against the page as its author ships it
+    (the fixture served plainly, fonts straight from the CDN):
+
+                                  before            after
+      failed requests             4 (the .woff2/    0
+                                  .woff of both)
+      Bootstrap Icons             error             loaded
+      Source Sans 3               error             loaded
+      stage foot → coverage       9438 ms           1488 / 1436 ms
+
+    The author's page loads both faces in both runs. Before, every navbar
+    icon was a missing-glyph box and the page was in a fallback face. The
+    9.6 s to read AdminLTE that #178 left open was this: the reach meter
+    waited on four fonts that were never coming.
+
+    Check 1:1 did not see it, and could not: its raw control loads the CDN
+    sheet directly (so its fonts arrive), and a computed font-family says
+    which face was ASKED for, not whether it arrived. Both frames read
+    "Source Sans 3" while one of them drew it in a fallback. Noted as a blind
+    spot of the meter, not fixed here.
+
+    The fix (sw.js absolutise): before the page rewrites the sheet, every
+    relative url() and @import is made absolute against the sheet's real
+    URL. Fonts and images then come from the CDN exactly as on the author's
+    site; nothing new is proxied. data:, blob:, #fragment and absolute
+    references are left alone. src/sandbox/__tests__/swAbsolutise.test.ts
+    lifts the function out of sw.js itself and holds those cases.
+
+    Full gate after: 173 fixtures, ok 154, differs 4, timeout/error 0. The
+    one row it calls a regression is flutter-meshsight's focus ring, which
+    differs on the pre-merge code too; chroma, todomvc and docsify differ as
+    in every earlier gate. Against the merge gate no row got worse.
