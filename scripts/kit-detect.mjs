@@ -63,6 +63,17 @@ const EXPECT = {
   's11-open-props.zip': null,                       // its variables live outside the served base
   // Tailwind v3 via the Play CDN: not the 4.3.3 the kit describes
   'twcdn.zip': null,
+  // The kit door's own builds (scripts/kit-builds.mjs): each must be
+  // recognised as the kit it was built from, or the door would hand somebody a
+  // Bootstrap screen and then a kit-less export for it.
+  'kit-bootstrap.zip': 'bootstrap',
+  'kit-tailwind.zip': 'tailwind',
+  'kit-daisyui.zip': 'daisyui',
+  'kit-shadcn.zip': 'shadcn',
+  'kit-material.zip': 'material',
+  'kit-radix.zip': 'radix',
+  'kit-mantine.zip': 'mantine',
+  'kit-antd.zip': 'antd',
   // None of the nine
   's11-vitepress.zip': null,
   's7-docsify.zip': null,
@@ -75,7 +86,7 @@ const EXPECT = {
 let server = null
 let base = opt('--base', '')
 if (!base) {
-  const port = 5241
+  const port = 5297
   server = spawn('pnpm', ['exec', 'vite', '--port', String(port), '--strictPort'], { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] })
   base = `http://localhost:${port}`
   await new Promise((res, rej) => { const t = setTimeout(() => rej(new Error('vite did not start')), 30000)

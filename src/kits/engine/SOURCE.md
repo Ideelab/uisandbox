@@ -16,7 +16,39 @@ The flat layout is kept on purpose: the tests read `kits/<id>.json` relative
 to the working directory, so `pnpm test:kits` runs them from here rather than
 editing a path in each one.
 
-## What is here, and what is still to come
+## What is here
+
+Phase 2a, the export: `color` `roles` `stack` `palettes` `generate`
+`kit-defaults` `fonts`, the nine kits' fetched values.
+
+Phase 2b, the kit door: the render layer `parts` `scenes` `wall-bindings`
+`antd-nodes`, and the build-time layer `build-css` `icons` `icon-sets`
+`material-elements` `derive-material` `antd-render` `antd-tree` `npm-read`
+`zip`, with `fidelity.mjs` and the cached `material.elements.json` and
+`antd.render.*`. The build-time modules `npm install` each kit, pinned to its
+version, into a throwaway directory: none of the kits is a dependency of
+UISandbox.
+
+Tests, all byte-identical and counted against the source:
+
+    dsg/                    117 of the 123 tests · 117 pass
+    src/kits/engine/        117 tests            · 117 pass
+
+The six that did not come:
+
+- `sweep.test.mjs` tests UIcockpit's PAGE: it reads `page.template.html`,
+  `build-page.mjs`, `build-home.mjs`. That page does not move — the UI is
+  UISandbox's (phase 3) — so a test of it would test nothing here. Its
+  invariants (FOLLOW, VISIBLE, STATES, CONSUMED) do move, rebuilt against what
+  UISandbox renders: `scripts/kit-export.mjs` holds that every kit build is
+  ALIVE and that the export is the screen.
+- `live.test.mjs` arrives with `live.js`, phase 2c.
+
+`fidelity.mjs` runs from here unchanged (`pnpm kits:fidelity`): eight kits at
+100%, 1271 classes and 28 elements, and every name SKILL.md cites is defined by
+the kit it is cited for.
+
+## Older note: what was still to come after 2a
 
 Here (phase 2a, the export): `color` `roles` `stack` `palettes` `generate`
 `kit-defaults` `fonts`, the nine kits' fetched values, and the tests of exactly
@@ -38,6 +70,8 @@ Not from the source, and free to change:
   build and the bridge answer with the same rules. 2c makes `live.js` inline it.
 - `*.d.mts` — types for the parts UISandbox calls, kept beside the engine so the
   `.mjs` files stay byte-identical.
+- `kit-root.mjs` — the wrapper each kit needs on `<html>`, from
+  `build-page.mjs`, which does not move. Every attribute keeps its reason.
 - `kits/unread.json` — which variables each kit's own stylesheet never reads,
   as uicockpit.com ships it: 16 rows, sha256 of its canonical JSON
   `a663ccbbb71d…`, fetched 2026-10-18 and identical to a local build of

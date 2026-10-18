@@ -39,6 +39,7 @@ import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
+const UNREAD = JSON.parse(readFileSync(join(root, 'src/kits/engine/kits/unread.json'), 'utf8'))
 const args = process.argv.slice(2)
 const opt = (n, d) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : d }
 
@@ -50,12 +51,14 @@ const BUILDS = [
   ['s11-mantine.zip', 'mantine'],
   ['s11-vitepress.zip', null],
   ['startbootstrap-sb-admin-2-master.zip', null],   // Bootstrap 4: not the 5.3.8 kit
+  // The kit door's own builds: through the door and out of the export.
+  ...['bootstrap', 'tailwind', 'daisyui', 'shadcn', 'material', 'radix', 'mantine', 'antd'].map((k) => [`kit-${k}.zip`, k]),
 ]
 
 let server = null
 let base = opt('--base', '')
 if (!base) {
-  const port = 5275
+  const port = 5295
   server = spawn('pnpm', ['exec', 'vite', '--port', String(port), '--strictPort'], { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] })
   base = `http://localhost:${port}`
   await new Promise((res, rej) => { const t = setTimeout(() => rej(new Error('vite did not start')), 30000)
@@ -127,6 +130,28 @@ for (const [f, kit] of BUILDS) {
     const card = await page.evaluate(() => [...document.querySelectorAll('.exp__card')].map((c) => c.textContent).find((t) => /agent/i.test(t)) ?? '')
     const skills = existsSync(join(x, '.claude/skills')) ? readdirSync(join(x, '.claude/skills')) : []
 
+    // A kit door build has to be ALIVE, not merely faithful. Check 1:1 cannot
+    // tell the two apart: the first Radix build rendered as bare text, with
+    // every var(--accent-9) and var(--space-3) resolving to nothing, and
+    // untouched and tokenised were exactly equally bare, so it passed. So the
+    // primary action must have a real fill and real padding.
+    if (f.startsWith('kit-')) {
+      const frame = await (await page.$('.stage__frame iframe')).contentFrame()
+      const btn = await frame.evaluate(() => {
+        const walk = (root, out = []) => { for (const el of root.querySelectorAll('*')) { out.push(el); if (el.shadowRoot) walk(el.shadowRoot, out) } return out }
+        const els = walk(document)
+        const host = els.find((el) => /^\s*Publish\s*$/.test(el.textContent ?? '') && el.children.length <= 2 && el.getBoundingClientRect().width > 0)
+        if (!host) return null
+        // Material's fill lives inside its own shadow root; read the largest painted box there.
+        const boxes = [host, ...(host.shadowRoot ? walk(host.shadowRoot) : [])]
+        const painted = boxes.map((el) => getComputedStyle(el)).find((cs) => cs.backgroundColor !== 'rgba(0, 0, 0, 0)' && cs.backgroundColor !== 'transparent')
+        const r = host.getBoundingClientRect()
+        return { fill: painted?.backgroundColor ?? 'none', w: Math.round(r.width), h: Math.round(r.height) }
+      })
+      check(f, `the kit is alive: its primary action has a fill (${btn?.fill ?? 'no Publish button'})`, !!btn && btn.fill !== 'none')
+      check(f, `and the size of a control, not of a word (${btn?.w}×${btn?.h})`, !!btn && btn.h >= 24 && btn.w >= 50)
+    }
+
     if (!kit) {
       check(f, 'no SKILL.md without a kit', skills.length === 0, skills.join(', '))
       check(f, 'says why there is none', /none of the nine kits/.test(card), card.slice(0, 80))
@@ -137,7 +162,16 @@ for (const [f, kit] of BUILDS) {
       const theme = readFileSync(join(x, 'theme.css'), 'utf8')
       const design = readFileSync(join(x, 'DESIGN.md'), 'utf8')
       check(f, 'DESIGN.md says the values were read, not chosen', /read off .* own build in UISandbox, not chosen/.test(design))
-      check(f, 'MANIFEST.md does not claim nothing is unread', !/^Nothing\. Every variable this theme writes is read/m.test(readFileSync(join(x, 'MANIFEST.md'), 'utf8')))
+      // MANIFEST.md must agree with the MEASUREMENT for this kit. Where the
+      // unread list has rows, it names them; where it has none, "Nothing" is
+      // what orphans.mjs found, not a claim made for want of data. (The first
+      // version of this check demanded rows everywhere, generalised from
+      // Bootstrap, and failed four kits that genuinely have none.)
+      const manifest = readFileSync(join(x, 'MANIFEST.md'), 'utf8')
+      const rows = UNREAD.filter((u) => u.kit === kit)
+      const saysNothing = /^Nothing\. Every variable this theme writes is read/m.test(manifest)
+      check(f, `MANIFEST.md agrees with the unread measurement (${rows.length} row${rows.length === 1 ? '' : 's'})`,
+        rows.length ? !saysNothing && rows.every((r) => manifest.includes(r.names[0])) : saysNothing)
       check(f, 'tokens.json parses', (() => { try { JSON.parse(readFileSync(join(x, 'tokens.json'), 'utf8')); return true } catch { return false } })())
 
       const untouched = await agreesWithScreen(page, theme)

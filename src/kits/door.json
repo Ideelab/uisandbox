@@ -1,0 +1,56 @@
+[
+ {
+  "id": "tailwind",
+  "name": "Tailwind CSS",
+  "version": "4.3.3",
+  "renders": true
+ },
+ {
+  "id": "daisyui",
+  "name": "daisyUI",
+  "version": "5.7.21",
+  "renders": true
+ },
+ {
+  "id": "shadcn",
+  "name": "shadcn/ui",
+  "version": null,
+  "renders": true
+ },
+ {
+  "id": "bootstrap",
+  "name": "Bootstrap",
+  "version": "5.3.8",
+  "renders": true
+ },
+ {
+  "id": "material",
+  "name": "Material 3",
+  "version": "2.5.0",
+  "renders": true
+ },
+ {
+  "id": "radix",
+  "name": "Radix Themes",
+  "version": "3.3.0",
+  "renders": true
+ },
+ {
+  "id": "mantine",
+  "name": "Mantine",
+  "version": "9.5.2",
+  "renders": true
+ },
+ {
+  "id": "antd",
+  "name": "Ant Design",
+  "version": "6.6.1",
+  "renders": true
+ },
+ {
+  "id": "openprops",
+  "name": "Open Props",
+  "version": "1.7.23",
+  "renders": false
+ }
+]

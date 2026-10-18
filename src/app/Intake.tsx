@@ -19,6 +19,8 @@ interface IntakeProps {
 type Way = 'zip' | 'folder' | 'repo'
 
 /** Three real open-source builds (MIT) served from this origin — names people know, with colour everywhere the knobs reach. */
+import DOOR from '../kits/door.json'
+
 const SAMPLES = [
   { path: '/samples/bootstrap-docs.zip', label: 'Bootstrap docs', title: 'getbootstrap.com: the Bootstrap 5.3 docs build (114 screens, 8 MB)' },
   { path: '/samples/vitepress-site.zip', label: 'VitePress site', title: 'vitepress.dev (259 screens, 5 MB)' },
@@ -161,12 +163,22 @@ export function Intake({ onArchive, onUrl, onSample, busy, error }: IntakeProps)
                 <ShieldCheck size={13} strokeWidth={2} /> Loaded into this tab, never sent to a server. No database, no account, no analytics. <u>How to verify</u>
               </button>
             )}
-            {onSample && (
+            {onSample && (<>
               <div className="intake__samples">
                 <span>No build at hand? Try a sample:</span>
                 {SAMPLES.map((x) => <button key={x.path} type="button" className="intake__sample" onClick={() => onSample(x.path)} title={x.title}>{x.label}</button>)}
               </div>
-            )}
+              {/* The kit door. Each is a build made from that kit's own package
+                  (scripts/kit-builds.mjs): its classes, its compiled CSS, its
+                  published defaults, so ×1 reads as "as the kit ships it". */}
+              <div className="intake__samples">
+                <span>Or start from a kit:</span>
+                {DOOR.filter((k) => k.renders).map((k) => (
+                  <button key={k.id} type="button" className="intake__sample" onClick={() => onSample(`/kits/${k.id}.zip`)}
+                    title={`${k.name}${k.version ? ` ${k.version}` : ''}: six screens in its own components and its own defaults`}>{k.name}</button>
+                ))}
+              </div>
+            </>)}
             <input ref={zipRef} type="file" accept=".zip,application/zip" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) void takeFiles([f]); e.target.value = '' }} />
             <input ref={dirRef} type="file" hidden {...({ webkitdirectory: '', directory: '' } as Record<string, string>)} onChange={(e) => { const fs = Array.from(e.target.files ?? []); if (fs.length) void takeFiles(fs); e.target.value = '' }} />
           </>

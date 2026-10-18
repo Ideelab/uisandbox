@@ -1995,3 +1995,82 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
       values read off a build. The engine stays byte-identical; phase 3.
     - The Export dialog does not close on Escape.
 
+179. The kit door, phase 2b: a build we make for you.
+
+    Each of the eight kits that render is turned into a build — the six
+    screens as six pages, the kit's own classes and elements on them, its REAL
+    compiled CSS beside them — and published at public/kits/<id>.zip. The door
+    is a row under the samples, "Or start from a kit", its list derived from
+    kits/*.json by the build so nobody maintains it by hand.
+
+    Why a build rather than a mode of the stage: the door then gets the whole
+    spine for nothing. The sandbox tokenises the kit's CSS like anyone's, so
+    the knobs, Check 1:1, the reach meter, the export and the MCP work on it
+    unchanged, and "×1 = as in your code" reads, correctly, as "as the kit
+    ships it", because the code IS what the kit ships. UIcockpit needed sixty
+    lines of `bootstrapLive` to make Bootstrap's compiled brand move; the
+    tokeniser does that for every kit and every literal.
+
+    Values: each kit built with ITS OWN published defaults (kitDefaults: read
+    from the package, and it throws if a package stops publishing one), not
+    UIcockpit's purple seed. UIcockpit bakes every kit with one shared seed
+    because it swaps values live and a frame must not open teal and turn
+    violet; the sandbox does not swap that way.
+
+    What came across, and what did not:
+
+    - the render layer and the build-time layer, byte-identical; 117 of 123
+      tests, the same 117 passing on both sides. sweep.test tests UIcockpit's
+      page, which does not move, so its invariants were rebuilt against what
+      UISandbox renders instead. live.test comes with 2c.
+    - fidelity.mjs runs from here unchanged: eight kits at 100%, 1271 classes
+      and 28 Material elements, and every name SKILL.md cites is defined by the
+      kit it is cited for.
+    - the ROOT table, out of build-page.mjs, with every attribute's reason.
+
+    Found on the way:
+
+    a. A screen board is HIDDEN on the wall's strip and only shown in grid
+       mode, scaled down by the wall's script. Each page here holds one screen
+       and drops that script (UIcockpit's canvas: sideways wheel, drag-to-pan,
+       Exposé), so it undoes the hiding — and the undo had to out-specify the
+       rule, (1,2,1) over (1,2,0), addressed by data- attribute and path
+       because .card and .col are also Bootstrap's and daisyUI's. Both are
+       lessons from the merge brief, met again on the first page.
+
+    b. Radix rendered as bare text, and CHECK 1:1 PASSED IT. Untouched and
+       tokenised were exactly equally bare. Radix takes choices, not values:
+       its accent, grey, radius and scaling are attributes on the theme root,
+       which UIcockpit's page sets while it runs and a static build has to
+       carry. Without data-radius and data-scaling every --radius-* and
+       --space-* resolves to nothing. The fix is Radix's own <Theme> defaults
+       — and three of the four are TYPED, the one place in the door that is:
+       kits/radix.json publishes each choice's options and not its default,
+       and Radix's own grey has no selector to read at all. They are read from
+       choices[role].default first, so the day fetch-kits.mjs reads Radix's
+       themePropDefs, the table stops being used.
+
+       And a gate for exactly this: kit-export.mjs now holds that every kit
+       build is ALIVE — its primary action has a fill and the size of a
+       control. All eight pass, each wearing its own default brand: Bootstrap
+       #0d6efd, Tailwind #4f39f6, daisyUI #422ad5, shadcn #171717, Material
+       #6750a4, Radix #3e63dd, Mantine #228be6, Ant #1677ff. The first Radix
+       build would have failed both checks.
+
+    c. MANIFEST.md says a flat "Nothing" under "variables nothing reads" for
+       Tailwind, daisyUI and shadcn. orphans.mjs measured nothing unread for
+       them, but its own comment says that for the three that compile through
+       Tailwind it cannot separate the theme's own declarations from the
+       kit's reads, "and that is said out loud below" — and nothing below says
+       it. An engine issue, live on uicockpit.com too. Not changed: the engine
+       stays byte-identical and the change belongs in both copies.
+
+    Gates over the door: 1:1 ok on all eight (holdouts.expect.json), detected
+    as their own kit (kit-detect, 26 of 26), and through the export (kit-export,
+    134 of 134: a SKILL.md each, a no-op theme each, alive each).
+
+    Measured, not fixed — reach on the door says how much of each kit the
+    knobs move: Radix 15% of type (it takes type as a scale CHOICE, which a
+    length dial cannot turn), Material 51% of radii (shape lives in its
+    shadow roots), shadcn 81% of radii.
+
