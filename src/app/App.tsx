@@ -1,6 +1,6 @@
 import DOOR from '../kits/door.json'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Download, PanelLeftOpen, X, BookOpen } from 'lucide-react'
+import { Download, PanelLeftOpen, X, BookOpen, Plug } from 'lucide-react'
 import { SandboxPanel } from '../panel/SandboxPanel'
 import type { Config } from '../tokens/types'
 import { useConfig } from '../state/useConfig'
@@ -631,10 +631,17 @@ function Editor() {
   return (
     <div className="app">
       <header className="app__topbar">
-        <a className="app__brand" href="/" title={loaded && !loaded.kit ? 'Close your app and start over' : 'UISandbox'} onClick={(e) => { if (loaded) { e.preventDefault(); startOver() } }}><span className="app__brand-mark"><Mark size={16} /></span><span className="app__brand-name">UISandbox</span> <small>Design System Generator</small></a>
+        <a className="app__brand" href="/" title={loaded && !loaded.kit ? 'Close your app and start over' : 'UISandbox'} onClick={(e) => { if (loaded) { e.preventDefault(); startOver() } }}><span className="app__brand-mark"><Mark size={16} /></span><span className="app__brand-name">UISandbox</span></a>
+        {/* Beside the name, where "Design System Generator" stood (it lives in
+            the footer): the one link a newcomer looks for first. */}
+        <a className="app__how" href="/about" title="How it works" onClick={openAbout}><BookOpen size={14} /> <span>How it works</span></a>
         <span className="app__spacer" />
         <div className="app__group">
-          <a className="btn btn--ghost btn--sm app__how" href="/about" title="How it works" onClick={openAbout}><BookOpen size={14} /><span className="ebar__txt"> How it works</span></a>
+          {/* The site's main action, beside Export, which follows it: it opens
+              the door (the bookmarklet, the local command, a build) and stays
+              lit while the door is open. Gone once your own app is in: Close
+              and the Kit menu speak for it then. */}
+          {loaded?.kit && <button type="button" className={`btn btn--secondary btn--sm app__connect ${tab === 'app' ? 'app__connect--on' : ''}`} aria-pressed={tab === 'app'} onClick={() => setTab('app')} title="Connect your app: any screen your browser shows, your dev server, or a build"><Plug size={14} strokeWidth={1.75} /><span className="ebar__txt"> Connect your app</span></button>}
           {!loaded && <><McpButton /><StarButton /></>}
           {loaded && <>
             <LookSelect current={lookNow} onPick={pickLook} />

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type RefObject } from 'react'
-import { ExternalLink, Info, Plus, RefreshCw, ShieldCheck, Star, X } from 'lucide-react'
+import { ExternalLink, Info, RefreshCw, ShieldCheck, Star, X } from 'lucide-react'
 import { ScreenPicker } from './ScreenPicker'
 import type { SandboxProject, Screen } from '../sandbox/project'
 import { identitySid, rawSid, sandboxUrl } from '../sandbox/host'
@@ -139,7 +139,6 @@ export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, pi
           <div className="stage__tabs" role="tablist" aria-label="What the stage shows">
             <button type="button" role="tab" aria-selected={tab === 'components'} className={`stage__tab ${tab === 'components' ? 'stage__tab--on' : ''}`} onClick={() => pickTab('components')}>Components</button>
             <button type="button" role="tab" aria-selected={tab === 'screens'} className={`stage__tab ${tab === 'screens' ? 'stage__tab--on' : ''}`} onClick={() => pickTab('screens')}>Screens</button>
-            <button type="button" role="tab" aria-selected={tab === 'app'} className={`stage__tab stage__tab--app ${tab === 'app' ? 'stage__tab--on' : ''}`} onClick={() => pickTab('app')}><Plus size={13} strokeWidth={2} /> Your app</button>
           </div>
         )}
         {(!kitName || tab === 'screens') && <ScreenPicker screens={others} current={screen} onPick={onScreen} onPin={onPin} pinnable={pinnable} named={!!kitName} />}

@@ -132,6 +132,12 @@ button { background: none; border: 0; padding: 0; cursor: pointer; }
 .app__brand { color: inherit; text-decoration: none; font-weight: 700; letter-spacing: -0.02em; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; }
 .app__brand-mark { display: inline-flex; width: 16px; height: 16px; border-radius: 3px; overflow: hidden; color: var(--app-fg); }
 .app__brand small { font-weight: 500; color: var(--app-fg-faint); }
+/* How it works, beside the name: quiet, a link not a button. */
+.app__how { display: inline-flex; align-items: center; gap: 5px; margin-left: 14px; padding: 4px 6px; border-radius: 6px; font-size: 12.5px; font-weight: 500; color: var(--app-fg-muted); text-decoration: none; }
+.app__how:hover { color: var(--app-fg); background: var(--app-hover); }
+/* Connect your app: lit while the door is open, as a tab would be. */
+.app__connect--on { background: var(--app-fg); color: var(--app-bg); border-color: var(--app-fg); }
+.app__connect--on:hover { background: var(--app-fg); color: var(--app-bg); }
 .app__spacer { flex: 1; }
 .app__body { flex: 1; min-height: 0; display: flex; }
 .app__body .panel { padding-top: 16px; }
@@ -618,7 +624,7 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
 /* A phone: "How it works" is the intro's link and /about's own address; Light /
    Dark is the Dark mode knob in the sheet. Neither control is lost. */
 .app__intro-how { display: none; }
-@media (max-width: 560px) { .app__group .app__how, .app__group .ebar__scheme { display: none; } .app__intro-how { display: inline; } }
+@media (max-width: 560px) { .app__how, .app__group .ebar__scheme { display: none; } .app__intro-how { display: inline; } }
 @media (max-width: 420px) {
   .app__brand-name { display: none; }
   .app__group { gap: 4px; }
