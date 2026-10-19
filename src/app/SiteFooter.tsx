@@ -5,6 +5,7 @@
 import LINKS from '../site/links.json'
 import DOOR from '../kits/door.json'
 import { Mark } from './Mark'
+import { StarButton } from './StarButton'
 
 type Link = { label: string; href: string }
 export const siteColumns = (): Array<{ title: string; links: Link[] }> => LINKS.columns.map((c) => ({
@@ -23,6 +24,7 @@ export function SiteFooter() {
         <div className="sitefoot__brand">
           <a href="/" className="sitefoot__mark"><Mark size={18} /> UISandbox Design System Generator</a>
           <p>Play with your app's design, right in the browser. Your files never leave it.</p>
+          <StarButton label="Star on GitHub" />
         </div>
         {siteColumns().map((c) => (
           <nav key={c.title} className="sitefoot__col" aria-label={c.title}>

@@ -1,6 +1,7 @@
 /** The editor's footer: one slim line, because the canvas needs the height.
  *  The full footer, in columns, is SiteFooter on /about and the kit pages. */
 import LINKS from '../site/links.json'
+import { StarButton } from './StarButton'
 
 export function Footer() {
   const m = LINKS.maker
@@ -13,6 +14,7 @@ export function Footer() {
         <a href="https://github.com/Ideelab/uisandbox" target="_blank" rel="noopener">Source</a>
         <a href="https://github.com/Ideelab/uisandbox/blob/main/notes/security.md" target="_blank" rel="noopener">Privacy and security</a>
       </nav>
+      <StarButton label="Star on GitHub" />
     </footer>
   )
 }

@@ -44,3 +44,12 @@
 .kp__kits a:hover { border-color: var(--app-fg-muted); }
 .kp__kits b { display: block; font-size: 15px; margin-bottom: 4px; }
 .kp__kits span { color: var(--app-fg-muted); font-size: 13px; }
+
+/* The Star on GitHub button, on the dark footers (the editor's line and the
+   site's columns). Complete here, because the static pages have no chrome.css. */
+.sitefoot .star, .foot .star { display: inline-flex; align-items: stretch; border: 1px solid #3a3a45; border-radius: 8px; overflow: hidden; font-weight: 600; color: #ececf1; background: #22232a; text-decoration: none; }
+.sitefoot .star:hover, .foot .star:hover { border-color: #6b6b78; color: #ffffff; text-decoration: none; }
+.sitefoot .star__main, .foot .star__main { display: inline-flex; align-items: center; gap: 6px; padding: 0 10px; }
+.sitefoot .star__count, .foot .star__count { display: inline-flex; align-items: center; padding: 0 9px; border-left: 1px solid #3a3a45; background: #2b2c34; font-variant-numeric: tabular-nums; }
+.sitefoot .star { height: 30px; margin-top: 14px; font-size: 12.5px; }
+.foot .star { height: 22px; font-size: 11px; margin-left: 4px; }
