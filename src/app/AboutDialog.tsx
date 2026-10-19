@@ -11,6 +11,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { X } from 'lucide-react'
 import { InstallLine } from './InstallLine'
+import { Mark } from './Mark'
 
 export function AboutDialog({ section, onClose }: { section?: string; onClose: () => void }) {
   const card = useRef<HTMLDivElement>(null)
@@ -31,7 +32,12 @@ export function AboutDialog({ section, onClose }: { section?: string; onClose: (
   return (
     <div className="privacy about-dialog" role="dialog" aria-modal="true" aria-label="How UISandbox works" onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
       <div className="card about-dialog__card" ref={card} tabIndex={-1}>
-        <button type="button" className="btn btn--ghost btn--icon privacy__close about-dialog__close" onClick={onClose} aria-label="Close"><X size={16} /></button>
+        {/* The mark the page opened with, kept, on the left; Close on the
+            right of the same line, which stays at the top as you scroll. */}
+        <div className="about-dialog__head">
+          <span className="about-dialog__mark" aria-hidden><Mark size={32} /></span>
+          <button type="button" className="btn btn--ghost btn--icon about-dialog__close" onClick={onClose} aria-label="Close"><X size={16} /></button>
+        </div>
         <div className="landing">
           <section className="landing__sec">
             <h2>How it works</h2>
