@@ -65,7 +65,7 @@ async function sandboxOfRequester(event) {
 
 let seq = 0
 /** Ask every window client until one owns the sandbox. */
-async function askPage(sid, path, navigate = false) {
+async function askPage(sid, path, navigate = false, extra = {}) {
   const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
   // The owner is our app, never a sandboxed document — skip those first.
   const ordered = clients.filter((c) => !c.url.includes(PREFIX)).concat(clients.filter((c) => c.url.includes(PREFIX)))
@@ -75,9 +75,9 @@ async function askPage(sid, path, navigate = false) {
       const id = ++seq
       const timer = setTimeout(() => resolve(null), 4000)
       ch.port1.onmessage = (e) => { clearTimeout(timer); resolve(e.data) }
-      client.postMessage({ type: 'us:fetch', id, sid, path, navigate: !!navigate }, [ch.port2])
+      client.postMessage({ type: 'us:fetch', id, sid, path, navigate: !!navigate, search: extra.search || '', method: extra.method || 'GET' }, [ch.port2])
     })
-    if (answer && answer.found) return answer
+    if (answer && (answer.found || answer.passthrough)) return answer
     if (answer && answer.owner === false) continue
   }
   return null
@@ -155,7 +155,16 @@ self.addEventListener('fetch', (event) => {
     }
     // A directory → its index; a route with no extension → the SPA's index.
     if (path === '' || path.endsWith('/')) path += 'index.html'
-    const answer = await askPage(sid, path, event.request.mode === 'navigate')
+    const answer = await askPage(sid, path, event.request.mode === 'navigate', { search: url.search, method: event.request.method })
+    // A live project (a running dev server behind the local UISandbox server):
+    // what the page does not rewrite goes to the dev server as it was asked,
+    // method, headers and body included (an API call, a form post).
+    if (answer && answer.passthrough) {
+      const req = event.request
+      const init = { method: req.method, headers: req.headers, redirect: 'manual' }
+      if (!/^(GET|HEAD)$/i.test(req.method)) { init.body = await req.clone().arrayBuffer() }
+      return fetch(`/__dev/${path}${url.search}`, init)
+    }
     if (!answer) {
       if (!/\.[a-z0-9]+$/i.test(path) && event.request.mode === 'navigate') {
         const idx = await askPage(sid, 'index.html', true)

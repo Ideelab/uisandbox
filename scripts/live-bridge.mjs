@@ -61,7 +61,7 @@ async function door() {
   // the default kit; `?tab=app` opens on it.
   await page.goto(`${sandbox}/?tab=app`, { waitUntil: 'networkidle' })
   // …folded under "Already running? Add one line" since decision 197.
-  await page.click('.stage__door .way__fold:has-text("Already running")')
+  await page.click('.stage__door .way__fold:has-text("Deployed somewhere")')
   await page.waitForSelector('.live__snippet')
   return page
 }

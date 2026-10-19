@@ -28,7 +28,11 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod'
 import { readFileSync, existsSync, statSync } from 'node:fs'
 import { basename, join, dirname, extname } from 'node:path'
-import { createServer, type Server } from 'node:http'
+import { createServer, request as httpRequest, type Server, type IncomingMessage, type ServerResponse } from 'node:http'
+import { request as httpsRequest } from 'node:https'
+import { connect as netConnect } from 'node:net'
+import { connect as tlsConnect } from 'node:tls'
+import { zipSync } from '../src/export/zip'
 import { fileURLToPath } from 'node:url'
 import { spawn } from 'node:child_process'
 import { openZip, type Archive } from '../src/audit/intake/readZip'
@@ -54,10 +58,15 @@ const APP_ENV = process.env.UISANDBOX_URL?.replace(/\/$/, '')
 
 interface Loaded {
   id: string; name: string; bytes: Uint8Array<ArrayBuffer>; project: SandboxProject; report: BaselineReport; cfg: Config; archive: Archive; touchedInBrowser?: number
+  /** A RUNNING dev server this project is (live mode), e.g. http://localhost:5173. */
+  live?: string
   /** Who opened it: an agent (MCP `open`) or the terminal (`npx uisandbox-mcp open`). Decides where Send goes. */
   via?: 'agent' | 'cli'
   /** When the user last pressed Send in the sandbox, and whether that send was handed over yet. */
   sent?: number; delivered?: boolean
+  /** The page's own account at the last Send: it saw the runtime and
+   *  hot-reloaded styles this server never fetched (live mode above all). */
+  pageReport?: { turned: Array<{ knob: string; from: unknown; to: unknown }>; moved: number; of: number; patch: string }
 }
 const projects = new Map<string, Loaded>()
 /* Agents waiting in `wait_for_send`, per project: resolved by the next Send. */
@@ -90,6 +99,10 @@ const summarise = (p: Loaded) => {
    → to), how many of the build's values moved, and the patch that writes the
    result into their source. Ready to act on, not a dump to interpret. */
 const sentPayload = (p: Loaded) => {
+  if (p.pageReport) {
+    const r = p.pageReport
+    return { sent: p.sent ? new Date(p.sent).toISOString() : null, project: p.name, turned: r.turned, moved: r.moved, of: r.of, patch: r.patch, next: nextStep(r.turned.length > 0) }
+  }
   const base = p.report.baseline.cfg
   const at = (c: Config, k: string) => k.startsWith('sb.') ? (c.sb as unknown as Record<string, unknown>)[k.slice(3)] : (c as unknown as Record<string, unknown>)[k]
   const turned = differingKeys(base, p.cfg).filter(isShownKnob).map((k) => ({ knob: knobLabel(k), from: at(base, k) ?? 'as in the code', to: at(p.cfg, k) ?? 'as in the code' }))
@@ -98,15 +111,17 @@ const sentPayload = (p: Loaded) => {
   return {
     sent: p.sent ? new Date(p.sent).toISOString() : null, project: p.name, turned, moved, of: p.project.table.entries.length,
     patch: genPatch(p.project.table, vars),
-    next: turned.length
-      ? 'Apply the patch to the source (each line is a literal in their CSS and the value it becomes), rebuild, then `load` the new build and `verify` to show it still renders 1:1. For a design system and a SKILL.md in their kit\'s own names, ask them to press Export in the sandbox.'
-      : 'They pressed Send without turning anything: nothing to apply.',
+    next: nextStep(turned.length > 0),
   }
 }
+const nextStep = (any: boolean) => any
+  ? 'Apply the patch to the source (each line is a literal in their CSS and the value it becomes; a file path names where it lives), then rebuild or let the dev server reload, and `verify` to show it still renders 1:1. For a design system and a SKILL.md in their kit\'s own names, ask them to press Export in the sandbox.'
+  : 'They pressed Send without turning anything: nothing to apply.'
 
 const INSTRUCTIONS = `UISandbox renders a BUILT web app 1:1 in a sandbox and turns every CSS literal into a knob that moves the app's own value; "1:1" is measured (a computed-style diff), not promised.
 
 When to use it — and offer it without being asked:
+- The user is DEVELOPING an app and its dev server runs (npm run dev, localhost:3000/5173/…): \`load\` with \`devUrl\` (no build), \`open\`, tell them to turn the knobs and press **Send to your agent**, then \`wait_for_send\` and apply the patch it returns (its file paths are their source files). Their hot reload keeps working inside the sandbox, so they see your edit land.
 - The user wants to LOOK at an app in a sandbox or PLAY with its design ("can I see this in a sandbox", "let me try some changes", "what would a different brand colour look like"): build the app if you are in its repo (npm run build / vite build / nuxi generate / next build with output: 'export'), zip the output folder (dist/, build/, out/ — never node_modules or source), \`load\` it, then \`open\`. The real, interactive sandbox opens in their browser from 127.0.0.1; nothing leaves the machine. Tell them it is open and that they press **Send to your agent** in the sandbox when they are done. Then call \`wait_for_send\`: it returns when they press it, with what they turned and the patch to apply (call it again if it reports the sandbox still open). If they come back in the chat instead ("export this" / "what did I change"), \`state\`, then \`export\` / \`verify\` / \`screenshot\`.
 - The user wants ONE change tried ("try brand #e11d48", "rounder corners"): \`load\` → \`set\` → \`verify\` → \`screenshot\` → \`export\` (patch). Offer \`open\` after.
 - The user is iterating on the look of an app you are working in: offer the sandbox proactively, once.
@@ -117,11 +132,24 @@ const server = new McpServer({ name: 'uisandbox', version: '0.5.0' }, { instruct
 
 server.registerTool('load', {
   title: 'Load a built web app',
-  description: 'Load a BUILT web app (a zip of its dist/build/out folder, or a repo zip carrying the build) by URL or local path. Returns the project id, screens, tokenised values and the baseline the knobs stand on. Refuses what cannot render (iOS/Android/source-only) with the reason.',
-  inputSchema: { zipUrl: z.string().url().optional().describe('URL of the zip (any URL the server can fetch, incl. GitHub /archive/…zip)'), zipPath: z.string().optional().describe('Local path to the zip') },
-}, async ({ zipUrl, zipPath }) => {
-  if (!zipUrl && !zipPath) throw new Error('Give zipUrl or zipPath.')
+  description: 'Load a web app: a RUNNING dev server by its local address (devUrl, e.g. http://localhost:5173 — live mode: no build needed, hot reload passes through, best while the user is developing), or a BUILT app (a zip of its dist/build/out folder, or a repo zip carrying the build) by URL or local path. Returns the project id, screens, tokenised values and the baseline the knobs stand on. Refuses a build that cannot render (iOS/Android/source-only) with the reason. After a devUrl load, `open` it: the tokenised values and the knobs arrive in the browser as the app renders.',
+  inputSchema: { devUrl: z.string().optional().describe('The address of a running dev server on this machine, e.g. http://localhost:3000'), zipUrl: z.string().url().optional().describe('URL of the zip (any URL the server can fetch, incl. GitHub /archive/…zip)'), zipPath: z.string().optional().describe('Local path to the zip') },
+}, async ({ devUrl, zipUrl, zipPath }) => {
+  if (!devUrl && !zipUrl && !zipPath) throw new Error('Give devUrl (a running dev server), zipUrl or zipPath.')
   let bytes: Uint8Array<ArrayBuffer>, name: string
+  if (devUrl) {
+    const u = /^https?:/i.test(devUrl) ? devUrl : `http://${devUrl}`
+    if (!/^(localhost|127\.0\.0\.1|\[::1\]|[\w-]+\.(localhost|test))$/i.test(new URL(u).hostname)) throw new Error('devUrl must be a dev server on this machine (localhost, 127.0.0.1, *.localhost, *.test).')
+    ;({ bytes, name } = await snapshotLive(u))
+    const archive = await openZip(new File([bytes], name, { type: 'application/zip' }))
+    const project = await buildProject(archive)
+    if (!project.screens.length) project.screens.push({ path: 'index.html', label: '/', source: 'file' })
+    const report = await deriveBaseline(archive, project.table)
+    const id = `p${(++seq).toString(36)}`
+    const p: Loaded = { id, name: new URL(u).host, bytes, project, report, cfg: report.baseline.cfg, archive, live: new URL(u).origin }
+    projects.set(id, p)
+    return { content: [{ type: 'text', text: JSON.stringify({ id, live: p.live, note: 'A running dev server, in live mode. Call `open` next: its styles are read as it renders in the browser, so numbers here (values, brand) are only the page\'s static part. Then `wait_for_send`.' }, null, 2) }] }
+  }
   if (zipPath) { const b = readFileSync(zipPath); bytes = new Uint8Array(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer); name = basename(zipPath) }
   else { const res = await fetch(zipUrl!); if (!res.ok) throw new Error(`${res.status} fetching ${zipUrl}`); bytes = new Uint8Array(await res.arrayBuffer()); name = zipUrl!.split('/').pop() || 'archive.zip' }
   const archive = await openZip(new File([bytes], name.endsWith('.zip') ? name : `${name}.zip`, { type: 'application/zip' }))
@@ -189,6 +217,60 @@ server.registerTool('export', {
   return { content: [{ type: 'text', text: out }] }
 })
 
+/* ── Live mode: a RUNNING dev server, behind this server's own origin ─────────
+ * `uisandbox-mcp open http://localhost:3000`. A website cannot read another
+ * origin's page, so the sandbox could not tokenise an app on localhost:3000.
+ * Here the app is served from 127.0.0.1:<this port>/__dev/…, the same origin
+ * as the sandbox, so it can: the page is snapshotted to start (its HTML and
+ * the stylesheets it links), and every file after that is fetched live through
+ * /__dev/, stylesheets rewritten on the way, scripts and API calls untouched.
+ * The dev server's websocket (hot reload) is passed through as well. */
+let liveOrigin: string | null = null
+async function snapshotLive(target: string): Promise<{ bytes: Uint8Array<ArrayBuffer>; name: string }> {
+  const u = new URL(target)
+  let res: Response
+  try { res = await fetch(u, { headers: { accept: 'text/html' } }) } catch { throw new Error(`Nothing answers at ${u.origin}. Is the dev server running?`) }
+  if (!res.ok) throw new Error(`${target} answered ${res.status}.`)
+  const html = await res.text()
+  const files = [{ name: 'index.html', text: html }]
+  for (const m of html.matchAll(/<link\b[^>]*>/gi)) {
+    if (!/rel=["']?stylesheet/i.test(m[0])) continue
+    const href = m[0].match(/href=["']?([^"' >]+)/i)?.[1]
+    if (!href) continue
+    const abs = new URL(href, u)
+    if (abs.origin !== u.origin) continue
+    try { const r = await fetch(abs); if (r.ok) files.push({ name: abs.pathname.replace(/^\//, ''), text: await r.text() }) } catch { /* fetched live later */ }
+  }
+  const bytes = new Uint8Array(await zipSync(files).arrayBuffer()) as Uint8Array<ArrayBuffer>
+  return { bytes, name: `${u.host.replace(/[^\w.-]+/g, '-')}.zip` }
+}
+function proxyToDev(req: IncomingMessage, res: ServerResponse, path: string): void {
+  const t = new URL(path, liveOrigin!)
+  const headers: Record<string, string | string[] | undefined> = { ...req.headers, host: t.host, 'accept-encoding': 'identity' }
+  const send = t.protocol === 'https:' ? httpsRequest : httpRequest
+  const up = send({ hostname: t.hostname, port: t.port || undefined, path: t.pathname + t.search, method: req.method, headers, rejectUnauthorized: false }, (r) => {
+    const h = { ...r.headers, 'cache-control': 'no-store' }
+    res.writeHead(r.statusCode ?? 502, h)
+    r.pipe(res)
+  })
+  up.on('error', () => { if (!res.headersSent) { res.statusCode = 502; res.end(`The dev server at ${liveOrigin} did not answer.`) } else res.end() })
+  req.pipe(up)
+}
+function proxyUpgrade(req: IncomingMessage, socket: import('node:stream').Duplex, head: Buffer): void {
+  if (!liveOrigin) { socket.destroy(); return }
+  const t = new URL(liveOrigin)
+  const port = Number(t.port || (t.protocol === 'https:' ? 443 : 80))
+  const up = t.protocol === 'https:' ? tlsConnect({ host: t.hostname, port, rejectUnauthorized: false }) : netConnect(port, t.hostname)
+  up.on(t.protocol === 'https:' ? 'secureConnect' : 'connect', () => {
+    const h = { ...req.headers, host: t.host }
+    const lines = [`${req.method} ${req.url} HTTP/1.1`, ...Object.entries(h).flatMap(([k, v]) => (Array.isArray(v) ? v : v == null ? [] : [v]).map((x) => `${k}: ${x}`)), '', '']
+    up.write(lines.join('\r\n'))
+    if (head?.length) up.write(head)
+    up.pipe(socket); socket.pipe(up)
+  })
+  up.on('error', () => socket.destroy()); socket.on('error', () => up.destroy())
+}
+
 /* ── The sandbox itself, locally: the web app the package ships, served with
  *    the archive on 127.0.0.1, opened in the user's browser. Nothing leaves the
  *    machine; the page posts its knob state back so `export`/`verify` can
@@ -220,7 +302,7 @@ async function localServer(): Promise<{ port: number }> {
         const p = projects.get(sd[1]!)
         res.setHeader('content-type', 'application/json')
         if (!p) { res.statusCode = 404; res.end('{}'); return }
-        try { const j = JSON.parse(body) as { cfg?: Config }; if (j.cfg) { p.cfg = j.cfg; p.touchedInBrowser = Date.now() } } catch { /* the last synced state stands */ }
+        try { const j = JSON.parse(body) as { cfg?: Config; report?: Loaded['pageReport'] }; if (j.cfg) { p.cfg = j.cfg; p.touchedInBrowser = Date.now() } if (j.report && Array.isArray(j.report.turned) && typeof j.report.patch === 'string') p.pageReport = j.report } catch { /* the last synced state stands */ }
         p.sent = Date.now(); p.delivered = false
         const ws = waiting.get(p.id) ?? []; waiting.delete(p.id); for (const w of ws) w()
         if (p.via === 'cli') printSent(p)
@@ -228,8 +310,10 @@ async function localServer(): Promise<{ port: number }> {
       })
       return
     }
+    // Live mode: the dev server, on this origin.
+    if (liveOrigin && url.pathname.startsWith('/__dev/')) { proxyToDev(req, res, url.pathname.slice('/__dev'.length) + url.search); return }
     const ar = url.pathname.match(/^\/__archive\/([a-z0-9]+)\.zip$/)
-    if (ar) { const p = projects.get(ar[1]!); if (!p) { res.statusCode = 404; res.end('no such project'); return } res.setHeader('content-type', 'application/zip'); res.setHeader('cache-control', 'no-store'); res.end(Buffer.from(p.bytes)); return }
+    if (ar) { const p = projects.get(ar[1]!); if (!p) { res.statusCode = 404; res.end('no such project'); return } res.setHeader('content-type', 'application/zip'); res.setHeader('cache-control', 'no-store'); res.setHeader('content-disposition', `attachment; filename="${p.name.replace(/[^\w.-]+/g, '-')}.zip"`); res.end(Buffer.from(p.bytes)); return }
     let file = join(APP_DIR!, decodeURIComponent(url.pathname))
     if (!file.startsWith(APP_DIR!)) { res.statusCode = 403; res.end(); return }
     if (!existsSync(file) || statSync(file).isDirectory()) file = join(APP_DIR!, 'index.html') // the SPA and the sandbox paths
@@ -237,6 +321,7 @@ async function localServer(): Promise<{ port: number }> {
     if (basename(file) === 'sw.js') res.setHeader('cache-control', 'no-cache')
     res.end(readFileSync(file))
   })
+  server.on('upgrade', (req, socket, head) => proxyUpgrade(req, socket, head))
   await new Promise<void>((r) => server.listen(0, '127.0.0.1', r))
   const port = (server.address() as { port: number }).port
   local = { server, port }
@@ -265,9 +350,10 @@ server.registerTool('open', {
 }, async ({ id, screen }) => {
   const p = need(id)
   p.via = 'agent'
+  if (p.live) liveOrigin = p.live
   const { port } = await localServer()
   const hash = JSON.stringify(p.cfg) === JSON.stringify(p.report.baseline.cfg) ? '' : `#${encode(p.cfg)}`
-  const url = `http://127.0.0.1:${port}/?load=${encodeURIComponent(`/__archive/${id}.zip`)}&sync=${id}${screen ? `&screen=${encodeURIComponent(screen)}` : ''}${hash}`
+  const url = `http://127.0.0.1:${port}/?load=${encodeURIComponent(`/__archive/${id}.zip`)}&sync=${id}${p.live ? '&live=1' : ''}${screen ? `&screen=${encodeURIComponent(screen)}` : ''}${hash}`
   if (!argv.includes('--no-browser')) openInBrowser(url)
   return { content: [{ type: 'text', text: JSON.stringify({ opened: url, note: 'The sandbox is open in the browser. Tell the user to press "Send to your agent" there when they are done, then call `wait_for_send`: it returns when they press it, with what they turned and the patch to apply. `state` reads the knobs at any moment.' }, null, 2) }] }
 })
@@ -374,21 +460,31 @@ if (argv[0] === 'open') {
   // whatever the framework calls it. `--no-browser` prints the URL only.
   const target = argv.slice(1).find((a) => !a.startsWith('--')) ?? '.'
   let bytes: Uint8Array<ArrayBuffer>, name: string
-  if (statSync(target).isDirectory()) {
+  // An address (http://localhost:3000): live mode, the running app itself.
+  const live = /^https?:\/\//i.test(target) || /^(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/i.test(target)
+  const liveUrl = live ? (/^https?:/i.test(target) ? target : `http://${target}`) : ''
+  if (live) {
+    liveOrigin = new URL(liveUrl).origin
+    try { ({ bytes, name } = await snapshotLive(liveUrl)) } catch (e) { console.error((e as Error).message); process.exit(2) }
+  } else if (statSync(target).isDirectory()) {
     // Zip the folder in memory (store, no compression — it only travels to the browser on this machine).
     const { zipFolder } = await import('./zipdir')
     bytes = await zipFolder(target); name = basename(target) + '.zip'
   } else { const b = readFileSync(target); bytes = new Uint8Array(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer); name = basename(target) }
   const archive = await openZip(new File([bytes], name.endsWith('.zip') ? name : `${name}.zip`, { type: 'application/zip' }))
   const project = await buildProject(archive)
-  if (!project.platform.renders || !project.screens.length) { console.error(refusalFor(project.platform, { files: archive.entries.length })); process.exit(2) }
+  // A dev server's page is source by design (`/src/main.tsx`): that is what a
+  // build refusal guards against, and exactly what live mode is for.
+  if (!live && (!project.platform.renders || !project.screens.length)) { console.error(refusalFor(project.platform, { files: archive.entries.length })); process.exit(2) }
   const report = await deriveBaseline(archive, project.table)
   const id = 'cli'
-  projects.set(id, { id, name: archive.rootName, bytes, project, report, cfg: report.baseline.cfg, archive, via: 'cli' })
+  projects.set(id, { id, name: live ? new URL(liveUrl).host : archive.rootName, bytes, project, report, cfg: report.baseline.cfg, archive, via: 'cli', live: live ? liveOrigin! : undefined })
   const { port } = await localServer()
-  const url = `http://127.0.0.1:${port}/?load=${encodeURIComponent(`/__archive/${id}.zip`)}&sync=${id}`
+  const url = `http://127.0.0.1:${port}/?load=${encodeURIComponent(`/__archive/${id}.zip`)}&sync=${id}${live ? '&live=1' : ''}`
   if (!argv.includes('--no-browser')) openInBrowser(url)
-  console.log(`UISandbox is open: ${url}\n${project.root ? `build found at ${project.root}/ · ` : ''}${project.screens.length} screens · ${project.table.entries.length} values · brand ${report.baseline.cfg.cPrimary}\nCtrl-C to stop.`)
+  console.log(live
+    ? `UISandbox is open: ${url}\nLive: ${liveOrigin}, through this sandbox. Turn the knobs, press Send to the terminal, and the patch prints here.\nCtrl-C to stop.`
+    : `UISandbox is open: ${url}\n${project.root ? `build found at ${project.root}/ · ` : ''}${project.screens.length} screens · ${project.table.entries.length} values · brand ${report.baseline.cfg.cPrimary}\nCtrl-C to stop.`)
   await new Promise(() => {})
 }
 

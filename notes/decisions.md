@@ -2800,3 +2800,51 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     Shuffle turns Hue / Saturation / Contrast, so the dials hidden on a kit
     reappear; the door's "comes with it" line becomes a list of every knob
     and slides under the What we read card.
+
+202. Live mode: a running dev server in the sandbox, in one command.
+
+    Alexander, wanting to use it on his own work: pasting localhost:3000
+    into the door and pressing Connect did nothing, because the bridge needs
+    a script line in the app's head. It cannot be simpler from the website:
+    a page on uisandbox.org may not read another origin's page, dev servers
+    send it no CORS, and Chrome now asks before a site reaches localhost.
+    The script line only ever told which kit the app is on; it turned no
+    knob.
+
+    So the line to run takes the address:
+
+        npx uisandbox-mcp open http://localhost:3000
+
+    and the local server puts the dev server under its OWN origin
+    (127.0.0.1:<port>/__dev/…), the same origin as the sandbox, so the
+    sandbox can do everything it does with a build. The page's HTML and the
+    stylesheets it links are snapshotted to start; every other file is
+    fetched live through /__dev/, stylesheets rewritten on the way like a
+    CDN sheet, scripts and API calls passed through untouched (the worker
+    hands any non-GET straight to the dev server). The dev server's
+    websocket is passed through too, so hot reload keeps working, and a
+    restyled <style> is tokenised again (the observer missed a <style>
+    whose whole text was replaced, which is how Vite reloads CSS). The
+    build refusal ("source, not a build") is skipped for a live project:
+    that is what live mode is for. Agents get the same with
+    `load({ devUrl })` → `open` → `wait_for_send`.
+
+    Send now carries the PAGE's account (what was turned, how many values
+    moved, the patch): the server only ever saw the snapshot, while the page
+    saw every runtime and hot-reloaded style. A <style> from Vite names its
+    source file (data-vite-dev-id), so the patch names the user's file.
+
+    In the door, "Run it on your machine" has an address field that fills
+    the command in; the script-line fold is now for an app deployed
+    somewhere ("Deployed somewhere? Add one line").
+
+    Measured on a Vite 8 + React dev app (CSS injected by JS, HMR on):
+    1:1 with 12 elements and 0 differences; Radius ×2 moves the button
+    8px → 16px; the brand edited in the app's own source while open shows
+    up (hot reload) and Radius stays at 16px; Send to the terminal printed
+    "Radius: 1 → 2 · 2 of 26 values moved" with the patch on
+    src/index.css (8px → 16px, 12px → 24px); the agent route returned the
+    same to a waiting `wait_for_send`. On a plain static server (Python,
+    serving the SB Admin build): 339 values from 225 KB of CSS, 1:1 with
+    353 elements and 0 differences. Not measured yet: Next.js, Nuxt,
+    SvelteKit and dev servers behind a path or with their own auth.

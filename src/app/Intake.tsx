@@ -1,6 +1,6 @@
 import { DropGlyph } from './Mark'
 import { useEffect, useRef, useState } from 'react'
-import { FileArchive, FolderOpen, GitBranch, Check, ShieldCheck, X, Plug, ChevronRight, Laptop } from 'lucide-react'
+import { FileArchive, FolderOpen, GitBranch, Check, Copy, ShieldCheck, X, Plug, ChevronRight, Laptop } from 'lucide-react'
 import { archiveFromFiles, isZip, openZip, type Archive } from '../audit/intake/readZip'
 import { filesFromDrop } from '../audit/intake/readFiles'
 import { STAGES, fmtBytes, type Progress } from './progress'
@@ -96,11 +96,11 @@ export function Door({ onArchive, onUrl, onSample, busy, error, carryNote, stand
             {carryNote && <p className="intake__carry">{carryNote}</p>}
             <section className="way way--main">
               <h3><Laptop size={16} strokeWidth={1.75} /> Run it on your machine</h3>
-              <p>In your project folder. It finds your build (<code>dist/</code>, <code>build/</code>, <code>out/</code>) and opens this sandbox from <code>127.0.0.1</code>: your code never leaves your machine, not even to this site. Needs Node 20.</p>
-              <InstallLine compact />
+              <p>Is your dev server running? Paste its address and run the line in your project's terminal: the sandbox opens on your live app, hot reload included. Without an address it finds your build (<code>dist/</code>, <code>build/</code>, <code>out/</code>). Served from <code>127.0.0.1</code>: your code never leaves your machine, not even to this site. Needs Node 20.</p>
+              <LocalCommand />
               <p className="way__fine">From Claude Code, Cursor or any MCP client: say "open this app in UISandbox". <a href="/about#agents">How</a></p>
             </section>
-            {fold('running', 'Already running? Add one line', 'Your app on localhost or anywhere: we read which kit it runs on and write its design system', <Plug size={15} strokeWidth={1.75} />)}
+            {fold('running', 'Deployed somewhere? Add one line', 'Your app on any address: we read which kit it runs on and write its design system', <Plug size={15} strokeWidth={1.75} />)}
             {more === 'running' && <div className="way__body"><LiveAppDoor /></div>}
             {fold('build', 'Or load a build here', 'A zip, a folder or a public repo, read into this tab. Or try a sample', <FileArchive size={15} strokeWidth={1.75} />)}
             {more === 'build' && <div className="way__body">
@@ -184,6 +184,32 @@ export function Door({ onArchive, onUrl, onSample, busy, error, carryNote, stand
         {localError && <div className="intake__error">{localError}</div>}
       </div>
       </div>
+    </div>
+  )
+}
+
+/** The one line to run: with a dev server's address in it, live mode (the
+ *  running app, hot reload included); without one, the build. The address is
+ *  only put into the line; nothing here connects to it. */
+function LocalCommand() {
+  const [addr, setAddr] = useState('')
+  const [copied, setCopied] = useState(false)
+  const clean = addr.trim().replace(/\/+$/, '')
+  const ok = !clean || /^(https?:\/\/)?(localhost|127\.0\.0\.1|\[::1\]|[\w-]+\.(localhost|test))(:\d+)?(\/[^\s]*)?$/i.test(clean)
+  const url = clean && ok ? (/^https?:/i.test(clean) ? clean : `http://${clean}`) : ''
+  const cmd = `npx uisandbox-mcp open${url ? ` ${url}` : ''}`
+  const copy = async () => { try { await navigator.clipboard.writeText(cmd); setCopied(true); setTimeout(() => setCopied(false), 1400) } catch { /* the line is on screen to select */ } }
+  return (
+    <div className="localcmd">
+      <input className="intake__input" type="text" inputMode="url" placeholder="http://localhost:3000 (optional)" value={addr} onChange={(e) => setAddr(e.target.value)} aria-label="Your dev server's address, if it is running" spellCheck={false} />
+      <div className="install install--compact">
+        <div className="install__pill">
+          <span className="install__prompt" aria-hidden>$</span>
+          <code className="install__cmd">{cmd}</code>
+          <button type="button" className="install__copy" onClick={() => void copy()} aria-label="Copy" title="Copy">{copied ? <Check size={14} strokeWidth={2.5} /> : <Copy size={14} />}</button>
+        </div>
+      </div>
+      {!ok && <p className="way__fine">That is not a local address. Live mode is for an app running on your own machine (localhost, 127.0.0.1, *.localhost, *.test).</p>}
     </div>
   )
 }

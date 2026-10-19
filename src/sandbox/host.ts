@@ -18,6 +18,10 @@ interface Owned {
   variant: 'raw' | 'rewritten'
   /** The variable block to inject into HTML at fetch time — the CURRENT sheet. */
   vars: () => Record<string, string>
+  /** A running dev server behind the local UISandbox server (live mode): what
+   *  the archive lacks is fetched from it at /__dev/, stylesheets rewritten on
+   *  the way like a CDN sheet. */
+  live?: boolean
 }
 
 const owned = new Map<string, Owned>()
@@ -104,10 +108,39 @@ export function ensureWorker(): Promise<ServiceWorkerRegistration> {
   return ready
 }
 
-export function own(project: SandboxProject, vars: () => Record<string, string>): void {
-  owned.set(project.id, { project, variant: 'rewritten', vars })
-  owned.set(identitySid(project.id), { project, variant: 'rewritten', vars: () => project.table.identityVars() })
-  owned.set(rawSid(project.id), { project, variant: 'raw', vars: () => ({}) })
+export function own(project: SandboxProject, vars: () => Record<string, string>, opts: { live?: boolean } = {}): void {
+  const live = !!opts.live
+  owned.set(project.id, { project, variant: 'rewritten', vars, live })
+  owned.set(identitySid(project.id), { project, variant: 'rewritten', vars: () => project.table.identityVars(), live })
+  owned.set(rawSid(project.id), { project, variant: 'raw', vars: () => ({}), live })
+}
+
+/** A stylesheet that arrived after the build was read (a CDN sheet, a dev
+ *  server's): rewritten into the project's table, with the variables it adds
+ *  defined at its own top, so nothing is invalid while the page waits. */
+function rewriteLateCss(o: Owned, css: string, file: string): string {
+  const table = o.project.table
+  const before = table.entries.length
+  const out = rewriteCss(css, table, file)
+  const fresh = table.entries.slice(before)
+  const head = fresh.length ? `:root{${fresh.map((x) => `${varName(x.id)}:${cssValue(x.value)}`).join(';')}}\n` : ''
+  // @charset / @import must stay first
+  const lead = out.match(/^(?:@charset[^;]*;\s*)?(?:@import[^;]*;\s*)*/)?.[0] ?? ''
+  if (fresh.length) for (const fn of growListeners) fn(o.project)
+  return lead + head + out.slice(lead.length)
+}
+
+/** Live mode: the dev server's answer for a file the archive does not hold. */
+async function fromDevServer(o: Owned, path: string, search: string): Promise<{ type: string; body: ArrayBuffer } | null> {
+  let res: Response
+  try { res = await fetch(`/__dev/${path}${search}`, { cache: 'no-store' }) } catch { return null }
+  if (!res.ok) return null
+  const type = res.headers.get('content-type') || 'application/octet-stream'
+  if (o.variant === 'rewritten' && /text\/css/i.test(type)) {
+    const css = rewriteLateCss(o, await res.text(), `dev: /${path}`)
+    return { type, body: new TextEncoder().encode(css).buffer as ArrayBuffer }
+  }
+  return { type, body: await res.arrayBuffer() }
 }
 
 export function disown(project: SandboxProject): void {
@@ -136,7 +169,7 @@ export function resolveFile<T>(files: Map<string, T>, path: string): T | undefin
 }
 
 async function onMessage(e: MessageEvent) {
-  const data = e.data as { type?: string; sid?: string; path?: string; url?: string; css?: string; navigate?: boolean } | undefined
+  const data = e.data as { type?: string; sid?: string; path?: string; url?: string; css?: string; navigate?: boolean; search?: string; method?: string } | undefined
   if (!data || !data.sid) return
   const port = e.ports[0]
   if (!port) return
@@ -147,16 +180,7 @@ async function onMessage(e: MessageEvent) {
     // itself, so nothing is ever invalid while the page waits for a render.
     const o = owned.get(data.sid)
     if (!o || o.variant !== 'rewritten' || !data.css) { port.postMessage({ found: false }); return }
-    const table = o.project.table
-    const before = table.entries.length
-    const file = `cdn: ${(data.url ?? '').replace(/^https?:\/\//, '')}`
-    const out = rewriteCss(data.css, table, file)
-    const fresh = table.entries.slice(before)
-    const head = fresh.length ? `:root{${fresh.map((x) => `${varName(x.id)}:${cssValue(x.value)}`).join(';')}}\n` : ''
-    // @charset / @import must stay first
-    const lead = out.match(/^(?:@charset[^;]*;\s*)?(?:@import[^;]*;\s*)*/)?.[0] ?? ''
-    port.postMessage({ found: true, css: lead + head + out.slice(lead.length) })
-    if (fresh.length) for (const fn of growListeners) fn(o.project)
+    port.postMessage({ found: true, css: rewriteLateCss(o, data.css, `cdn: ${(data.url ?? '').replace(/^https?:\/\//, '')}`) })
     return
   }
   if (data.type !== 'us:fetch') return
@@ -164,7 +188,14 @@ async function onMessage(e: MessageEvent) {
   if (!o) { port.postMessage({ found: false, owner: false }); return }
   const files = o.variant === 'raw' ? o.project.raw : o.project.rewritten
   const path = decodeURIComponent(data.path ?? '')
+  // Live: anything but a read goes to the dev server untouched (an API call).
+  if (o.live && !/^(GET|HEAD)$/i.test(data.method ?? 'GET')) { port.postMessage({ passthrough: true }); return }
   let f = resolveFile(files, path)
+  if (!f && o.live) {
+    const got = await fromDevServer(o, path, data.search ?? '')
+    if (got) { port.postMessage({ found: true, type: got.type, body: got.body }, [got.body]); return }
+    port.postMessage({ found: false, owner: true }); return
+  }
   if (!f) {
     // Above the root? A page under `examples/` asking for `/build/x.js` means
     // the archive path `build/x.js` (or `<root>/../build/x.js`, the same thing).

@@ -83,6 +83,10 @@ function Editor() {
   // A shared link's knobs: read before the first load resets them, applied
   // once that load is in (onArchive), then forgotten.
   const sharedCfg = useRef<Config | null>(readHash())
+  // Live mode: the local server opened a RUNNING dev server (`npx uisandbox-mcp
+  // open http://localhost:3000`). Only the first load, only from 127.0.0.1:
+  // the files it lacks are fetched from the dev server behind /__dev/.
+  const liveFirst = useRef(new URLSearchParams(location.search).get('live') === '1' && /^(127\.0\.0\.1|localhost)$/.test(location.hostname))
   // Only the very first load honours `?tab=app`; a kit loaded later opens on its sheet.
   const doorFirst = useRef(new URLSearchParams(location.search).get('tab') === 'app')
   const frameRef = useRef<HTMLIFrameElement | null>(null)
@@ -198,7 +202,16 @@ function Editor() {
   const sendBack = async (): Promise<{ waiting: number } | null> => {
     const id = new URLSearchParams(location.search).get('sync')
     if (!id) return null
-    try { const r = await fetch(`/__send/${encodeURIComponent(id)}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cfg }) }); return r.ok ? await r.json() : null } catch { return null }
+    // The page sends its own account: it saw everything the build styled,
+    // runtime and hot-reloaded styles included, which the server never does.
+    const report = (() => {
+      if (!loaded) return undefined
+      const base = loaded.report.baseline.cfg
+      const at = (c: Config, k: string) => k.startsWith('sb.') ? (c.sb as unknown as Record<string, unknown>)[k.slice(3)] : (c as unknown as Record<string, unknown>)[k]
+      const turned = differingKeys(base, cfg).filter(isShownKnob).map((k) => ({ knob: knobLabel(k), from: at(base, k) ?? 'as in the code', to: at(cfg, k) ?? 'as in the code' }))
+      return { turned, moved: changedCount, of: loaded.project.table.entries.length, patch: genPatch(loaded.project.table, vars) }
+    })()
+    try { const r = await fetch(`/__send/${encodeURIComponent(id)}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cfg, report }) }); return r.ok ? await r.json() : null } catch { return null }
   }
   useEffect(() => {
     const id = new URLSearchParams(location.search).get('sync')
@@ -357,7 +370,13 @@ function Editor() {
         onProgress: (d, t, css) => { const now = Date.now(); if (now - lastAt > 120 || d === t) { lastAt = now; setBusy({ stage: 'read', done: d, total: t, bytes: css, what: archive.rootName }) } },
       })
       // The door opens for what renders 1:1, and for nothing else.
-      if (!project.platform.renders || !project.screens.length) throw new Error(refusalFor(project.platform, { files: archive.entries.length }))
+      // A running dev server's page is source by design (live mode): that is
+      // what the build refusal guards against, and what live mode is for.
+      const liveNow = liveFirst.current && !kit
+      if (!liveNow && (!project.platform.renders || !project.screens.length)) throw new Error(refusalFor(project.platform, { files: archive.entries.length }))
+      // The dev server's page is the one screen to start on; its links are
+      // discovered once it renders, as for any SPA.
+      if (liveNow && !project.screens.length) project.screens.push({ path: 'index.html', label: '/', source: 'file' })
       setBusy({ stage: 'derive', total: project.table.entries.length, what: archive.rootName })
       const report = await deriveBaseline(archive, project.table)
       setBusy({ stage: 'open', what: archive.rootName })
@@ -368,7 +387,8 @@ function Editor() {
       // is same-origin, so what the last app wrote to localStorage is still
       // there and would make this drop look like a cached one.
       purgeGuestStorage()
-      own(project, () => varsRef.current)
+      own(project, () => varsRef.current, { live: liveNow })
+      liveFirst.current = false
       // A fresh project is a fresh start: no history, no hash from the last one.
       reset(report.baseline.cfg)
       // A shared link's knobs, once; else what was turned on the kit before.

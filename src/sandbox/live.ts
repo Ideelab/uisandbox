@@ -44,7 +44,9 @@ export function observeFrame(doc: Document, table: SubstitutionTable, onGrow: ()
     const css = el.textContent ?? ''
     if (!css.trim() || el.id === 'us-vars' || /var\(--us-v/.test(css)) return
     const n = before()
-    const out = rewriteCss(css, table, '<style> (runtime)')
+    // A dev server says which source file a <style> came from (Vite:
+    // data-vite-dev-id): the patch then names that file, not "runtime".
+    const out = rewriteCss(css, table, el.getAttribute('data-vite-dev-id') ?? '<style> (runtime)')
     defineNewVars(doc, table, n) // BEFORE the rewritten text lands
     if (out !== css) {
       muted = true
@@ -87,6 +89,9 @@ export function observeFrame(doc: Document, table: SubstitutionTable, onGrow: ()
     if (muted) return
     for (const r of records) {
       if (r.type === 'attributes' && isEl(r.target)) { if (r.attributeName === 'style') rewriteStyleAttr(r.target); else rewriteSvgAttrs(r.target) }
+      // Hot reload replaces a <style>'s whole text (Vite: style.textContent =
+      // …): a childList change ON the style element, with a text node added.
+      else if (r.type === 'childList' && isStyleEl(r.target)) rewriteStyleEl(r.target)
       else if (r.type === 'childList') r.addedNodes.forEach((n) => { if (isEl(n)) sweep(n) })
       else if (r.type === 'characterData' && isStyleEl(r.target.parentElement)) rewriteStyleEl(r.target.parentElement)
     }
