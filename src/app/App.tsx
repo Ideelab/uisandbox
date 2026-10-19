@@ -644,8 +644,6 @@ function Editor() {
           {loaded?.kit && <button type="button" className={`btn btn--secondary btn--sm app__connect ${tab === 'app' ? 'app__connect--on' : ''}`} aria-pressed={tab === 'app'} onClick={() => setTab('app')} title="Connect your app: any screen your browser shows, your dev server, or a build"><Plug size={14} strokeWidth={1.75} /><span className="ebar__txt"> Connect your app</span></button>}
           {!loaded && <><McpButton /><StarButton /></>}
           {loaded && <>
-            <LookSelect current={lookNow} onPick={pickLook} />
-            <EngineSelect kitId={loaded.kit?.id} ownApp={!loaded.kit} detected={coverage ? coverage.kit : undefined} onPick={pickKit} />
             <button type="button" className={`btn ${sendTo ? 'btn--secondary' : 'btn--primary'} btn--sm`} onClick={() => setShowExport(true)}><Download size={14} /> Export</button>
             {sendTo && !loaded.kit && <SendButton to={sendTo} onSend={sendBack} />}
             {!loaded.kit && <button type="button" className="btn btn--ghost btn--sm" onClick={closeProject} title="Close your app and go back to the kit"><X size={14} /> Close</button>}
@@ -690,6 +688,12 @@ function Editor() {
                 history={{ undo, redo, canUndo, canRedo }}
                 radiiOnScreen={coverage ? coverage.radii.total : undefined}
                 kitName={loaded.kit?.name}
+                head={<>
+                  {/* What the knobs turn, and a start for all of them at once:
+                      both belong to the knobs, not to the site's top bar. */}
+                  <EngineSelect kitId={loaded.kit?.id} ownApp={!loaded.kit} detected={coverage ? coverage.kit : undefined} onPick={pickKit} />
+                  <LookSelect current={lookNow} onPick={pickLook} />
+                </>}
               />
             )}
             <Stage

@@ -40,6 +40,8 @@ interface Props {
   /** Painted radii on the current screen (the reach meter's count): 0 means the
    *  Radius dial has nothing visible to move — the dial says so. */
   radiiOnScreen?: number
+  /** Above the knobs: which kit (or your app) they turn, and the preset. */
+  head?: React.ReactNode
 }
 
 const THEMES: Array<{ id: ColorTheme; label: string; hex: string }> = (Object.keys(COLOR_THEMES) as ColorTheme[]).map((id) => ({ id, label: id[0]!.toUpperCase() + id.slice(1), hex: COLOR_THEMES[id].cPrimary }))
@@ -60,7 +62,7 @@ const FAMILY_ROWS: Array<{ fam: Family; key: keyof Dials; label: string }> = [
  *
  * At rest a row shows a quiet dot — "as in your code"; once turned, "changed".
  */
-export function SandboxPanel({ cfg, tokens, base, families, scheme, codeFonts = [], hasGradients = false, varNow, dispatch, onCollapse, onRandomize, onReset, history, radiiOnScreen, kitName }: Props) {
+export function SandboxPanel({ cfg, tokens, base, families, scheme, codeFonts = [], hasGradients = false, varNow, dispatch, onCollapse, onRandomize, onReset, history, radiiOnScreen, kitName, head }: Props) {
   const asIs = kitName ? 'as the kit ships it' : 'as in your code'
   const [openKey, setOpenKey] = useState<string | null>(null)
   // One colour picker open at a time. A flyout that IS one colour (the page
@@ -322,10 +324,11 @@ export function SandboxPanel({ cfg, tokens, base, families, scheme, codeFonts = 
     <aside className="panel">
       <div className="card fmenu">
         <div className="fmenu__bar">
-          <span className="fmenu__bar-title">{kitName ? `${kitName} · knobs` : 'Your app · knobs'}</span>
+          <span className="fmenu__bar-title">{head ? 'Knobs' : kitName ? `${kitName} · knobs` : 'Your app · knobs'}</span>
           <button type="button" className="btn btn--ghost btn--icon fmenu__collapse" onClick={onCollapse} aria-label="Collapse" title="Collapse for a full-width preview"><PanelLeftClose size={15} strokeWidth={1.75} /></button>
         </div>
         <div className="fmenu__rows">
+          {head && <div className="fmhead">{head}</div>}
           {essential.map(renderRow)}
           {fine.length > 0 && (
             <button type="button" className="menu__label fmsec fmsec--fold" onClick={() => setFineOpen((v) => !v)} aria-expanded={fineOpen}>

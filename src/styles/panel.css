@@ -162,6 +162,14 @@
   transition: opacity 0.14s ease;
 }
 .fmsec--link:hover::after { opacity: 0.55; }
+/* Kit and Preset, above the knobs: full-width fields, menus opening down
+   and to the right, labels always shown (the top bar hid them when narrow). */
+.fmhead { display: grid; gap: 6px; padding: 4px 4px 10px; margin-bottom: 4px; border-bottom: 1px solid var(--app-border); }
+.fmhead .ddm, .fmhead .ddm__btn { width: 100%; }
+.fmhead .ddm__btn { justify-content: flex-start; }
+.fmhead .ebar__label { display: inline; min-width: 44px; text-align: left; }
+.fmhead .ddm__value { max-width: none; flex: 1; text-align: left; }
+.fmhead .ddm__menu { left: 0; right: auto; min-width: max(100%, 280px); transform-origin: top left; }
 /* Fine-tune: the fold under the essential knobs. A section label that opens. */
 .fmsec--fold {
   appearance: none; -webkit-appearance: none; background: none; border: 0; font-family: inherit;
