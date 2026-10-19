@@ -3257,3 +3257,36 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     (rewrite.ts; rewrite.test.ts holds Radix's stack in and a min() with a
     quoted argument out). On the Radix kit: type reach 0% to 100%, and the
     knob turns 63 of 81 texts; the 18 left are Menlo, its code face.
+
+210. One footer in two heights, and How it works over the editor
+    (2026-10-20, Alexander's call).
+
+    The footer. The editor kept a slim line and /about a footer in columns,
+    and the two had drifted into two footers. A tall one in the editor would
+    take the height the canvas needs, so the slim line stays and gains
+    "More": the same columns as the kit pages (SiteColumns, from
+    src/site/links.json) slide up over the canvas; Escape, a click beside it
+    or a click in the canvas closes them. They are always in the page,
+    folded and inert, because they are the homepage's links to every kit
+    page and a crawler reads what is there. A link to where you already are
+    stays here: The editor closes the sheet, How it works opens the dialog.
+
+    How it works. /about was a page that sent you out of the editor and
+    then needed "Open the editor" to get back. It is a dialog over the
+    editor now: Close, Escape, a click beside it or Back return to the
+    editor as it stood (measured: the knob hash after open and close is the
+    one before). The address is /about while it is open, so a link to it is
+    still a link and the sitemap entry stays true; opened cold, /about is
+    the editor with the dialog over it, with its own title and canonical.
+    /about#agents opens at that section. Closing replaces the entry rather
+    than going back: the knobs turned while it was open live in this
+    entry's hash, and Back would hand the editor an older one.
+
+    Shorter: the hero is gone (you are in the editor; its headline and
+    buttons had nothing left to sell), the steps name the ways in as they
+    are now (the bookmarklet, `npx uisandbox-mcp open`, a build) and the
+    knobs as the panel orders them (decision on Fine-tune, 0c5e0d5), Inspect
+    and How to check it are one paragraph each, and the three screenshots
+    of the old screen are out. About.tsx and Landing are removed; the
+    roadmap's "/about as the launch page" is answered by this: the editor
+    with this dialog is the launch page.

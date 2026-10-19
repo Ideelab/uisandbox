@@ -28,7 +28,7 @@ import { customFontUrl } from '../tokens/customFonts'
 import { Door, LoadStages } from './Intake'
 import { CaptureDoor } from './CaptureDoor'
 import { captureArchive, readCapture, sanitizeHtml, screenPath, type CapturedScreen } from '../capture/receive'
-import { About } from './About'
+import { AboutDialog } from './AboutDialog'
 import { Stage, type StageTab } from './Stage'
 import { ExportDialog } from './ExportDialog'
 import { EngineSelect, LookSelect, SchemeSwitch, SendButton } from './EditorBar'
@@ -67,12 +67,40 @@ const DEFAULT_KIT = 'shadcn'
 const isAbout = () => /^\/about\/?$/.test(location.pathname)
 
 export function App() {
-  if (isAbout()) return <About />
   return <Editor />
+}
+
+/** How it works opens over the editor at /about (AboutDialog): a click there
+ *  pushes /about, Close and Back return to the editor as it stood; opened cold,
+ *  /about is the editor with the dialog over it. Its own title and canonical
+ *  while it is open: two URLs claiming to be "/" is one page too many. */
+function useAbout() {
+  const [about, setAbout] = useState<{ section?: string } | null>(() => isAbout() ? { section: /^#[a-z]+$/.test(location.hash) ? location.hash.slice(1) : undefined } : null)
+  useEffect(() => {
+    const onPop = () => setAbout(isAbout() ? {} : null)
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [])
+  useEffect(() => {
+    if (!about) return
+    const canon = document.querySelector('link[rel="canonical"]')
+    const was = canon?.getAttribute('href')
+    canon?.setAttribute('href', 'https://uisandbox.org/about')
+    return () => { if (was) canon?.setAttribute('href', was) }
+  }, [!!about]) // eslint-disable-line react-hooks/exhaustive-deps
+  // The knobs ride in the hash; a section anchor (#agents) is not knob state.
+  const keep = () => location.search + (/^#[a-z]+$/.test(location.hash) ? '' : location.hash)
+  const open = (section?: string) => { if (!isAbout()) history.pushState(null, '', '/about' + keep()); setAbout({ section }) }
+  // Not history.back(): the knobs turned while it was open live in this
+  // entry's hash, and going back would hand the editor an older one.
+  const close = () => { if (isAbout()) history.replaceState(null, '', '/' + keep()); setAbout(null) }
+  return { about, open, close }
 }
 
 function Editor() {
   const { cfg, tokens, dispatch, undo, redo, reset, canUndo, canRedo } = useConfig()
+  const aboutDialog = useAbout()
+  const openAbout = (e: React.MouseEvent) => { if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return; e.preventDefault(); aboutDialog.open() }
   const [loaded, setLoaded] = useState<Loaded | null>(null)
   const [busy, setBusyRaw] = useState<Progress | null>(null)
   const fromUrlRef = useRef(false)
@@ -156,9 +184,12 @@ function Editor() {
   }, [loaded, cfg, vars, dispatch, fontCss])
   // The tab title says which project is open (a hostile page may rewrite it —
   // security.md — so it is set from here on every load, not trusted).
+  // One place sets it, so How it works (open over the editor) keeps its own.
+  const aboutOpen = !!aboutDialog.about
   useEffect(() => {
-    document.title = loaded && !loaded.kit ? `UISandbox · ${loaded.project.name}` : "UISandbox · Play with your app's design. Right in the browser"
-  }, [loaded])
+    document.title = aboutOpen ? "How UISandbox works · Play with your app's design, right in the browser"
+      : loaded && !loaded.kit ? `UISandbox · ${loaded.project.name}` : "UISandbox · Play with your app's design. Right in the browser"
+  }, [loaded, aboutOpen])
   const changedCount = useMemo(() => {
     if (!loaded) return 0
     const id = loaded.project.table.identityVars()
@@ -594,7 +625,7 @@ function Editor() {
         <a className="app__brand" href="/" title={loaded && !loaded.kit ? 'Close your app and start over' : 'UISandbox'} onClick={(e) => { if (loaded) { e.preventDefault(); startOver() } }}><span className="app__brand-mark"><Mark size={16} /></span><span className="app__brand-name">UISandbox</span> <small>Design System Generator</small></a>
         <span className="app__spacer" />
         <div className="app__group">
-          <a className="btn btn--ghost btn--sm app__how" href="/about" title="How it works"><BookOpen size={14} /><span className="ebar__txt"> How it works</span></a>
+          <a className="btn btn--ghost btn--sm app__how" href="/about" title="How it works" onClick={openAbout}><BookOpen size={14} /><span className="ebar__txt"> How it works</span></a>
           {!loaded && <><McpButton /><StarButton /></>}
           {loaded && <>
             <LookSelect current={lookNow} onPick={pickLook} />
@@ -617,7 +648,7 @@ function Editor() {
         <div className="app__intro">
           <h1>Play with your app's design, right in the browser.</h1>
           <span>This is {loaded.kit.name} as it ships. Turn a knob<span className="app__intro-where"> on the left</span>, then <button type="button" className="app__intro-link" onClick={() => setTab('app')}>try it on your own app</button>.</span>
-          <a className="app__intro-link app__intro-how" href="/about">How it works</a>
+          <a className="app__intro-link app__intro-how" href="/about" onClick={openAbout}>How it works</a>
         </div>
       )}
       <div className="app__body">
@@ -696,7 +727,8 @@ function Editor() {
           </div>
         ))}
       </div>
-      {(loaded || !error) && <Footer />}
+      {(loaded || !error) && <Footer onAbout={(section) => aboutDialog.open(section)} />}
+      {aboutDialog.about && <AboutDialog section={aboutDialog.about.section} onClose={aboutDialog.close} />}
       {showExport && loaded && (
         <ExportDialog cfg={cfg} base={loaded.report.baseline.cfg} table={loaded.project.table} vars={vars} projectName={loaded.project.name} kitDoorName={loaded.kit?.name} shareUrl={shareUrl} files={loaded.project.raw} fontCss={fontCss} notes={loaded.report.notes} painted={coverage?.painted} anchors={coverage?.anchors} kit={coverage ? coverage.kit : undefined} kitValues={coverage?.kitValues} readPageVars={readPageVars} onClose={() => setShowExport(false)} />
       )}

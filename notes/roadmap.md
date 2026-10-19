@@ -92,8 +92,8 @@ server-side zone analytics); one source, no mirror; every step ends with
     alone; watch it.
 - **A first-use test with people:** the bookmarklet, the door and the
   knobs, watched, not asked.
-- **/about as the launch page**, if the launch wants one: a short pitch, the
-  clip, the two buttons, then the story. Only on Alexander's call.
+- **The launch page** is the editor with How it works over it at /about
+  (decision 210); the clip in it still shows the old screen.
 
 ### 2. Merge phase 4 — the cutover
 
