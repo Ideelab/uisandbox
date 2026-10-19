@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { rewriteCss } from '../rewrite'
 import { SubstitutionTable } from '../table'
 import { fontsFromTable, knobFont, radiusFromTable, bodySizeFromTable, brandFromTable, brandDeclared } from '../baseline'
+import { familiesOf } from '../mapping'
 
 const sheet = (css: string) => { const t = new SubstitutionTable(); rewriteCss(css, t, 'a.css'); return t }
 
@@ -45,5 +46,29 @@ describe('brandDeclared', () => {
   })
   it('nothing declared → null (the audit or the count decides)', () => {
     expect(brandDeclared(sheet(`.a{color:#4f39f6}`))).toBeNull()
+  })
+})
+
+describe('a grey brand (shadcn/ui: --primary is #171717)', () => {
+  const SHADCN = `:root{--primary:#171717;--primary-foreground:#fafafa;--foreground:#0a0a0a;--destructive:#e7000b}
+.dark{--primary:#e5e5e5;--sidebar-primary:oklch(48.8% .243 264.376)}
+.btn{background:var(--primary);color:var(--primary-foreground)}.btn-x{background:var(--destructive)}body{color:var(--foreground)}`
+  it('is declared, and not a chromatic brand-named colour from the dark block', () => {
+    expect(brandDeclared(sheet(SHADCN))).toBe('#171717')
+  })
+  it('is the brand family, and the body text grey is not in it', () => {
+    const t = sheet(SHADCN)
+    const fams = familiesOf(t, '#171717')
+    expect(fams.of.get(t.find('color', '#171717')!.id)).toBe('brand')
+    expect(fams.of.get(t.find('color', '#0a0a0a')!.id)).toBe('neutral')
+  })
+  it('is not admitted when "primary" names a role: --text-primary is text (coloris)', () => {
+    const t = sheet(`:root{--text-primary:#0f172a;--bg-primary:#ffffff;--accent-primary:#ec008c}a{color:var(--accent-primary)}.cta{background:var(--accent-primary)}body{color:var(--text-primary)}`)
+    expect(brandDeclared(t)).toBe('#ec008c')
+  })
+  it('is not admitted when the same grey is also body text', () => {
+    const t = sheet(`:root{--primary:#171717}.btn{background:var(--primary)}body{color:#171717}`)
+    expect(brandDeclared(t)).toBe(null)
+    expect(familiesOf(t, '#171717').of.get(t.find('color', '#171717')!.id)).toBe('neutral')
   })
 })

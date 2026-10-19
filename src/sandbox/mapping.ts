@@ -80,6 +80,20 @@ export interface Families {
   canvasId?: number
 }
 const NEUTRAL_CHROMA = 0.035
+/** A property that NAMES the brand (`--bs-primary`, `--ifm-color-primary`,
+ *  `--brand-500`), never its on-colour (`--on-primary`). */
+export const BRAND_NAME = /^(?:--)?(?![\w-]*\bon[_-]?primary)(?:[\w.-]*?[-_.])?(primary|brand)(?:[-_]?(color|colour|base|default|500|600|main|hex))?$/i
+export const namesBrand = (prop: string) => BRAND_NAME.test(prop) || BRAND_NAME.test(prop.replace(/-(rgb|hsl|channels)$/i, ''))
+/** A grey can be a brand: shadcn/ui's `--primary` is #171717, and its primary
+ *  button is black. A hue window cannot find it (every grey has no hue to be
+ *  near), so a grey is admitted by NAME, and only when that literal is used as
+ *  nothing else: an entry that is also somebody's body text stays a neutral,
+ *  or turning Brand would recolour the text. Every site is counted (none
+ *  dropped at the cap), every one names the brand. And "primary" must mean
+ *  the brand: `--text-primary: #0f172a` is a page's main text colour (coloris
+ *  — its brand is the magenta `--accent-primary`), `--bg-primary` its canvas. */
+const ROLE_PRIMARY = /(^|[-_.])(text|bg|background|surface|border|fg|foreground|ink|content|font|label|icon|heading|body)[-_.]primary/i
+export const greyBrandEntry = (e: Entry): boolean => e.sites.length > 0 && e.sites.length === e.count && e.sites.every((s) => namesBrand(s.prop) && !ROLE_PRIMARY.test(s.prop))
 const FAMILY_HUE_WINDOW = 32
 // OKLCH hues: red ≈ 20–30, amber ≈ 60–85, green ≈ 140–160, blue ≈ 240–260
 const STATUS: Array<[Family, number, number]> = [['success', 110, 175], ['danger', 335, 40], ['warning', 45, 100], ['info', 215, 265]]
@@ -142,6 +156,7 @@ export function familiesOf(table: SubstitutionTable, brandHex: string, opts: { p
     const c = parseCssColor(e.value)
     if (!c || c.a === 0) { of.set(e.id, 'keep'); continue }
     if (c.C < NEUTRAL_CHROMA) {
+      if (brand && brand.C < NEUTRAL_CHROMA && sameRgb(c, brand) && greyBrandEntry(e)) { of.set(e.id, 'brand'); continue }
       // A pale tint NAMED for a role (`--bs-success-bg-subtle: #d1e7dd`) is that
       // role's, not a grey: the alert background must follow the Success picker.
       const st = STATUS.find(([, lo, hi]) => inHue(c.H, lo, hi))

@@ -22,7 +22,7 @@ import { buildTokens } from '../tokens/buildTokens'
 import { ALL_FONTS, CUSTOM_FONT_PREFIX, SYSTEM_FONT } from '../tokens/fonts'
 import type { Config } from '../tokens/types'
 import { formatCssColor, parseCssColor } from './cssColor'
-import { familiesOf, fontRole, toPx, type Baseline } from './mapping'
+import { familiesOf, fontRole, greyBrandEntry, namesBrand, toPx, type Baseline } from './mapping'
 import type { Site, SubstitutionTable } from './table'
 
 export interface BaselineReport {
@@ -49,7 +49,6 @@ interface AuditLike {
 /* `--bs-primary`, `--color-primary`, `md_theme_light_primary`, `colorPrimary`,
  * `brandColor`, `Brand.primary` — not `on_primary`, `primary_container`,
  * `primary-foreground`. */
-const BRAND_NAME = /^(?:--)?(?![\w-]*\bon[_-]?primary)(?:[\w.-]*?[-_.])?(primary|brand)(?:[-_]?(color|colour|base|default|500|600|main|hex))?$/i
 export function brandDeclared(table: SubstitutionTable): string | null {
   // Among the colours NAMED as brand, the one the build paints with most: Ant
   // Design's site declares `--ant-color-primary: #1677ff` once, in the sheet
@@ -60,7 +59,7 @@ export function brandDeclared(table: SubstitutionTable): string | null {
   // in the same sheet — the blue is declared, the red is painted. A later
   // declaration of the same property on the same selector in the same file
   // overrides the earlier; only the surviving declaration names a brand.
-  const isBrand = (s: Site) => BRAND_NAME.test(s.prop) || BRAND_NAME.test(s.prop.replace(/-(rgb|hsl|channels)$/i, ''))
+  const isBrand = (s: Site) => namesBrand(s.prop)
   const latest = new Map<string, number>()
   for (const e of table.ofKind('color')) for (const s of e.sites) {
     if (!isBrand(s) || s.seq === undefined) continue
@@ -71,7 +70,8 @@ export function brandDeclared(table: SubstitutionTable): string | null {
   let best: { hex: string; n: number; count: number } | null = null
   for (const e of table.ofKind('color')) {
     const c = parseCssColor(e.value)
-    if (!c || c.a < 0.99 || c.C < 0.05) continue
+    // A grey only when it is the brand and nothing else (greyBrandEntry).
+    if (!c || c.a < 0.99 || (c.C < 0.05 && !greyBrandEntry(e))) continue
     const named = e.sites.filter((s) => isBrand(s) && survives(s))
     const n = named.length
     // What the build leans on: the literal's own paint count plus every
