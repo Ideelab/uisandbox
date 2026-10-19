@@ -13,7 +13,6 @@ import { McpButton } from './McpButton'
 import { StarButton } from './StarButton'
 import { Footer } from './Footer'
 import type { Progress } from './progress'
-import { DEFAULT_CONFIG } from '../tokens/defaults'
 import { varName } from '../sandbox/table'
 import { codeFonts, deriveBaseline, refineFromDocument, refineFromTable, type BaselineReport } from '../sandbox/baseline'
 import { buildTokens } from '../tokens/buildTokens'
@@ -26,7 +25,7 @@ import { nestedDocs } from '../sandbox/verify'
 import { applyScheme } from '../sandbox/scheme'
 import { googleFontsImport, isCustomFont, customFontFamily, SYSTEM_FONT } from '../tokens/fonts'
 import { customFontUrl } from '../tokens/customFonts'
-import { Door } from './Intake'
+import { Door, LoadStages } from './Intake'
 import { About } from './About'
 import { Stage, type StageTab } from './Stage'
 import { ExportDialog } from './ExportDialog'
@@ -451,8 +450,16 @@ function Editor() {
   }, [undo, redo])
 
 
-  // Closing your own app goes back to where everybody starts: the default kit.
-  const closeProject = () => { if (!loaded) return; disown(loaded.project); purgeGuestStorage(); setLoaded(null); reset(DEFAULT_CONFIG); void loadFromUrl(`/kits/${DEFAULT_KIT}.zip`) }
+  // Start over: the default kit, in place. Not a page load, and never an
+  // empty stage in between: the screen on show stays until the kit replaces it
+  // (a reload, or loaded → null, put the door on screen for a moment, and it
+  // read as the old landing page flashing past).
+  const startOver = () => {
+    if (location.search || location.hash) history.replaceState(null, '', '/')
+    if (loaded?.kit?.id === DEFAULT_KIT && !busy) { setTab('components'); dispatch({ type: 'REPLACE', cfg: loaded.report.baseline.cfg }); return }
+    void loadFromUrl(`/kits/${DEFAULT_KIT}.zip`)
+  }
+  const closeProject = startOver
   // Share: the default kit is `/`; anything else with an address is `?load=`;
   // the knobs ride along as the hash, unless nothing was turned.
   const shareUrl = (() => {
@@ -494,7 +501,7 @@ function Editor() {
   return (
     <div className="app">
       <header className="app__topbar">
-        <a className="app__brand" href="/" title={loaded && !loaded.kit ? 'Close your app and start over' : 'UISandbox'} onClick={(e) => { if (loaded && !loaded.kit) { e.preventDefault(); closeProject() } }}><span className="app__brand-mark"><Mark size={16} /></span><span className="app__brand-name">UISandbox</span> <small>{loaded ? (loaded.kit ? loaded.kit.name : loaded.project.name) : 'Interface Design Playground'}</small></a>
+        <a className="app__brand" href="/" title={loaded && !loaded.kit ? 'Close your app and start over' : 'UISandbox'} onClick={(e) => { if (loaded) { e.preventDefault(); startOver() } }}><span className="app__brand-mark"><Mark size={16} /></span><span className="app__brand-name">UISandbox</span> <small>{loaded ? (loaded.kit ? loaded.kit.name : loaded.project.name) : 'Interface Design Playground'}</small></a>
         <span className="app__spacer" />
         <div className="app__group">
           <a className="btn btn--ghost btn--sm app__how" href="/about" title="How it works"><BookOpen size={14} /><span className="ebar__txt"> How it works</span></a>
@@ -512,6 +519,12 @@ function Editor() {
       </header>
       {/* One line that says what this is, on the kit everybody lands on. The
           page's h1 lives here: the homepage IS the editor now. */}
+      {!loaded && !error && (
+        <div className="app__intro">
+          <h1>Play with your app's design, right in the browser.</h1>
+          <span>Start from a kit or your own app, turn the knobs, export the code.</span>
+        </div>
+      )}
       {loaded?.kit && (
         <div className="app__intro">
           <h1>Play with your app's design, right in the browser.</h1>
@@ -579,11 +592,18 @@ function Editor() {
             />
           </>
         )}
-        {/* Nothing on the stage yet: the first load's stages, or, when a load
-            failed, the door with the reason and every other way in. */}
-        {!loaded && door}
+        {/* Nothing on the stage yet: the editor's own skeleton with the load's
+            stages (the same shape index.html paints before the script runs,
+            so nothing flashes), or, when a load failed, the door with the
+            reason and every other way in. */}
+        {!loaded && (error ? door : (
+          <div className="skel">
+            <aside className="skel__panel" aria-hidden />
+            <section className="skel__stage">{busy ? <div className="skel__load"><LoadStages busy={busy} /></div> : null}</section>
+          </div>
+        ))}
       </div>
-      {loaded && <Footer />}
+      {(loaded || !error) && <Footer />}
       {showExport && loaded && (
         <ExportDialog cfg={cfg} base={loaded.report.baseline.cfg} table={loaded.project.table} vars={vars} projectName={loaded.project.name} kitDoorName={loaded.kit?.name} files={loaded.project.raw} fontCss={fontCss} notes={loaded.report.notes} painted={coverage?.painted} anchors={coverage?.anchors} kit={coverage ? coverage.kit : undefined} kitValues={coverage?.kitValues} readPageVars={readPageVars} onClose={() => setShowExport(false)} />
       )}

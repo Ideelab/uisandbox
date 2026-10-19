@@ -676,3 +676,10 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
 @media (max-width: 1180px) { .ebar__look .ebar__label { display: none; } .ebar__look { padding-left: 6px; } }
 /* A phone keeps Engine and drops Look: presets are a desk-sized pleasure. */
 @media (max-width: 560px) { .app__group .ebar__look { display: none; } }
+/* The editor's skeleton while the first screen loads: the shape index.html
+   paints before the script runs, so the swap neither shifts nor flashes. */
+.skel { flex: 1; display: flex; gap: 16px; padding: 16px; min-height: 0; }
+.skel__panel { width: 252px; flex: 0 0 auto; border: 1px solid var(--app-border); border-radius: 12px; background: var(--app-surface); }
+.skel__stage { flex: 1; border: 1px solid var(--app-border); border-radius: 12px; background: var(--app-surface); display: flex; align-items: center; justify-content: center; padding: 24px; }
+.skel__load { width: min(360px, 100%); }
+@media (max-width: 820px) { .skel__panel { display: none; } }

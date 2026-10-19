@@ -75,26 +75,7 @@ export function Door({ onArchive, onUrl, onSample, busy, error, carryNote }: Doo
       <div className="card intake__card">
 
         {busy ? (
-          <ol className="intake__stages" aria-live="polite">
-            {STAGES.filter((s) => s.id !== 'fetch' || busy.fromUrl).map((s) => {
-              const idx = STAGES.findIndex((x) => x.id === s.id), cur = STAGES.findIndex((x) => x.id === busy.stage)
-              const state = idx < cur ? 'done' : idx === cur ? 'now' : 'next'
-              let detail = ''
-              if (state === 'now') {
-                if (busy.stage === 'fetch') detail = busy.size ? `${fmtBytes(busy.bytes ?? 0)} of ${fmtBytes(busy.size)} from ${busy.what}` : `${fmtBytes(busy.bytes ?? 0)} from ${busy.what}`
-                if (busy.stage === 'read') detail = `${busy.done ?? 0} / ${busy.total ?? 0} files · ${fmtBytes(busy.bytes ?? 0)} of CSS`
-                if (busy.stage === 'derive') detail = `${busy.total ?? 0} values → the knobs on the stand of your code`
-                if (busy.stage === 'open') detail = 'first paint…'
-              }
-              return (
-                <li key={s.id} className={`intake__stage intake__stage--${state}`}>
-                  <span className="intake__stage-dot" aria-hidden>{state === 'done' ? <Check size={11} strokeWidth={3} /> : null}</span>
-                  <span className="intake__stage-label">{s.label}</span>
-                  {detail && <span className="intake__stage-detail">{detail}</span>}
-                </li>
-              )
-            })}
-          </ol>
+          <LoadStages busy={busy} />
         ) : (
           <>
             {carryNote && <p className="intake__carry">{carryNote}</p>}
@@ -176,6 +157,33 @@ export function Door({ onArchive, onUrl, onSample, busy, error, carryNote }: Doo
       </div>
       </div>
     </div>
+  )
+}
+
+/** What the load is doing, with its numbers: in the door, and in the editor's
+ *  own skeleton while the first screen comes in. */
+export function LoadStages({ busy }: { busy: Progress }) {
+  return (
+    <ol className="intake__stages" aria-live="polite">
+      {STAGES.filter((s) => s.id !== 'fetch' || busy.fromUrl).map((s) => {
+        const idx = STAGES.findIndex((x) => x.id === s.id), cur = STAGES.findIndex((x) => x.id === busy.stage)
+        const state = idx < cur ? 'done' : idx === cur ? 'now' : 'next'
+        let detail = ''
+        if (state === 'now') {
+          if (busy.stage === 'fetch') detail = busy.size ? `${fmtBytes(busy.bytes ?? 0)} of ${fmtBytes(busy.size)} from ${busy.what}` : `${fmtBytes(busy.bytes ?? 0)} from ${busy.what}`
+          if (busy.stage === 'read') detail = `${busy.done ?? 0} / ${busy.total ?? 0} files · ${fmtBytes(busy.bytes ?? 0)} of CSS`
+          if (busy.stage === 'derive') detail = `${busy.total ?? 0} values → the knobs on the stand of your code`
+          if (busy.stage === 'open') detail = 'first paint…'
+        }
+        return (
+          <li key={s.id} className={`intake__stage intake__stage--${state}`}>
+            <span className="intake__stage-dot" aria-hidden>{state === 'done' ? <Check size={11} strokeWidth={3} /> : null}</span>
+            <span className="intake__stage-label">{s.label}</span>
+            {detail && <span className="intake__stage-detail">{detail}</span>}
+          </li>
+        )
+      })}
+    </ol>
   )
 }
 

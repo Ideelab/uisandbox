@@ -2610,3 +2610,27 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     load is the likely cause and not a proven one; the gate is the place to
     see it again. Against the gate before (182) nothing else got worse, and
     visx flipped back to ok.
+
+196. No flash of the old landing page: the editor loads in its own shape.
+
+    Reported: a click on the logo showed the old marketing page for a
+    moment. Measured with a frame-by-frame log from the first paint: after
+    index.html's skeleton, the DOOR (the intake card with its glow and the
+    load stages) was on screen for 80 to 360 ms on every fresh load of `/`,
+    and the logo was a full page load into exactly that. The door was what
+    App rendered whenever no project was loaded yet.
+
+    - While the first screen loads, App now paints the editor's skeleton
+      (panel and stage outlines, the intro line, the footer) with the load
+      stages small in the stage: the shape index.html paints before the
+      script runs, edge for edge (topbar at 45/46px, intro at 81/82, panels
+      from 98, compared on a production build). The door appears only when
+      a load failed, with its reason, as before.
+    - The logo and Close start over in place: the default kit is loaded
+      into the page that is there, and the screen on show stays until the
+      kit replaces it. On the untouched default kit the logo only resets
+      the knobs and the tab.
+
+    After, on a production preview: pre-mount skeleton → React skeleton →
+    editor, no door; a logo click changes nothing on screen until the kit
+    is in.
