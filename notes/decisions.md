@@ -3034,6 +3034,11 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     browser's own toolbar), and how Firefox and Safari treat a bookmarklet
     under a strict CSP. The console is the fallback wherever one is refused.
 
+    Then by hand (2026-10-19): Alexander dragged the bookmarklet from the
+    dev server to his own Chrome's bookmarks bar and clicked it on
+    test.siteshare.dev/ideelab, logged in: it works. That is the real
+    bookmarks bar, and the app this was for. No numbers were taken there.
+
     Where it stops:
 
     - Cross-Origin-Opener-Policy. An app that sends `same-origin` cuts its
