@@ -7,6 +7,7 @@ import { COLOR_THEMES } from '../tokens/stylesAndThemes'
 import type { ColorTheme, Config, Tokens } from '../tokens/types'
 import type { ConfigAction } from '../state/configReducer'
 import { FontPicker } from './FontPicker'
+import { ColorField } from './ColorPicker'
 import { DEFAULT_DIALS, DIALS, fmtDial, nearestSnap, type DialSpec, type Dials } from '../sandbox/dials'
 import type { Families, Family } from '../sandbox/mapping'
 import { formatCssColor } from '../sandbox/cssColor'
@@ -62,24 +63,31 @@ const FAMILY_ROWS: Array<{ fam: Family; key: keyof Dials; label: string }> = [
 export function SandboxPanel({ cfg, tokens, base, families, scheme, codeFonts = [], hasGradients = false, varNow, dispatch, onCollapse, onRandomize, onReset, history, radiiOnScreen, kitName }: Props) {
   const asIs = kitName ? 'as the kit ships it' : 'as in your code'
   const [openKey, setOpenKey] = useState<string | null>(null)
+  // One colour picker open at a time. A flyout that IS one colour (the page
+  // background, a secondary or accent family) opens with it; Brand leads with
+  // its swatches, Status with its four rows.
+  const [picker, setPicker] = useState<string | null>(null)
   const [fineOpen, setFineOpen] = useState(false)
   const [anchor, setAnchor] = useState<{ top: number; left: number } | null>(null)
   const popRef = useRef<HTMLDivElement>(null)
   const set = (patch: Partial<Config>) => dispatch({ type: 'SET', patch })
   const setDial = (key: keyof Dials, v: number | string | undefined) => set({ sb: { ...cfg.sb, [key]: v } })
   const close = () => { setOpenKey(null); setAnchor(null) }
+  const pickerProps = (k: string) => ({ open: picker === k, onToggle: () => setPicker((p) => (p === k ? null : k)) })
+
   const toggle = (key: string, rowEl: HTMLElement | null) => {
     if (openKey === key) { close(); return }
     const r = rowEl?.getBoundingClientRect()
     setAnchor(r ? { top: r.top - 6, left: r.right + 10 } : null)
     setOpenKey(key)
+    setPicker(key === 'background' || key === 'cSecondary' || key === 'cAccent' ? key : null)
   }
   useLayoutEffect(() => {
     const el = popRef.current
     if (!el || !anchor) return
     const maxTop = window.innerHeight - el.offsetHeight - 12
     if (anchor.top > maxTop) el.style.top = `${Math.max(12, maxTop)}px`
-  }, [anchor, openKey])
+  }, [anchor, openKey, picker])  // a picker opening makes the flyout taller
   useEffect(() => {
     if (!openKey) return
     const onDown = (e: MouseEvent) => { if (!(e.target as HTMLElement).closest('.fmrow, .fmrow__pop')) close() }
@@ -123,11 +131,7 @@ export function SandboxPanel({ cfg, tokens, base, families, scheme, codeFonts = 
             </button>
           ))}
         </div>
-        <label className="fmbrand">
-          <span className="fmbrand__label">Brand colour</span>
-          <span className="fmbrand__val"><span className="fmrow__dot" style={{ background: cfg.cPrimary }} />{cfg.cPrimary}</span>
-          <input type="color" className="fmrow__colorinput" value={cfg.cPrimary} onChange={(e) => set({ cPrimary: e.target.value as Config['cPrimary'] })} aria-label="Brand colour" />
-        </label>
+        <ColorField label="Brand colour" value={cfg.cPrimary} base={base.cPrimary} onChange={(hex) => set({ cPrimary: hex as Config['cPrimary'] })} {...pickerProps('brand')} />
         {brandChanged && <button type="button" className="btn btn--ghost btn--sm sbp__reset" onClick={() => set({ cPrimary: base.cPrimary })}>Back to your code ({base.cPrimary})</button>}
       </>
     ),
@@ -147,11 +151,7 @@ export function SandboxPanel({ cfg, tokens, base, families, scheme, codeFonts = 
   }
   const famPicker = (f: NonNullable<ReturnType<typeof famState>>, hint = true) => (
     <Fragment key={f.key}>
-      <label className="fmbrand">
-        <span className="fmbrand__label">{f.label} colour</span>
-        <span className="fmbrand__val"><span className="fmrow__dot" style={{ background: f.cur }} />{f.cur}</span>
-        <input type="color" className="fmrow__colorinput" value={f.cur} onChange={(e) => setDial(f.key, e.target.value)} aria-label={`${f.label} colour`} />
-      </label>
+      <ColorField label={`${f.label} colour`} value={f.cur} base={f.centreHex} onChange={(hex) => setDial(f.key, hex)} {...pickerProps(f.key)} />
       {hint && <p className="sbp__hint">Every {f.label.toLowerCase()}-family colour in your CSS moves with this one; its most-used member is {f.centreHex}.</p>}
       {cfg.sb[f.key] && <button type="button" className="btn btn--ghost btn--sm sbp__reset" onClick={() => setDial(f.key, undefined)}>Back to your code{hint ? '' : ` (${f.label.toLowerCase()})`}</button>}
     </Fragment>
@@ -189,11 +189,7 @@ export function SandboxPanel({ cfg, tokens, base, families, scheme, codeFonts = 
       value: nameColor(cur as `#${string}`), dot: <span className="fmrow__dot fmrow__dot--ring" style={{ background: live }} />,
       body: () => (
         <>
-          <label className="fmbrand">
-            <span className="fmbrand__label">Page background</span>
-            <span className="fmbrand__val"><span className="fmrow__dot fmrow__dot--ring" style={{ background: cur }} />{cur}</span>
-            <input type="color" className="fmrow__colorinput" value={cur} onChange={(e) => setDial('cBackground', e.target.value)} aria-label="Page background" />
-          </label>
+          <ColorField label="Page background" value={cur} base={canvasHex} ring onChange={(hex) => setDial('cBackground', hex)} {...pickerProps('background')} />
           <p className="sbp__hint">Your page paints {canvasHex} behind everything; surfaces and cards near that lightness move with it, so their step above the page stays.</p>
           {cfg.sb.cBackground && <button type="button" className="btn btn--ghost btn--sm sbp__reset" onClick={() => setDial('cBackground', undefined)}>Back to your code ({canvasHex})</button>}
         </>
