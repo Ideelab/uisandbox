@@ -5,7 +5,7 @@ export function Footer() {
   const year = new Date().getFullYear()
   return (
     <footer className="foot" aria-label="About UISandbox">
-      <span className="foot__credit">Made with ♥ by <a href="https://github.com/AlexanderKaan" target="_blank" rel="noopener author">Alexander Kaan</a> at <a href="https://ideelab.nl/" target="_blank" rel="noopener">Ideelab</a></span>
+      <span className="foot__credit">Made by <a href="https://github.com/AlexanderKaan" target="_blank" rel="noopener author">Alexander Kaan</a> at <a href="https://ideelab.nl/" target="_blank" rel="noopener">Ideelab</a></span>
       <span className="foot__sep" aria-hidden>·</span>
       <span>© {year} Ideelab · <a href="https://github.com/Ideelab/uisandbox/blob/main/LICENSE" target="_blank" rel="noopener license">MIT</a></span>
       <span className="foot__sep" aria-hidden>·</span>

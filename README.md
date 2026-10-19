@@ -128,4 +128,4 @@ including the ones I had to undo. Issues and pull requests are welcome.
 
 ---
 
-Made with ♥ by [Alexander Kaan](https://github.com/AlexanderKaan) at [Ideelab](https://ideelab.nl/) · [MIT](LICENSE) · the decisions that shaped it, numbered: [`notes/decisions.md`](notes/decisions.md)
+Made by [Alexander Kaan](https://github.com/AlexanderKaan) at [Ideelab](https://ideelab.nl/) · [MIT](LICENSE) · the decisions that shaped it, numbered: [`notes/decisions.md`](notes/decisions.md)
