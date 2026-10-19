@@ -4,13 +4,72 @@
  * Export stays the one primary button.
  */
 import { useEffect, useRef, useState } from 'react'
-import { Check, Link2, Moon, Send, Sun } from 'lucide-react'
+import { Check, ChevronDown, Link2, Moon, Send, Sun } from 'lucide-react'
 import DOOR from '../kits/door.json'
 import type { KitId } from '../kits/engine/detect.mjs'
 import { looks as LOOKS } from '../kits/looks'
 
 const KITS = DOOR.filter((k) => k.renders)
 const kitName = (id: string) => DOOR.find((k) => k.id === id)?.name ?? id
+
+/** A field that opens a list, in the app's own menu language (.menu,
+ *  .menu__item, the check on the current one) and its own motion, not the
+ *  operating system's: the screen picker and the knob rows look this way, and
+ *  a native <select> drew macOS's menu beside them. Keyboard: arrows, Enter,
+ *  Escape; a click outside closes it. */
+function Dropdown({ label, value, display, options, onPick, title, className = '' }: {
+  label: string
+  value: string
+  display: string
+  options: Array<{ value: string; label: string; hint?: string; swatch?: string }>
+  onPick: (v: string) => void
+  title: string
+  className?: string
+}) {
+  const [open, setOpen] = useState(false)
+  const [hi, setHi] = useState(0)
+  const root = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!open) return
+    setHi(Math.max(0, options.findIndex((o) => o.value === value)))
+    const onDown = (e: MouseEvent) => { if (!root.current?.contains(e.target as Node)) setOpen(false) }
+    // A click in the canvas lands in its iframe and never reaches this
+    // document; the window losing focus is how that click shows up here.
+    const onBlur = () => setOpen(false)
+    document.addEventListener('mousedown', onDown)
+    window.addEventListener('blur', onBlur)
+    return () => { document.removeEventListener('mousedown', onDown); window.removeEventListener('blur', onBlur) }
+  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+  const choose = (v: string) => { setOpen(false); if (v !== value) onPick(v) }
+  const onKey = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') { setOpen(false); return }
+    if (!open && (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); setOpen(true); return }
+    if (!open) return
+    if (e.key === 'ArrowDown') { e.preventDefault(); setHi((h) => Math.min(options.length - 1, h + 1)) }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setHi((h) => Math.max(0, h - 1)) }
+    else if (e.key === 'Enter') { e.preventDefault(); const o = options[hi]; if (o) choose(o.value) }
+  }
+  return (
+    <div className={`ddm ${className}`} ref={root} onKeyDown={onKey}>
+      <button type="button" className="ebar__engine ddm__btn" onClick={() => setOpen((v) => !v)} aria-haspopup="listbox" aria-expanded={open} title={title}>
+        <span className="ebar__label">{label}</span>
+        <span className="ddm__value">{display}</span>
+        <ChevronDown size={13} strokeWidth={2} className="ddm__chev" />
+      </button>
+      {open && (
+        <div className="menu menu--pop ddm__menu" role="listbox" aria-label={label}>
+          {options.map((o, i) => (
+            <button key={o.value || '_'} type="button" role="option" aria-selected={o.value === value} className={`menu__item ddm__item ${o.value === value ? 'menu__item--on' : ''} ${i === hi ? 'ddm__item--hi' : ''}`} style={{ ['--stagger-i' as string]: Math.min(i, 6) }} onMouseEnter={() => setHi(i)} onClick={() => choose(o.value)}>
+              {o.swatch && <span className="ddm__swatch" style={{ background: o.swatch }} aria-hidden />}
+              <span className="fmopt__text"><span className="fmopt__label">{o.label}</span>{o.hint && <span className="fmopt__sub ddm__hint">{o.hint}</span>}</span>
+              {o.value === value && <Check size={14} strokeWidth={2.5} className="fmopt__check" />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 /** Which kit is on the stage, and the others one pick away. On your own app it
  *  says which kit the page runs on, as measured, or that it runs on none. */
@@ -22,14 +81,10 @@ export function EngineSelect({ kitId, ownApp, detected, onPick }: {
   onPick: (id: string) => void
 }) {
   const own = ownApp ? (detected ? `Your app · runs on ${kitName(detected)}` : detected === null ? 'Your app · none of the nine' : 'Your app') : ''
+  const options = [...(ownApp ? [{ value: '', label: own }] : []), ...KITS.map((k) => ({ value: k.id, label: k.name, hint: k.version ? `v${k.version}, from its own package` : 'from its own registry' }))]
   return (
-    <label className="ebar__engine" title="The UI kit on the canvas, built from its own package. Your own app stays what it is: picking a kit loads it in its place.">
-      <span className="ebar__label">Kit</span>
-      <select value={ownApp ? '' : kitId ?? ''} onChange={(e) => { if (e.target.value) onPick(e.target.value) }} aria-label="Kit: the UI kit on the canvas">
-        {ownApp && <option value="">{own}</option>}
-        {KITS.map((k) => <option key={k.id} value={k.id}>{k.name}</option>)}
-      </select>
-    </label>
+    <Dropdown label="Kit" value={ownApp ? '' : kitId ?? ''} display={ownApp ? 'Your app' : kitName(kitId ?? '')} options={options} onPick={(v) => { if (v) onPick(v) }}
+      title="The UI kit on the canvas, built from its own package. Your own app stays what it is: picking a kit loads it in its place." />
   )
 }
 
@@ -70,14 +125,14 @@ export function ShareButton({ url }: { url: string | null }) {
 /** Look: another kit's own start values on what the stage shows (kits/looks.ts).
  *  Shows the look while the knobs still stand where it put them. */
 export function LookSelect({ current, onPick }: { current: string | null; onPick: (id: string) => void }) {
+  const display = current ? `${LOOKS.find((l) => l.id === current)?.name ?? current} look` : current === '' ? 'Custom' : 'None'
+  // What each look sets, in its own values: specific, so the list can be read.
+  const fam = (stack?: string) => { const f = (stack ?? '').split(',')[0]!.trim().replace(/^["']|["']$/g, ''); return !f ? '' : /^(system-ui|-apple-system|blinkmacsystemfont|ui-sans-serif|sans-serif)$/i.test(f) ? 'system font' : f }
+  const hint = (v: (typeof LOOKS)[number]['values']) => [v.brand, fam(v.fontBody), v.radius && `${v.radius} corners`].filter(Boolean).join(' · ')
+  const options = [{ value: '', label: current ? 'Custom' : 'None', hint: 'the canvas as it stands' }, ...LOOKS.map((l) => ({ value: l.id, label: `${l.name} look`, hint: hint(l.values), swatch: l.values.brand }))]
   return (
-    <label className="ebar__engine ebar__look" title="A preset: another kit's own start values (brand, background, status colours, body font, corners) on what the canvas shows. Undo, Reset and Export treat it like any knob.">
-      <span className="ebar__label">Preset</span>
-      <select value={current ?? ''} onChange={(e) => { if (e.target.value) onPick(e.target.value) }} aria-label="Preset: another kit's start values">
-        <option value="">{current ? 'Custom' : 'None'}</option>
-        {LOOKS.map((l) => <option key={l.id} value={l.id}>{l.name} look</option>)}
-      </select>
-    </label>
+    <Dropdown className="ebar__look" label="Preset" value={current ?? ''} display={display} options={options} onPick={(v) => { if (v) onPick(v) }}
+      title="A preset: another kit's own start values (brand, background, status colours, body font, corners) on what the canvas shows. Undo, Reset and Export treat it like any knob." />
   )
 }
 

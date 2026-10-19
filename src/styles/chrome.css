@@ -709,3 +709,27 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
 .foot__name { color: #ececf1; font-weight: 600; }
 .localcmd { display: grid; gap: 8px; margin: 0 0 10px; }
 .localcmd .intake__input { width: 100%; }
+
+/* The app's own dropdown (EditorBar Dropdown): the .menu card, opening with
+   the menu motion below. */
+.ddm { position: relative; }
+.ddm__btn { cursor: pointer; padding-right: 8px; gap: 6px; }
+.ddm__btn:hover { border-color: var(--app-fg-muted); }
+.ddm__btn[aria-expanded="true"] { border-color: var(--app-fg); }
+.ddm__value { font-weight: 500; color: var(--app-fg); max-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ddm__chev { color: var(--app-fg-muted); transition: transform var(--app-dur) var(--app-ease); }
+.ddm__btn[aria-expanded="true"] .ddm__chev { transform: rotate(180deg); }
+.ddm__menu { position: absolute; top: calc(100% + 6px); right: 0; z-index: 70; min-width: 220px; transform-origin: top right; }
+.ddm__item--hi { background: var(--app-hover); }
+
+/* The menu motion. `app-menu-item` was referenced by the font picker's rows and
+   never defined, so no menu moved; defined once here for all of them: the card
+   settles in, its rows follow a beat apart. */
+@keyframes app-menu-in { from { opacity: 0; transform: translateY(-4px) scale(.98); } to { opacity: 1; transform: none; } }
+@keyframes app-menu-item { from { opacity: 0; transform: translateY(-2px); } to { opacity: 1; transform: none; } }
+.menu--pop { animation: app-menu-in var(--app-dur-md) var(--app-ease) both; }
+.menu--pop .ddm__item { animation: app-menu-item var(--app-dur-md) var(--app-ease) both; animation-delay: calc(var(--stagger-i, 0) * 18ms); }
+@media (prefers-reduced-motion: reduce) { .menu--pop, .menu--pop .ddm__item, .fp__item { animation: none; } }
+.ddm__swatch { flex: none; width: 12px; height: 12px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .12); }
+.ddm__hint { white-space: nowrap; }
+.ddm__menu { min-width: 260px; }

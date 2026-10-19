@@ -2848,3 +2848,33 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     serving the SB Admin build): 339 values from 225 KB of CSS, 1:1 with
     353 elements and 0 differences. Not measured yet: Next.js, Nuxt,
     SvelteKit and dev servers behind a path or with their own auth.
+
+203. Kit and Preset open the app's own menu, and menus move again.
+
+    Alexander: we have our own design language and motion for dropdowns,
+    and the bar used the system's. True: Kit and Preset were native
+    <select>s, so macOS drew its own menu beside the app's. They are now a
+    Dropdown in the app's menu language (.menu, .menu__item, the check on
+    the current one), with arrows, Enter and Escape, closed by a click
+    anywhere (a click in the canvas lands in its iframe and never reaches
+    the page, so the window losing focus closes it too). Preset's rows say
+    what each look sets in its own values (a swatch, "#0d6efd · system font
+    · 6px corners"); Kit's rows give the version.
+
+    The motion was broken, not just unused: the font picker's rows animate
+    with `app-menu-item`, a keyframes rule that was never defined, so no
+    menu moved. Defined now (a card that settles in, rows a beat apart),
+    used by these two and the screen picker, and off under
+    prefers-reduced-motion.
+
+    Also from the baseline (201):
+    - Shuffle on a kit leaves Hue, Saturation and Contrast alone; the panel
+      hides them there, and they reappeared turned. A test holds it, with a
+      build of yours as the control (there they still roll).
+    - export-sweep looked for the card "Hand it to your agent" that 191
+      renamed; it takes either name now. Reaching further, it found a real
+      gap the old failure hid: on a build where a kit is detected, the
+      engine's tokens.json writes colours and sizes as strings, not the W3C
+      colour and dimension objects our own exporter writes, and its
+      DESIGN.md has no components section and does not say it left one
+      out (AdminLTE). Two token formats in one product: on the list.

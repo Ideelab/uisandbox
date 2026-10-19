@@ -164,7 +164,9 @@ for (const [i, f] of PICKS.entries()) {
       })
       await page.waitForSelector('.exp__card', { timeout: 15000 })
       const miss = await page.evaluate((c) => {
-        const k = Array.from(document.querySelectorAll('.exp__card')).find((x) => x.textContent.includes(c))
+        // `a|b`: the card under either name (191 renamed "Hand it to your agent"
+        // to "Design system + Skill" where a kit is detected).
+        const k = Array.from(document.querySelectorAll('.exp__card')).find((x) => c.split('|').some((n) => x.textContent.includes(n)))
         if (!k) return `no destination card "${c}" — cards: ` + Array.from(document.querySelectorAll('.exp__card .exp__label')).map((x) => x.textContent.trim()).join(' | ')
         k.click()
         return ''
@@ -191,9 +193,9 @@ for (const [i, f] of PICKS.entries()) {
     // The source card first: it is the one that has to finish preparing, and
     // everything after it then reads a settled dialog.
     const patch = await grab('Patch your own files', 'Find and replace')
-    const design = await grab('Hand it to your agent', 'DESIGN.md')
-    const agents = await grab('Hand it to your agent', 'AGENTS.md')
-    const tokens = await grab('Hand it to your agent', 'Design tokens')
+    const design = await grab('Design system + Skill|Hand it to your agent', 'DESIGN.md')
+    const agents = await grab('Design system + Skill|Hand it to your agent', 'AGENTS.md')
+    const tokens = await grab('Design system + Skill|Hand it to your agent', 'Design tokens')
     await page.evaluate(() => {
       const back = document.querySelector('.dialog__pane') && document.querySelector('.dialog__head .btn--ghost')
       if (back) back.click()

@@ -12,10 +12,16 @@ import { DIALS, type Dials } from './dials'
 import type { Baseline } from './mapping'
 import { formatCssColor } from './cssColor'
 
-export function shuffle(cur: Config, baseline: Baseline, rnd: () => number = Math.random): Config {
+/** On a kit the panel hides the dials that only move somebody's own CSS
+ *  (SandboxPanel ownBuildOnly): a shuffle there must leave them where they are,
+ *  or they reappear turned (seen on the shadcn kit, 2026-10-19). */
+const OWN_BUILD_ONLY = new Set(['hue', 'sat', 'contrast'])
+
+export function shuffle(cur: Config, baseline: Baseline, rnd: () => number = Math.random, opts: { kit?: boolean } = {}): Config {
   const pick = <T,>(a: readonly T[]): T => a[Math.floor(rnd() * a.length)]!
   const sb: Dials = { ...cur.sb }
   for (const d of DIALS) {
+    if (opts.kit && OWN_BUILD_ONLY.has(d.key)) continue
     // Triangular around the centre snap ("as is") — mostly small moves.
     const centre = d.snaps.find((s) => s.label === 'as is')?.at ?? (d.min + d.max) / 2
     const t = (rnd() + rnd()) / 2 // 0..1, peaked at .5

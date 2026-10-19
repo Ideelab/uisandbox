@@ -582,7 +582,7 @@ function Editor() {
                 varNow={(id) => vars[varName(id)]}
                 dispatch={dispatch}
                 onCollapse={() => setPanelOpen(false)}
-                onRandomize={() => dispatch({ type: 'REPLACE', cfg: shuffle(cfg, loaded.report.baseline) })}
+                onRandomize={() => dispatch({ type: 'REPLACE', cfg: shuffle(cfg, loaded.report.baseline, Math.random, { kit: !!loaded.kit }) })}
                 onReset={() => dispatch({ type: 'REPLACE', cfg: loaded.report.baseline.cfg })}
                 history={{ undo, redo, canUndo, canRedo }}
                 radiiOnScreen={coverage ? coverage.radii.total : undefined}

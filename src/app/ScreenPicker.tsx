@@ -77,7 +77,7 @@ export function ScreenPicker({ screens, current, onPick, onPin }: ScreenPickerPr
         <ChevronDown size={13} strokeWidth={2} />
       </button>
       {open && (
-        <div className="menu spick__menu" role="listbox">
+        <div className="menu menu--pop spick__menu" role="listbox">
           <div className="spick__search">
             <Search size={13} strokeWidth={2} />
             <input
