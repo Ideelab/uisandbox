@@ -48,6 +48,21 @@ of a PUBLIC zip passing through; nothing is stored, no token is ever involved
 `gitlab.com` targets are accepted, only same-origin callers (`Sec-Fetch-Site: same-origin` / Origin),
 200 MB cap. The intake says this in one sentence next to the field.
 
+## Screens taken along: what the capture tab accepts (decision 207)
+
+`/?capture=1` is the tab the "Take this screen along" bookmarklet opens. It
+listens to one window only, the one that opened it (`e.source ===
+window.opener`), and answers a ping with `targetOrigin` set to the sender's
+origin. A screen is taken when the address the page reports has the origin
+the browser reports for the message; every file is named `_c/<hash>.<ext>`
+and is a Blob; a page is at most 8 MB of HTML, a screen 400 MB. The HTML is
+cleaned again here, whatever the sender did: no `<script>`, no `on*`
+attribute, no `javascript:` URL, no `<base>`, no meta refresh or CSP, no
+frame address, inside declarative shadow templates as well. So a page the
+user clicks the bookmarklet on can put inert HTML and CSS into a tab the user
+opened, which is what a dropped build can do already, minus its scripts.
+Nothing reaches a server; no password field's value is ever copied.
+
 ## What is NOT covered, and what to do about it
 
 - **Same-origin reach.** A hostile build can rewrite the tool's DOM, read the

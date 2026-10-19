@@ -2957,3 +2957,128 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     - kit-antd timed out twice, both times while something else loaded the
       same server (probes, a first run straight after a deploy), and is ok
       on every run alone. Watched, not chased.
+
+207. Take this screen along: a bookmarklet for the app behind a login.
+
+    An app that runs only where it is deployed, behind a login (an SPA whose
+    env files are not on the machine), cannot be fetched by URL and cannot
+    be started on localhost. Only the user's own logged-in browser sees it
+    rendered, so the capture runs there. Prototype, not on the door yet.
+
+    How it works. A bookmarklet (src/capture/grab.ts; the link is the
+    function's own source, so it carries everything it needs) serialises the
+    page as it stands: the DOM after render with scripts, handlers and
+    javascript: URLs removed, open shadow roots as declarative templates with
+    their adopted sheets, form values (never a password), canvases as PNG;
+    every sheet (a <style> as its text, or its CSSOM when JS inserted rules
+    the text does not hold; a <link> fetched from the page, its CSSOM when
+    the fetch is refused, named when both are); every image, font, @import
+    and background image fetched with the page's own cookies, so what sits
+    behind the login comes along as bytes. It opens a tab named
+    `uisandbox-capture` on uisandbox.org (`/?capture=1`) and posts it there,
+    origin checked on both ends; a second click finds the same tab and adds a
+    screen. The tab cleans the HTML again (src/capture/receive.ts), files
+    each screen as `<path>/index.html` with the shared files under `_c/` by
+    content, and builds the project through buildProject, exactly as a
+    dropped build. Knobs turned on the first screens stay turned. Tab to tab:
+    nothing goes to a server.
+
+    Measured (scripts/.probe-capture-*, deleted; Chromium 151 headless with
+    its popup blocker ON, viewport 1280×900). "Same as live" compares 17
+    computed properties per element (colour, background, border, radius,
+    font, line height, padding, margin, gap, shadow, display, width, height)
+    between the live tab and the captured screen served untouched, at the
+    same width, url() strings ignored. "Click to stage" runs from the click
+    to the sandbox tab showing the project.
+
+    | Screen | Stack | Taken | Read | Click to stage | Same as live | Check 1:1 | Reach | Brand → rose |
+    |---|---|---|---|---|---|---|---|---|
+    | test app `/` | SPA behind a login cookie, strict CSP | 50 KB, 7 files | 12–31 ms | 0.4–0.6 s | 32 of 32 | ok, 31 paired | 95% colours, 2 outside | 12 of 48 elements |
+    | test app `/settings` | same tab, form half filled | 47 KB, 6 files | 6–9 ms | 0.3 s | 24 of 24 | ok, 21 paired | 100%, 1 outside | 5 of 37 |
+    | todomvc.com React | React SPA | 11 KB, 2 files | 8 ms | 0.4 s | 58 of 59 | ok, 57 paired | 100 / 100 / 100% | 12 of 70 |
+    | nextjs.org | Next.js, CSP with script-src | 1.2 MB, 25 files | 224 ms | 1.1 s | 737 of 739 | ok, 722 paired | 66% colours, 11 outside | 5 of 770 |
+    | react.dev | Next.js / React | 2.2 MB, 87 files | 177–191 ms | 0.5 s | 1676 of 1753 | ok, 1708 paired | 100%, 49 outside | 183 of 1793 |
+    | vuejs.org | Vue (VitePress) | 2.2 MB, 71 files | 1067 ms | 1.6 s | 674 of 674 | ok, 633 paired | 100%, 73 outside | 2 of 696 |
+
+    What differs from live: TodoMVC's input has focus on the live page (a
+    focus ring a snapshot cannot hold); nextjs.org's cookie banner text, 2
+    elements at 14px instead of 16px; on react.dev one section of the
+    article renders 210px taller and its ancestors grow with it (77 heights,
+    48 widths, no colour or type). The handover itself is cheap: the files
+    travel as Blobs (structured clone, no base64), 2.2 MB in 2 to 3 ms.
+    The sandbox's own build of the project dominates "click to stage".
+    The knob counts are what the brand family paints on that page; a home
+    page that is mostly black and white (nextjs.org, vuejs.org) moves
+    little, and that was not chased further.
+
+    The test app: a page rendered by JavaScript after a cookie login, with
+    `default-src 'none'; script-src 'self'; style-src 'self' 'nonce-…';
+    connect-src 'self'; require-trusted-types-for 'script'`, a CSS-in-JS
+    sheet with rules only in its CSSOM, a web component with an open shadow
+    root and an adopted sheet, a canvas, a webfont, a logo and a background
+    image that answer 403 without the cookie, and two stylesheets from
+    another site, one with CORS and one without. All of it arrived. The CORS
+    sheet came through its CSSOM (connect-src refused the fetch, the
+    `crossorigin` attribute made the CSSOM readable); the other is named in
+    the notes and loads from where it lives, outside the knobs.
+
+    CSP. On the test app a javascript: URL the PAGE navigates to is refused
+    (the control: one CSP violation, it did not run). The bookmarklet,
+    entered the way the bookmarks bar and the address bar enter it (a
+    navigation the browser starts, here through DevTools' Page.navigate),
+    ran, and opened its tab with the popup blocker on; so it did on
+    nextjs.org, whose CSP limits script-src. The console line (the copy
+    button on `/?capture=1`) ran too, in Chromium and in WebKit 26.5, where
+    the capture and the handover gave the same 32 of 32 and 1:1 ok. Not
+    measured: a click on a real bookmarks bar (no automation reaches the
+    browser's own toolbar), and how Firefox and Safari treat a bookmarklet
+    under a strict CSP. The console is the fallback wherever one is refused.
+
+    Where it stops:
+
+    - Cross-Origin-Opener-Policy. An app that sends `same-origin` cuts its
+      tab off from the tab it opens the moment that tab reaches another
+      origin: nothing can be handed over. Measured on the test app with the
+      header: the bookmarklet sees the handle close (it looks every 250
+      ms) and says so; its message was on the page when read 3 s after the
+      click, and nothing was sent. A way around it (save the
+      capture as a zip, drop it at the door) is not built.
+    - A snapshot is not the app: no scripts, so no clicks, no hover or focus
+      state, no scroll position, no popover or modal in the top layer.
+      Links in a captured screen lead nowhere in the sandbox; route
+      discovery is off for captures, so every screen is a click.
+    - Closed shadow roots cannot be read (counted, named in the notes);
+      frames are left empty; video and audio play from their own address; a
+      font added by script (FontFace) and not by CSS does not come along; a
+      WebGL canvas may come out blank (counted). A custom element is not
+      defined in the sandbox, so a `:not(:defined)` rule would apply; not
+      seen on these sites, not measured.
+    - Media queries evaluate at the sandbox frame's width; the note names
+      the viewport the screen was taken at, and "same as live" was measured
+      at that width.
+    - Typed values in inputs come along (they are what the screen shows); a
+      password never does.
+
+    Found on the way, and fixed: a cross-origin stylesheet whose server
+    sends no CORS headers vanished from the tokenised render only. The
+    worker fetched it for the rewriter, the fetch failed, and it answered
+    502, while the raw control loaded the sheet as any page does. Check 1:1
+    said so: 4 differences on the line it styled. The worker now sends such
+    a sheet to its own address instead (sw.js externalCss): it applies
+    untouched in both renders, outside the knobs' reach, and 1:1 is ok. Any
+    build with a CDN sheet without CORS had the same gap.
+
+    Security: notes/security.md, "Screens taken along".
+
+    Where it lives: `/?capture=1` shows the bookmarklet to drag and the
+    console line to copy; the tab the bookmarklet opens shows "Waiting for a
+    screen". Not linked from the door. The bookmarklet is 13.6k characters
+    from the production build, 26k from the dev server.
+
+    Door copy, a draft for Alexander's OK (not shipped). Under "Your running
+    app", as a third way:
+
+    > **Behind a login?** Drag *Take this screen along* to your bookmarks bar,
+    > open your app where you are logged in, and click it on each screen you
+    > want. Your browser copies the page as you see it into a UISandbox tab.
+    > Nothing goes to a server.
