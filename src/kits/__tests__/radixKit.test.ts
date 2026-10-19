@@ -21,6 +21,12 @@ describe('the Radix kit build', () => {
     for (const t of danger) expect(t, t).toContain('data-accent-color="red"')
   })
 
+  it('draws its separators in gray, as Radix\'s Separator defaults to', () => {
+    const hrs = [...first.matchAll(/<hr\b[^>]*rt-Separator[^>]*>/g)].map((m) => m[0])
+    expect(hrs.length).toBeGreaterThan(0)
+    for (const t of hrs) expect(t, t).toContain('data-accent-color="gray"')
+  })
+
   it('leaves the brand pieces on the theme accent, so the Brand knob still moves them', () => {
     expect(first).toMatch(/<html[^>]*data-accent-color="indigo"/)
     const brand = tags('brand')

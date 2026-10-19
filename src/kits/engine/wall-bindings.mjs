@@ -743,7 +743,9 @@ const radix = {
   row:     (n, k) => `<div class="rt-Flex" style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-${Math.min(9, n.gap ?? 2)})${n.between ? ';justify-content:space-between' : ''}">${k}</div>`,
   grid:    (n, k) => `<div class="rt-Grid" style="display:grid;gap:var(--space-3);grid-template-columns:repeat(${n.cols ?? 2},minmax(0,1fr))">${k}</div>`,
   panel:   (n, k) => `<div class="rt-reset rt-BaseCard rt-Card rt-r-size-2 rt-variant-surface">${k}</div>`,
-  divider: () => `<hr class="rt-reset rt-Separator rt-r-size-4">`,
+  /* their Separator is color="gray" unless told otherwise; bare, it wore the
+     accent and followed a brand pick */
+  divider: () => `<hr class="rt-reset rt-Separator rt-r-size-4" data-accent-color="gray">`,
   heading: (n, k) => A(n, k, `h${n.level ?? 3}`, `rt-Heading rt-r-size-${n.level === 2 ? 6 : 4}`),
   text:    (n, k) => A(n, k, 'p', 'rt-Text rt-r-size-2'),
   muted:   (n, k) => A(n, k, 'p', 'rt-Text rt-r-size-2', ' data-accent-color="gray"'),

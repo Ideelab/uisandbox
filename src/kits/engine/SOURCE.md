@@ -87,4 +87,12 @@ Not from the source, and free to change:
 It serves its own copy, so for a while there are two. Any change to an engine
 file here or there must be carried to the other until the cutover (phase 4),
 after which `Ideelab/uicockpit` is the redirect and this is the only copy.
-`cmp` against the source at `37ed9bc` is the drift check.
+`cmp` against the source is the drift check.
+
+Carried since the move, the same change in both copies:
+
+| uicockpit | file | what |
+|---|---|---|
+| `8ddeb0b` (branch `radix-separator-gray`, not yet on main) | `wall-bindings.mjs` | Radix divider gets `data-accent-color="gray"` (decision 187) |
+
+The drift check is now against `8ddeb0b`: 45 shared files, 0 differ.

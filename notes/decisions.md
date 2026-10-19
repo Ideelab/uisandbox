@@ -2351,3 +2351,25 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     data-accent-color, so it wears the root's accent. Proposed change, for
     both copies: add ` data-accent-color="gray"` to that <hr>, then
     `pnpm kits:build radix`.
+
+187. A Radix separator is gray, as theirs is: the first change carried to both engines.
+
+    The proposal at the end of #186, approved by Alexander. Radix Themes'
+    Separator defaults to color="gray"; the binding's divider was a bare
+    <hr class="rt-Separator">, so it wore the theme's accent and followed a
+    brand pick. Now `data-accent-color="gray"`, with a comment saying why.
+
+    The same edit in both copies of wall-bindings.mjs: here, and in
+    Ideelab/uicockpit dsg/ as 8ddeb0b on branch radix-separator-gray (not
+    pushed, not on main). SOURCE.md now lists it and drifts against 8ddeb0b:
+    45 shared files, 0 differ. uicockpit's own tests: 123 of 123 pass. A third
+    copy lives in UIDraw/engine/ and was left as it is.
+
+    Measured: the rebuilt radix.zip differs from #185's in four <hr> tags
+    (index 2, settings 1, work 1) and nothing else; kit.css is identical. In
+    the browser, Brand to Rose: both separators stay rgba(0, 0, 47, 0.15)
+    (`--slate-a6`); 16 of 220 elements change (18 before, the two <hr>). The
+    one icon button in the list is a hover, gray-a3 to gray-a4, with the
+    pointer left on it by the flyout. radixKit.test.ts holds the separators
+    gray and fails on #185's zip. Gates: vitest 446, node 145 + 117, kit gates
+    26/26 · 101 · 18, hold-outs on the kit fixtures 9 of 9 ok.
