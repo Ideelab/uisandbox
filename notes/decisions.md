@@ -2268,3 +2268,37 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     node 145 + 117, kit gates 101 + 18, hold-outs on the nine kit fixtures
     ok. Left for phase 3: the export dialog still offers "Patch your own
     files" on a kit, where Design system + Skill belongs first.
+
+185. A destructive Radix button is red: the kit build says so.
+
+    On the Radix kit's first screen the Remove button was drawn in the
+    theme's indigo, rgb(62, 99, 221), before any knob was turned; so were the
+    "Refused" badge and the "Not sent" callout. Radix tones one element with
+    data-accent-color, and the engine's binding fills it from the tone the
+    person chose (wall-bindings.mjs rxAccent reads RX_TONE, which
+    kit-builds.mjs sets from route().chosen, attr "tone"). At the kit door
+    there is no person: kitDefaults gives Radix no danger colour, because
+    Radix publishes none, so route() chose no tone, the attribute was left
+    off, and the button wore the accent set on <html>.
+
+    The engine is right for the generator, where a danger colour always
+    exists; what was missing is the kit's own answer, so the fix is in
+    kit-builds.mjs, next to RADIX_THEME: RADIX_TONES = { danger: 'red' },
+    under whatever route() does choose. Read from Radix's own docs: their
+    AlertDialog's destructive action is <Button color="red">. No engine file
+    changed.
+
+    Measured: the rebuilt zip differs from the old one in exactly three tags
+    on index.html, each gaining data-accent-color="red" (button, badge,
+    callout); kit.css and the other five pages are byte-identical. In the
+    browser, before any knob: Remove rgb(229, 72, 77) (Radix red-9), Publish
+    still rgb(62, 99, 221). src/kits/__tests__/radixKit.test.ts reads the
+    shipped zip; its danger case fails on the old one, and its control holds
+    that no brand piece carries an accent of its own (the Brand knob needs
+    them on the root's).
+
+    Left on purpose: success and warning ("Granted", "Waiting", the "Saved"
+    and "Check this" callouts) still wear the accent, for the same reason.
+    No Radix page gives either a colour (their Callout docs show blue, green
+    and red with the same text and no meaning), so a pick would be ours. It
+    is Alexander's call; the table is the one place to add it.

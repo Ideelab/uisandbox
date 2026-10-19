@@ -99,7 +99,7 @@ const choicesOf = (id, values) => {
  * selector for fetch-kits to read: "gray" is not even among the options it
  * found.
  *
- * TYPED, NOT READ — the one place in the kit door that is. kits/radix.json
+ * TYPED, NOT READ — with RADIX_TONES below, the only place in the kit door that is. kits/radix.json
  * publishes each choice's options and not its default, so these four are
  * Radix Themes' themePropDefs defaults, copied from its source. They are read
  * from `choices[role].default` first, so the day fetch-kits.mjs learns to read
@@ -107,6 +107,15 @@ const choicesOf = (id, values) => {
  * data-radius and data-scaling every --radius-* and --space-* resolves to
  * nothing: buttons with no padding and square corners, measured. */
 const RADIX_THEME = { brand: 'indigo', ink: 'slate', radius: 'medium', baseText: '100%' }   // grayColor "auto" is slate for indigo
+/* And a tone, the same way. Radix tones one element by data-accent-color, and
+ * the engine fills that from a colour the person chose (route().chosen, attr
+ * "tone"). The kit's defaults carry no danger colour, Radix publishes none, so
+ * nothing was chosen, the attribute was left off, and the Remove button wore
+ * the theme's indigo. A destructive action in Radix's own docs is
+ * color="red" (AlertDialog: <Button color="red">). Success and warning are
+ * left out on purpose: no Radix page gives either a colour, and a pick here
+ * would be ours. A tone route() does choose still wins. */
+const RADIX_TONES = { danger: 'red' }
 const radixTheme = () => Object.entries(kits.radix.choices ?? {})
   .map(([role, c]) => [c.attr, c.default ?? RADIX_THEME[role]]).filter(([a, v]) => a && v)
   .map(([a, v]) => ` ${a}="${v}"`).join('')
@@ -150,8 +159,8 @@ for (const id of IDS) {
   const values = DEFAULTS[id]?.values
   if (!values) throw new Error(`no published defaults for ${id}`)
   iconKit(KIT_ICON_SETS[id] ?? null)
-  useRadixTones(Object.fromEntries((route(values, ['radix'], kits)[0]?.chosen ?? [])
-    .filter((c) => c.attr === 'tone').map((c) => [c.role, c.picked])))
+  useRadixTones({ ...RADIX_TONES, ...Object.fromEntries((route(values, ['radix'], kits)[0]?.chosen ?? [])
+    .filter((c) => c.attr === 'tone').map((c) => [c.role, c.picked])) })
   console.log(`\n${kits[id].name} ${kits[id].version}`)
   // What Tailwind scans: every screen this kit will show, so no class a page
   // uses is one the stylesheet never saw.
