@@ -101,6 +101,7 @@ table with its decision.
 | `generate.test.mjs` | holds both, on Bootstrap and on Tailwind | 191 |
 | `generate.mjs` | tokens.json in the W3C shapes (sRGB colour objects, {value, unit} lengths, fontFamily lists); what has no shape is named | 205 |
 | `generate.test.mjs` | holds those shapes | 205 |
+| `scenes.mjs` | on glass a column takes the board's width, so a kit's own responsive rules fold it | 206 |
 
 The byte-for-byte rule above still holds for what it was for: the tests were
 not edited on the way across. A test changed from here on is changed here,

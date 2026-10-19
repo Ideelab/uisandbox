@@ -649,6 +649,12 @@ body{margin:0;overflow:hidden}
   .board{width:100vw;min-width:100vw;box-sizing:border-box;padding:16px 16px 20px;
     overflow-y:auto;overscroll-behavior:contain}
   .board__cols{flex-direction:column;align-items:stretch;gap:16px}
+  /* A column's desktop width is written inline (style="width:1080px"); on
+     glass it is the board's width, so the kit's OWN responsive rules can
+     fold its rows and grids the way they do on any phone (decision 206:
+     from 35-133 elements past the edge per screen to 0 on 38 of 48). */
+  .board .col{width:auto!important;max-width:100%;flex:1 1 auto;min-width:0}
+  .board .card{max-width:100%;min-width:0}
 }
 #strip.pan{cursor:grabbing;user-select:none}
 .board{flex:none;display:flex;flex-direction:column;gap:16px;padding:22px 26px;scroll-snap-align:start;border-inline-end:1px solid rgb(128 128 128 / .16)}

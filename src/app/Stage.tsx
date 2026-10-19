@@ -78,6 +78,8 @@ export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, ch
   const [verify, setVerify] = useState<VerifyResult | { busy: true } | null>(null)
   const [showVerify, setShowVerify] = useState(false)
   const [leftSandbox, setLeftSandbox] = useState(false)
+  // A warning closed stays closed until it says something else.
+  const [dismissedWarning, setDismissedWarning] = useState<string | null>(null)
   const hiddenHost = useRef<HTMLDivElement>(null)
   const w = WIDTHS.find((x) => x.id === width)?.w ?? null
   const src = sandboxUrl(project.id, screen.path, project.base)
@@ -194,8 +196,8 @@ export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, ch
             <div style={{ marginTop: 14 }}><button type="button" className="btn btn--secondary btn--sm" onClick={() => setShowCov(false)}>Close</button></div>
           </div>
         )}
-        {warning && !leftSandbox && (
-          <div className="card popcard popcard--low verify" role="status"><h3>{warningTitle ?? 'Is this the built app?'}</h3><div>{warning}</div><div style={{ marginTop: 12 }}><a className="btn btn--secondary btn--sm" href={reportUrl(project, warning)} target="_blank" rel="noopener">This is wrong? Report it</a></div></div>
+        {warning && !leftSandbox && warning !== dismissedWarning && (
+          <div className="card popcard popcard--low verify" role="status"><h3>{warningTitle ?? 'Is this the built app?'}</h3><div>{warning}</div><div style={{ marginTop: 12, display: 'flex', gap: 8 }}><button type="button" className="btn btn--secondary btn--sm" onClick={() => setDismissedWarning(warning)}>Close</button><a className="btn btn--ghost btn--sm" href={reportUrl(project, warning)} target="_blank" rel="noopener">This is wrong? Report it</a></div></div>
         )}
         {leftSandbox && (
           <div className="card popcard popcard--low verify" role="status">

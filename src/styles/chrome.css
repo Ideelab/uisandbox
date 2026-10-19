@@ -733,3 +733,6 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
 .ddm__swatch { flex: none; width: 12px; height: 12px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .12); }
 .ddm__hint { white-space: nowrap; }
 .ddm__menu { min-width: 260px; }
+/* The editor's footer line: its words from the left, Star on GitHub on the right. */
+.foot--app { justify-content: flex-start; padding-left: 22px; padding-right: 16px; }
+.foot.foot--app .star { margin-left: auto; }

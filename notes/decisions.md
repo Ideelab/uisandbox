@@ -2933,3 +2933,27 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     components section (`components:` in its front matter, "## Components"),
     and the sweep only recognised our own exporter's way of declaring one
     left out. It accepts both now. AdminLTE: 0 findings.
+
+206. The kits fit a phone, and two small things Alexander saw.
+
+    The kit builds' screens ran off a phone: measured in a 364px frame, 35
+    to 133 elements per screen past its edge (shadcn's button row, the
+    overview's stat cards), scrolled sideways inside each board. The cause
+    was one thing: every column's desktop width is written inline
+    (style="width:1080px"), so nothing could fold. On glass a column now
+    takes the board's width (scenes.mjs, ours since 188), and each kit's
+    OWN responsive rules fold its rows and grids the way they do on any
+    phone. Tried first by injecting the rule into the frames, then built:
+    0 elements past the edge on 38 of 48 screens. What is left is the work
+    screen's table (daisyUI and shadcn 49, Bootstrap 11, Radix 9), which
+    scrolls sideways inside itself as a table does on a phone, and 1 or 2
+    elements on three kits' overview. The kit builds and their fixtures
+    were rebuilt; the kit hold-outs are ok 9 of 9.
+
+    - The editor's footer line starts at the left and Star on GitHub sits
+      at the right.
+    - "Is this the built app?" has a Close; a closed warning stays closed
+      until it says something else.
+    - kit-antd timed out twice, both times while something else loaded the
+      same server (probes, a first run straight after a deploy), and is ok
+      on every run alone. Watched, not chased.
