@@ -3072,7 +3072,11 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
 
     Where it lives: `/?capture=1` shows the bookmarklet to drag and the
     console line to copy; the tab the bookmarklet opens shows "Waiting for a
-    screen". Not linked from the door. The bookmarklet is 13.6k characters
+    screen". Not linked from the door. The first version showed the
+    bookmarklet as a button, and Alexander clicked it: nothing happened,
+    and nothing said why. It is now a dashed label with a grip, under a
+    drawn bookmarks bar with its slot; a click says to drag it, and the
+    shortcut for a hidden bookmarks bar is on the page. The bookmarklet is 13.6k characters
     from the production build, 26k from the dev server.
 
     Door copy, a draft for Alexander's OK (not shipped). Under "Your running
