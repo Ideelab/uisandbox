@@ -6,9 +6,9 @@ the editor on the shadcn/ui kit; the Your app tab opens with the bookmarklet
 (any screen your browser shows, logged in or not), then `npx uisandbox-mcp
 open` for a build or a running dev server, then a build. Live on
 uisandbox.org as Worker version `b8becd00` from `main` at `00035d6`.
-`uisandbox-mcp` 0.4.0 is on npm and in the MCP registry; 0.5.0 is built in
-`mcp/dist` from the same commit (the same bundle as the live site, smoke test
-green) and waits for Alexander's publish. The engine lives in
+`uisandbox-mcp` 0.5.0 is on npm (latest) and in the MCP registry
+(`io.github.Ideelab/uisandbox`, latest), built from the same commit: the same
+bundle as the live site, smoke test green. The engine lives in
 `src/kits/engine/`, its only copy (decision 188). Full hold-out gate after
 phase 3: 173 fixtures, ok 153, four known flakes, one timeout under load that
 is ok 3 of 3 alone (195).
@@ -74,9 +74,6 @@ server-side zone analytics); one source, no mirror; every step ends with
 
 ### 1. Polish: make it work phenomenally
 
-- **Publish `uisandbox-mcp` 0.5.0** (Alexander: `npm publish` from `mcp/`,
-  then `./mcp-publisher login github -token …` and `./mcp-publisher
-  publish`). Built and smoke-tested on 2026-10-19.
 - **The bookmarklet behind `Cross-Origin-Opener-Policy: same-origin`.** Such
   an app cuts its tab off from the tab it opens, so nothing can be handed
   over. The bookmarklet says so, but offers no other way. Saving the capture
