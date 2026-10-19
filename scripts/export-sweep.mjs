@@ -325,7 +325,9 @@ function checkDesign(md) {
     const declared = md.includes(`- section: ${key}`)
     if (!has && !declared) out.push(`DESIGN.md: no \`${key}:\` tokens and no \`omitted:\` entry for it (${head} claims something it did not measure)`)
   }
-  if (!md.includes('- section: components')) out.push('DESIGN.md: components neither present nor declared omitted')
+  // Present (a `components:` key, as the engine's DESIGN.md writes it) or
+  // declared omitted (our own exporter's `- section: components`).
+  if (!fm.some((l) => l.startsWith('components:')) && !md.includes('- section: components')) out.push('DESIGN.md: components neither present nor declared omitted')
   return out
 }
 

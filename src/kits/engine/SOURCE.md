@@ -99,6 +99,8 @@ table with its decision.
 | `wall-bindings.mjs` | Radix divider gets `data-accent-color="gray"` | 187 |
 | `generate.mjs` | MANIFEST.md: "The values" for "What you set"; no flat "Nothing" under "nothing reads" for the kits that compile through Tailwind | 191 |
 | `generate.test.mjs` | holds both, on Bootstrap and on Tailwind | 191 |
+| `generate.mjs` | tokens.json in the W3C shapes (sRGB colour objects, {value, unit} lengths, fontFamily lists); what has no shape is named | 205 |
+| `generate.test.mjs` | holds those shapes | 205 |
 
 The byte-for-byte rule above still holds for what it was for: the tests were
 not edited on the way across. A test changed from here on is changed here,

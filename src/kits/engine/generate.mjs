@@ -1233,17 +1233,60 @@ again.
 /**
  * The same values, machine-readable, in the W3C Design Tokens format.
  * Their spec, not a shape of ours — so a tool that reads design tokens can read
- * this one without being told about us.
+ * this one without being told about us. In the shapes the format defines
+ * (decision 205): a colour is an sRGB object, a length a {value, unit} in px or
+ * rem, a font a list of families. The first version wrote every value as a
+ * string and typed the fonts `dimension`, which the export sweep caught once it
+ * could reach this file. A value the format cannot express (an em length needs
+ * a font size to become px) is left out and named in $description, not
+ * smuggled through as a string.
  */
+const HEX6 = /^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i
+function colourToken(v) {
+  const s = String(v).trim()
+  let r, g, b, a = 1
+  const h = s.match(HEX6)
+  if (h) {
+    let x = h[1]
+    if (x.length <= 4) x = [...x].map((c) => c + c).join('')
+    r = parseInt(x.slice(0, 2), 16); g = parseInt(x.slice(2, 4), 16); b = parseInt(x.slice(4, 6), 16)
+    if (x.length === 8) a = parseInt(x.slice(6, 8), 16) / 255
+  } else {
+    const m = s.match(/^rgba?\(\s*([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)(?:\s*[,/]\s*([\d.]+%?))?\s*\)$/i)
+    if (!m) return null
+    r = +m[1]; g = +m[2]; b = +m[3]
+    if (m[4]) a = m[4].endsWith('%') ? parseFloat(m[4]) / 100 : +m[4]
+  }
+  const hx = (n) => Math.round(n).toString(16).padStart(2, '0')
+  const out = { colorSpace: 'srgb', components: [r, g, b].map((n) => Math.round((n / 255) * 10000) / 10000), hex: `#${hx(r)}${hx(g)}${hx(b)}` }
+  if (a < 1) out.alpha = Math.round(a * 1000) / 1000
+  return out
+}
+function dimensionToken(v) {
+  const m = String(v).trim().match(/^(-?\d*\.?\d+)(px|rem)$/i)
+  return m ? { value: parseFloat(m[1]), unit: m[2].toLowerCase() } : null
+}
+function familiesToken(v) {
+  return String(v).split(',').map((f) => f.trim().replace(/^["']|["']$/g, '')).filter(Boolean)
+}
 function tokensJson(values, routed, kits) {
-  const group = (kind, type) => Object.fromEntries(ROLES
-    .filter((r) => values[r.id] != null && (kind === 'other' ? KIND[r.id] !== 'colour' : KIND[r.id] === 'colour'))
-    .map((r) => [r.id, { $type: type, $value: values[r.id], $description: r.what }]))
+  const color = {}, size = {}, font = {}, left = []
+  for (const r of ROLES) {
+    const v = values[r.id]
+    if (v == null) continue
+    const kind = KIND[r.id]
+    if (kind === 'colour') { const t = colourToken(v); if (t) color[r.id] = { $type: 'color', $value: t, $description: r.what }; else left.push(`${r.id} (${v})`) }
+    else if (kind === 'font') font[r.id] = { $type: 'fontFamily', $value: familiesToken(v), $description: r.what }
+    else if (kind === 'length') { const t = dimensionToken(v); if (t) size[r.id] = { $type: 'dimension', $value: t, $description: r.what }; else left.push(`${r.id} (${v})`) }
+    else if (/^-?\d*\.?\d+$/.test(String(v))) size[r.id] = { $type: 'number', $value: Number(v), $description: r.what }
+    else left.push(`${r.id} (${v})`)
+  }
   return JSON.stringify({
     $description: `Generated from ${routed.map((r) => kits[r.kit].name).join(' + ')}. `
-      + 'Every value belongs to the kit that publishes it.',
-    color: group('colour', 'color'),
-    size: Object.fromEntries(Object.entries(group('other', 'dimension')).map(([k, v]) => [k,
-      /^[\d.]+$/.test(String(v.$value)) ? { ...v, $type: 'number' } : v])),
+      + 'Every value belongs to the kit that publishes it.'
+      + (left.length ? ` Not exported, the format has no shape for them: ${left.join(', ')}. theme.css and DESIGN.md carry them as written.` : ''),
+    color,
+    ...(Object.keys(font).length ? { font } : {}),
+    size,
   }, null, 2) + '\n'
 }

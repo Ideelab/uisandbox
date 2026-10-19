@@ -222,3 +222,20 @@ test('the manifest says what the stack is really made of, in four bands', () => 
   const plain = section(generate(VALUES, ['tailwind', 'daisyui'], kits)['MANIFEST.md'], '## What this stack is made of')
   assert.match(plain[0], /nothing here brings any/)
 })
+
+test('tokens.json is in the W3C shapes: colour objects, {value, unit} lengths, font lists (decision 205)', () => {
+  const kits = { bootstrap: JSON.parse(readFileSync('kits/bootstrap.json', 'utf8')) }
+  const t = JSON.parse(generate({ ...VALUES, letterSpacing: '-0.01em', radius: '6px', fontBody: 'Inter, system-ui, sans-serif' }, ['bootstrap'], kits)['tokens.json'])
+  const brand = t.color.brand.$value
+  assert.equal(brand.colorSpace, 'srgb')
+  assert.equal(brand.components.length, 3)
+  assert.match(brand.hex, /^#[0-9a-f]{6}$/)
+  assert.deepEqual(t.size.radius.$value, { value: 6, unit: 'px' })
+  assert.equal(t.font.fontBody.$type, 'fontFamily')
+  assert.deepEqual(t.font.fontBody.$value, ['Inter', 'system-ui', 'sans-serif'])
+  // an em length has no shape in the format without a font size: left out and said
+  assert.equal(t.size.letterSpacing, undefined)
+  assert.match(t.$description, /letterSpacing \(-0\.01em\)/)
+  // and no value is a bare string where the format wants an object
+  for (const g of [t.color, t.size]) for (const v of Object.values(g)) assert.notEqual(typeof v.$value, 'string')
+})

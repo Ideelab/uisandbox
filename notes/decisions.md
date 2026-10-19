@@ -2914,3 +2914,22 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
 
     Not measured yet in live mode: Nuxt, SvelteKit, Astro, Angular, and a
     dev server behind a sub-path or its own login.
+
+205. One token format: the engine's tokens.json in the W3C shapes.
+
+    Found by the export sweep once it could reach the kit export (203): on a
+    build where a kit is detected, tokens.json came from the engine, which
+    wrote every value as a string and typed the fonts `dimension`, while our
+    own exporter writes the shapes the W3C format defines. Now the engine
+    writes them too: a colour is an sRGB object ({colorSpace, components,
+    hex}, alpha when below 1), a length a {value, unit} in px or rem, a font
+    a `fontFamily` list, a plain number a `number`. A value the format has
+    no shape for (letter spacing in em needs a font size to become px) is
+    left out and named in $description, never smuggled through as a string.
+    generate.test.mjs holds the shapes; SOURCE.md lists the change.
+
+    The sweep's second finding, "DESIGN.md: components neither present nor
+    declared omitted", was the instrument: the engine's DESIGN.md HAS a
+    components section (`components:` in its front matter, "## Components"),
+    and the sweep only recognised our own exporter's way of declaring one
+    left out. It accepts both now. AdminLTE: 0 findings.
