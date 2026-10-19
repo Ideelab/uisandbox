@@ -28,6 +28,7 @@ Site: https://uisandbox.org/ · How it works: https://uisandbox.org/about · Sou
 ## For agents
 
 - Load by link, which any agent can say to a user: `https://uisandbox.org/?load=https://github.com/user/repo` (a public GitHub or GitLab repo; its default branch, or `/tree/branch`, is fetched as a zip through the site's own route; the build must be inside the repo, e.g. a gh-pages branch), or `?load=<zip-url>` for a zip the browser may fetch (CORS). A kit: `?load=/kits/<id>.zip` with id tailwind, daisyui, shadcn, bootstrap, material, radix, mantine or antd. `?tab=app` opens on the ways in.
+- While the user develops: `npx uisandbox-mcp open http://localhost:3000` (or the MCP tool `load` with `devUrl`) opens their RUNNING dev server in the sandbox, served from 127.0.0.1 so it is tokenised like a build; hot reload keeps working, and Send returns the patch with their source file names.
 - A link from the Share button carries the knobs as the URL hash and reopens the same build with the same knobs.
 - Claude Code plugin: `/plugin marketplace add Ideelab/uisandbox`, then `/plugin install uisandbox@uisandbox` (skill + MCP server).
 - In Claude Code / Claude Desktop / Cursor with the MCP server: say "open this app in UISandbox". The agent builds the app, loads it and opens the real sandbox in the browser (`open`), then waits (`wait_for_send`) until you press Send to your agent, and gets what you turned and the patch to apply. Prompts `/uisandbox:open` and `/uisandbox:try` exist where the client shows MCP prompts.

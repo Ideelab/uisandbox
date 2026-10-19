@@ -18,7 +18,7 @@ npx tsx mcp/smoke.ts fixtures/x.zip        # load → set → export → verify 
 
 | tool | input | returns |
 |---|---|---|
-| `load` | `zipUrl` or `zipPath` | project id, screens, values, the baseline (brand, fonts, families, palette, canvas, dark mode) — or a refusal with the reason |
+| `load` | `devUrl`, or `zipUrl` / `zipPath` | `devUrl` (e.g. `http://localhost:5173`): a RUNNING dev server, in live mode, no build needed, hot reload passed through; a zip: project id, screens, values, the baseline (brand, fonts, families, palette, canvas, dark mode), or a refusal with the reason |
 | `open` | `id`, `screen?` | **the sandbox itself** in the user's browser — the web app ships in the package and is served from 127.0.0.1 by this process with the archive; what the user turns flows back (`state`) |
 | `state` | `id` | the knobs now, including what was turned by hand in an opened sandbox |
 | `wait_for_send` | `id`, `timeoutSeconds?` | waits until the user presses **Send to your agent** in the opened sandbox, then returns what they turned (from → to), how many values moved, and the patch for their source; says `stillOpen` when the time runs out first |
@@ -35,6 +35,7 @@ The conversation this is built for: *"Can I look at this app in a sandbox and ch
 ## Without an agent
 
 ```bash
+npx uisandbox-mcp open http://localhost:3000   # your RUNNING dev server, live: knobs on the app as you develop it, hot reload included
 npx uisandbox-mcp open                 # inside your project: finds the build, opens the sandbox (a folder or zip as argument works too)
 ```
 
