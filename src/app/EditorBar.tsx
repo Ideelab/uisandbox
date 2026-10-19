@@ -53,7 +53,7 @@ export function ShareButton({ url }: { url: string | null }) {
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current) }, [])
   const say = (s: string, ms: number) => { setSaid(s); if (timer.current) clearTimeout(timer.current); timer.current = setTimeout(() => setSaid(null), ms) }
   const share = async () => {
-    if (!url) { say('Your app was dropped from your machine, so there is no address to send. A link carries the knobs only for a build that has one: a public repo, or a zip URL.', 6000); return }
+    if (!url) { say('Your app came from your own machine, so there is no address to send. A link carries the knobs only for a build that has one: a public repo, or a zip URL.', 6000); return }
     try { await navigator.clipboard.writeText(url); say('Link copied: the same build, with these knobs.', 2200) }
     catch { say(url, 8000) }
   }

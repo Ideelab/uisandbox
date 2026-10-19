@@ -413,7 +413,7 @@ function Editor() {
       const kitId = (() => { try { const u = new URL(url, location.href); return u.origin === location.origin ? u.pathname.match(/^\/kits\/([a-z0-9]+)\.zip$/)?.[1] : undefined } catch { return undefined } })()
       const door = kitId ? DOOR.find((d) => d.id === kitId) : undefined
       // What a link needs to open this again: the repo URL behind the proxy route, or the zip URL itself.
-      const source = (() => { try { const u = new URL(url, location.href); return u.pathname.startsWith('/__repo/') ? u.searchParams.get('u') ?? undefined : u.origin === location.origin ? u.pathname : u.href } catch { return undefined } })()
+      const source = (() => { try { const u = new URL(url, location.href); return u.pathname.startsWith('/__repo/') ? u.searchParams.get('u') ?? undefined : u.pathname.startsWith('/__archive/') ? undefined /* the local server's, gone when it stops */ : u.origin === location.origin ? u.pathname : u.href } catch { return undefined } })()
       await onArchive(await openZip(new File([blob], name.endsWith('.zip') ? name : `${name}.zip`, { type: 'application/zip' })), undefined, door ? { id: door.id, name: door.name } : undefined, source)
     } catch (err) { setError((err as Error).message); setBusy(null) }
   }
@@ -497,7 +497,7 @@ function Editor() {
   const hasScheme = !!loaded && (loaded.project.scheme.media || loaded.project.scheme.hooks.length > 0)
   const turnedOnKit = loaded?.kit ? differingKeys(loaded.report.baseline.cfg, cfg) : []
   const carryNote = turnedOnKit.length ? `What you turned on ${loaded!.kit!.name} comes with it: ${turnedOnKit.map(knobLabel).join(', ')}. Everything else starts as your code has it.` : undefined
-  const door = <Door carryNote={carryNote} onArchive={onArchive} onUrl={(u) => void loadFromUrl(`/__repo/?u=${encodeURIComponent(u)}`)} onSample={(p) => void loadFromUrl(p)} busy={busy} error={error} />
+  const makeDoor = (standalone = false) => <Door standalone={standalone} carryNote={standalone ? undefined : carryNote} onArchive={onArchive} onUrl={(u) => void loadFromUrl(`/__repo/?u=${encodeURIComponent(u)}`)} onSample={(p) => void loadFromUrl(p)} busy={busy} error={error} />
   return (
     <div className="app">
       <header className="app__topbar">
@@ -571,7 +571,7 @@ function Editor() {
               tab={tab}
               onTab={setTab}
               kitName={loaded.kit?.name}
-              door={door}
+              door={makeDoor()}
               notes={showNotes ? (
               <div className="card popcard" role="dialog" aria-label="What was read">
                 <h3>{loaded.kit ? `What we read from ${loaded.kit.name}` : 'What we read from your code'}</h3>
@@ -596,7 +596,7 @@ function Editor() {
             stages (the same shape index.html paints before the script runs,
             so nothing flashes), or, when a load failed, the door with the
             reason and every other way in. */}
-        {!loaded && (error ? door : (
+        {!loaded && (error ? makeDoor(true) : (
           <div className="skel">
             <aside className="skel__panel" aria-hidden />
             <section className="skel__stage">{busy ? <div className="skel__load"><LoadStages busy={busy} /></div> : null}</section>

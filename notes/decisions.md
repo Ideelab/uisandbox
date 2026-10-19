@@ -2634,3 +2634,40 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     After, on a production preview: pre-mount skeleton → React skeleton →
     editor, no door; a logo click changes nothing on screen until the kit
     is in.
+
+197. The door leads with the way where nothing leaves your machine.
+
+    Alexander's experience from the soft launch: people do not dare to drop
+    a zip or connect a repo, because they think their code will be taken.
+    Loading a build here never sends it anywhere (138, and checkable), but
+    "drop your code on a website" is what people hear. His proposal was to
+    keep only "connect localhost". Measured against what that route can do
+    today, it would cost too much: the script line (live.js) reads which
+    kit a running app is on and writes its design system, but it turns no
+    knob (the app is on another origin; there is no stylesheet here to
+    tokenise) and it has nothing to say to an app on none of the nine.
+
+    The route that is local AND does everything already exists:
+    `npx uisandbox-mcp open` in the project finds the build, serves this
+    sandbox from 127.0.0.1 and opens it; nothing reaches uisandbox.org at
+    all. So the Your app tab now leads with that, open: "Run it on your
+    machine", the command, one sentence on what it does. Folded under it:
+    "Already running? Add one line" (the bridge) and "Or load a build here"
+    (zip, folder, repo, samples; open by itself after a failed load, which
+    says why first). The kit row stays only where no kit stands behind the
+    door; behind a kit the Engine menu has them.
+
+    The npm package served the pre-phase-3 app until rebuilt. Rebuilt and
+    bumped to 0.4.0 (package.json, server.json, and the version the server
+    reports, which still said 0.3.2). Checked from the built bundle: the
+    MCP smoke test (load, set, export, verify 1:1 with 0 differences, open,
+    screenshot) passes; `open fixtures/startbootstrap-sb-admin-2-master.zip`
+    serves the new editor with the app as "Your app" (13 screens), Share
+    says there is no address (a `/__archive/` source is the local server's
+    and gone when it stops, so it is not offered as one), and `/` on the
+    same local server opens the shadcn kit. npm publish is Alexander's.
+
+    The bridge gate clicked "running app" in the old tab row; it opens the
+    fold now, and its download and "offers no download" checks are scoped
+    to the bridge door, because the fold's own text says "design system"
+    and the first run clicked the fold instead of the download. 18 of 18.

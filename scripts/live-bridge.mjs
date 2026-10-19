@@ -60,7 +60,8 @@ async function door() {
   // The door is the "Your app" tab of the editor now (merge phase 3), over
   // the default kit; `?tab=app` opens on it.
   await page.goto(`${sandbox}/?tab=app`, { waitUntil: 'networkidle' })
-  await page.click('.stage__door .intake__way:has-text("running app")')
+  // …folded under "Already running? Add one line" since decision 197.
+  await page.click('.stage__door .way__fold:has-text("Already running")')
   await page.waitForSelector('.live__snippet')
   return page
 }
@@ -82,7 +83,7 @@ try {
   // 2 — a running app on Bootstrap
   const said = await connect(page, `${apps}/kit/`)
   check('a running Bootstrap app is recognised', /Connected · runs on Bootstrap 5\.3\.8/.test(said), said)
-  const [dl] = await Promise.all([page.waitForEvent('download'), page.click('button:has-text("design system")')])
+  const [dl] = await Promise.all([page.waitForEvent('download'), page.click('.intake__drop--live button:has-text("design system")')])
   const out = mkdtempSync(join(tmpdir(), 'live-zip-'))
   await dl.saveAs(join(out, 'x.zip')); execFileSync('unzip', ['-q', '-o', join(out, 'x.zip'), '-d', join(out, 'x')])
   const x = join(out, 'x')
@@ -113,14 +114,14 @@ try {
   page = await door()
   const quiet = await connect(page, `${apps}/quiet/`)
   check('an app without the line is reported as silent, not as "no kit"', /Nothing heard back/.test(quiet), quiet)
-  check('and offers no download', !(await page.$('button:has-text("design system")')))
+  check('and offers no download', !(await page.$('.intake__drop--live button:has-text("design system")')))
   await page.close()
 
   // 4 — a page on no kit, with the line: heard, and said why there is nothing to write
   page = await door()
   const plain = await connect(page, `${apps}/plain/`)
   check('a page on no kit is heard and told so', /Connected\. This page runs on none of the nine/.test(plain), plain)
-  check('and offers no download', !(await page.$('button:has-text("design system")')))
+  check('and offers no download', !(await page.$('.intake__drop--live button:has-text("design system")')))
   await page.close()
 
   // 5 — the sandbox's own address is refused before it is framed

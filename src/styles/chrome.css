@@ -683,3 +683,21 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
 .skel__stage { flex: 1; border: 1px solid var(--app-border); border-radius: 12px; background: var(--app-surface); display: flex; align-items: center; justify-content: center; padding: 24px; }
 .skel__load { width: min(360px, 100%); }
 @media (max-width: 820px) { .skel__panel { display: none; } }
+/* The door's three ways (decision 197): the local one open, the others folded. */
+.way { text-align: left; }
+.way--main h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; font-size: 15px; font-weight: 650; }
+.way--main p { margin: 0 0 12px; max-width: none; color: var(--app-fg-muted); font-size: 13px; line-height: 1.5; }
+.way--main .install--compact { margin: 0 0 10px; }
+.way--main .install__pill { width: 100%; max-width: none; }
+.way__fine { font-size: 12px !important; margin-bottom: 4px !important; }
+.way__fine a { color: var(--app-fg); }
+.way__fold { width: 100%; display: flex; align-items: center; gap: 12px; margin-top: 10px; padding: 12px 14px; border: 1px solid var(--app-border); border-radius: 10px; background: var(--app-surface); text-align: left; color: var(--app-fg); }
+.way__fold:hover { background: var(--app-hover); }
+.way__fold:first-of-type { margin-top: 18px; }
+.way__icon { color: var(--app-fg-muted); display: inline-flex; }
+.way__text { flex: 1; display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
+.way__text span { color: var(--app-fg-muted); font-size: 12px; }
+.way__chev { color: var(--app-fg-faint); transition: transform .15s; }
+.way__fold--open .way__chev { transform: rotate(90deg); }
+.way__body { margin-top: 12px; }
+.intake__error--top { margin: 0 0 16px; text-align: left; }

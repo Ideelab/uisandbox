@@ -1,6 +1,6 @@
 import { DropGlyph } from './Mark'
 import { useEffect, useRef, useState } from 'react'
-import { FileArchive, FolderOpen, GitBranch, Check, ShieldCheck, X, Plug } from 'lucide-react'
+import { FileArchive, FolderOpen, GitBranch, Check, ShieldCheck, X, Plug, ChevronRight, Laptop } from 'lucide-react'
 import { archiveFromFiles, isZip, openZip, type Archive } from '../audit/intake/readZip'
 import { filesFromDrop } from '../audit/intake/readFiles'
 import { STAGES, fmtBytes, type Progress } from './progress'
@@ -16,8 +16,10 @@ interface DoorProps {
   error: string | null
   /** Said when knobs were turned on the kit behind the door: they come along. */
   carryNote?: string
+  /** No kit stands behind the door (a load failed): offer the kits here too. */
+  standalone?: boolean
 }
-type Way = 'zip' | 'folder' | 'repo' | 'app'
+type Way = 'zip' | 'folder' | 'repo'
 
 /** Three real open-source builds (MIT) served from this origin — names people know, with colour everywhere the knobs reach. */
 import DOOR from '../kits/door.json'
@@ -30,14 +32,19 @@ const SAMPLES = [
 ]
 
 /**
- * The door. Ways in — a zip of the build, a folder (build or source), a public
- * GitHub repo, a running app — and, while it works, the stages with their
- * numbers. Everything stays in the tab; the repo route says the one thing that
- * does not. It is the empty state of the stage's "Your app" tab, and what a
- * failed load falls back to; the story around it lives on /about.
+ * The door: the empty state of the stage's "Your app" tab, and what a failed
+ * load falls back to; the story around it lives on /about.
+ *
+ * In the order people trust it (decision 197). First the way where nothing
+ * leaves their machine at all: one command in their project, the sandbox
+ * served from 127.0.0.1. Then the running app, one script line. Then, folded
+ * away, loading a build into this page (zip, folder, repo): it never leaves
+ * the tab either, but "drop your code on a website" is what people hear, and
+ * the samples, Share links and agents' `?load=` still need it.
  */
-export function Door({ onArchive, onUrl, onSample, busy, error, carryNote }: DoorProps) {
+export function Door({ onArchive, onUrl, onSample, busy, error, carryNote, standalone }: DoorProps) {
   const [way, setWay] = useState<Way>('zip')
+  const [more, setMore] = useState<'running' | 'build' | null>(error || standalone ? 'build' : null)
   const [showPrivacy, setShowPrivacy] = useState(false)
   const [over, setOver] = useState(false)
   const [localError, setLocalError] = useState<string | null>(null)
@@ -65,8 +72,14 @@ export function Door({ onArchive, onUrl, onSample, busy, error, carryNote }: Doo
     { id: 'zip', label: <><span className="intake__way-long">Upload a </span>zip</>, icon: <FileArchive size={14} strokeWidth={1.75} /> },
     { id: 'folder', label: <><span className="intake__way-long">Upload a </span>codebase</>, icon: <FolderOpen size={14} strokeWidth={1.75} /> },
     { id: 'repo', label: <><span className="intake__way-long">Connect a </span>repo</>, icon: <GitBranch size={14} strokeWidth={1.75} /> },
-    { id: 'app', label: <><span className="intake__way-long">Your </span>running app</>, icon: <Plug size={14} strokeWidth={1.75} /> },
   ]
+  const fold = (id: 'running' | 'build', title: string, sub: string, icon: React.ReactNode) => (
+    <button type="button" className={`way__fold ${more === id ? 'way__fold--open' : ''}`} aria-expanded={more === id} onClick={() => setMore(more === id ? null : id)}>
+      <span className="way__icon">{icon}</span>
+      <span className="way__text"><b>{title}</b><span>{sub}</span></span>
+      <ChevronRight size={15} className="way__chev" />
+    </button>
+  )
 
   return (
     <div className="intake intake--door">
@@ -74,17 +87,29 @@ export function Door({ onArchive, onUrl, onSample, busy, error, carryNote }: Doo
       <div className="door">
       <div className="card intake__card">
 
+        {/* A failed load says why first, above every way to try again. */}
+        {error && !busy && <div className="intake__error intake__error--top">{error}</div>}
         {busy ? (
           <LoadStages busy={busy} />
         ) : (
           <>
             {carryNote && <p className="intake__carry">{carryNote}</p>}
+            <section className="way way--main">
+              <h3><Laptop size={16} strokeWidth={1.75} /> Run it on your machine</h3>
+              <p>In your project folder. It finds your build (<code>dist/</code>, <code>build/</code>, <code>out/</code>) and opens this sandbox from <code>127.0.0.1</code>: your code never leaves your machine, not even to this site. Needs Node 20.</p>
+              <InstallLine compact />
+              <p className="way__fine">From Claude Code, Cursor or any MCP client: say "open this app in UISandbox". <a href="/about#agents">How</a></p>
+            </section>
+            {fold('running', 'Already running? Add one line', 'Your app on localhost or anywhere: we read which kit it runs on and write its design system', <Plug size={15} strokeWidth={1.75} />)}
+            {more === 'running' && <div className="way__body"><LiveAppDoor /></div>}
+            {fold('build', 'Or load a build here', 'A zip, a folder or a public repo, read into this tab. Or try a sample', <FileArchive size={15} strokeWidth={1.75} />)}
+            {more === 'build' && <div className="way__body">
             <div className="intake__ways" role="tablist">
               {ways.map((w) => (
                 <button key={w.id} type="button" role="tab" aria-selected={way === w.id} className={`intake__way ${way === w.id ? 'intake__way--on' : ''}`} onClick={() => { setWay(w.id); setLocalError(null) }}>{w.icon} {w.label}</button>
               ))}
             </div>
-            {way === 'app' ? <LiveAppDoor /> : way !== 'repo' ? (
+            {way !== 'repo' ? (
               <div
                 className={`intake__drop ${over ? 'intake__drop--over' : ''}`}
                 onDragOver={(e) => { e.preventDefault(); setOver(true) }}
@@ -128,7 +153,7 @@ export function Door({ onArchive, onUrl, onSample, busy, error, carryNote }: Doo
                 <div className="intake__note">GitHub and GitLab do not allow the browser to fetch a repo zip directly, so the URL goes through uisandbox.org to fetch it. Public repos only, nothing stored. Everything else stays in your browser.</div>
               </div>
             )}
-            {way !== 'repo' && way !== 'app' && (
+            {way !== 'repo' && (
               <button type="button" className="intake__privacy" onClick={() => setShowPrivacy(true)}>
                 <ShieldCheck size={13} strokeWidth={2} /> Loaded into this tab, never sent to a server. No database, no account, no analytics. <u>How to verify</u>
               </button>
@@ -140,20 +165,23 @@ export function Door({ onArchive, onUrl, onSample, busy, error, carryNote }: Doo
               </div>
               {/* The kit door. Each is a build made from that kit's own package
                   (scripts/kit-builds.mjs): its classes, its compiled CSS, its
-                  published defaults, so ×1 reads as "as the kit ships it". */}
-              <div className="intake__samples">
+                  published defaults, so ×1 reads as "as the kit ships it".
+                  Behind a kit the Engine menu has them; here only when no kit
+                  stands behind the door. */}
+              {standalone && <div className="intake__samples">
                 <span>Or start from a kit:</span>
                 {DOOR.filter((k) => k.renders).map((k) => (
                   <button key={k.id} type="button" className="intake__sample" onClick={() => onSample(`/kits/${k.id}.zip`)}
                     title={`${k.name}${k.version ? ` ${k.version}` : ''}: six screens in its own components and its own defaults`}>{k.name}</button>
                 ))}
-              </div>
+              </div>}
             </>)}
+            </div>}
             <input ref={zipRef} type="file" accept=".zip,application/zip" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) void takeFiles([f]); e.target.value = '' }} />
             <input ref={dirRef} type="file" hidden {...({ webkitdirectory: '', directory: '' } as Record<string, string>)} onChange={(e) => { const fs = Array.from(e.target.files ?? []); if (fs.length) void takeFiles(fs); e.target.value = '' }} />
           </>
         )}
-        {(error || localError) && <div className="intake__error">{error || localError}</div>}
+        {localError && <div className="intake__error">{localError}</div>}
       </div>
       </div>
     </div>
@@ -308,7 +336,7 @@ export function Landing() {
         <p>There is no server behind the sandbox, no account, no cookies and no analytics. Your files are read in the page and served to the frame by a service worker on this origin; the knobs are a URL hash; exports are generated here. You can check this yourself: watch the network tab while you drop and export (no request carries your bytes), or load the page, go offline and drop the zip: everything still works. The one exception is <em>Connect a repo</em>: a public GitHub or GitLab URL goes through uisandbox.org to fetch the zip, because neither host lets a browser fetch it directly; nothing is stored. A hostile archive cannot navigate this page away, register its own worker, or smuggle a path out of an export. <a href="https://github.com/Ideelab/uisandbox/blob/main/notes/security.md" target="_blank" rel="noopener">The full security note.</a></p>
       </section>
       <section className="landing__sec">
-        <h2>From your terminal, or from your agent</h2>
+        <h2 id="agents">From your terminal, or from your agent</h2>
         <p>The same engine runs as an MCP server, and as a <b>Claude Code skill</b>, <code>/uisandbox</code>. Say <em>"open this app in UISandbox"</em> and it builds, loads and opens the real sandbox in your browser; what you turn comes back, so <em>"export what I changed"</em> just works. The plugin installs the skill and the server in one step; any MCP client (Cursor, Claude Desktop, Codex) gets the server and its own <code>/uisandbox:open</code> prompt. Or <code>npx uisandbox-mcp open</code> inside your project, without any agent.</p>
         <InstallLine />
         <p className="landing__more"><b>Or a link.</b> <code>uisandbox.org/?load=</code> followed by a public GitHub or GitLab repository URL, or a direct link to a <code>.zip</code> that allows CORS, opens straight into the sandbox. It is how the samples load, and it is a way to show somebody a build without asking them to find it: <a href="https://uisandbox.org/?load=https://github.com/edwardtufte/tufte-css" target="_blank" rel="noopener">uisandbox.org/?load=https://github.com/edwardtufte/tufte-css</a>.</p>
