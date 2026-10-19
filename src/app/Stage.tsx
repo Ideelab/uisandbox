@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type RefObject } from 'react'
-import { ExternalLink, Info, Plus, RefreshCw, ShieldCheck, Star } from 'lucide-react'
+import { ExternalLink, Info, Plus, RefreshCw, ShieldCheck, Star, X } from 'lucide-react'
 import { ScreenPicker } from './ScreenPicker'
 import type { SandboxProject, Screen } from '../sandbox/project'
 import { identitySid, rawSid, sandboxUrl } from '../sandbox/host'
@@ -191,14 +191,14 @@ export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, pi
         <div className="stage__low">
         {showCov && coverage && (
           <div className="card popcard popcard--low verify" role="dialog" aria-label="Reach">
+            <button type="button" className="btn btn--ghost btn--icon popcard__x" onClick={() => setShowCov(false)} aria-label="Close" title="Close"><X size={15} /></button>
             <h3>What the knobs reach on this screen</h3>
             <div>Of {coverage.elements} visible elements: <b>{coverage.colours.hit}/{coverage.colours.total}</b> painted colours (text, backgrounds, borders), <b>{coverage.fonts.hit}/{coverage.fonts.total}</b> text families, <b>{coverage.sizes.hit}/{coverage.sizes.total}</b> text sizes and <b>{coverage.radii.hit}/{coverage.radii.total}</b> corner radii come from your CSS literals and follow the knobs.</div>
             <div style={{ marginTop: 6 }}>Outside any knob: {coverage.outside.images} image{coverage.outside.images === 1 ? '' : 's'}, {coverage.outside.canvas} canvas, {coverage.outside.video} video, {coverage.outside.backgroundImages} background image{coverage.outside.backgroundImages === 1 ? '' : 's'}: pixels no CSS value can move.</div>
-            <div style={{ marginTop: 14 }}><button type="button" className="btn btn--secondary btn--sm" onClick={() => setShowCov(false)}>Close</button></div>
           </div>
         )}
         {warning && !leftSandbox && warning !== dismissedWarning && (
-          <div className="card popcard popcard--low verify" role="status"><h3>{warningTitle ?? 'Is this the built app?'}</h3><div>{warning}</div><div style={{ marginTop: 12, display: 'flex', gap: 8 }}><button type="button" className="btn btn--secondary btn--sm" onClick={() => setDismissedWarning(warning)}>Close</button><a className="btn btn--ghost btn--sm" href={reportUrl(project, warning)} target="_blank" rel="noopener">This is wrong? Report it</a></div></div>
+          <div className="card popcard popcard--low verify" role="status"><button type="button" className="btn btn--ghost btn--icon popcard__x" onClick={() => setDismissedWarning(warning)} aria-label="Close" title="Close"><X size={15} /></button><h3>{warningTitle ?? 'Is this the built app?'}</h3><div>{warning}</div><div style={{ marginTop: 12, display: 'flex', gap: 8 }}><a className="btn btn--ghost btn--sm" href={reportUrl(project, warning)} target="_blank" rel="noopener">This is wrong? Report it</a></div></div>
         )}
         {leftSandbox && (
           <div className="card popcard popcard--low verify" role="status">
@@ -210,6 +210,7 @@ export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, pi
         <div ref={hiddenHost} aria-hidden="true" />
         {showVerify && (
           <div className="card popcard verify" role="dialog" aria-label="1:1 check">
+            <button type="button" className="btn btn--ghost btn--icon popcard__x" onClick={() => setShowVerify(false)} aria-label="Close" title="Close"><X size={15} /></button>
             <h3>1:1 check: untouched vs. tokenised, identity sheet</h3>
             {!verify || 'busy' in verify ? (
               <div>Loading both versions of this screen and comparing every element…</div>
@@ -229,7 +230,6 @@ export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, pi
             )}
             <div style={{ marginTop: 10, display: 'flex', gap: 8, alignItems: 'center' }}>
               <button type="button" className="btn btn--secondary btn--sm" onClick={runVerify}>Run again</button>
-              <button type="button" className="btn btn--secondary btn--sm" onClick={() => setShowVerify(false)}>Close</button>
               {verify && !('busy' in verify) && !verify.ok && !verify.refusal && (
                 <a className="btn btn--ghost btn--sm" href={reportUrl(project, `1:1 differs — ${verify.mismatches.slice(0, 3).map((m) => `${m.prop}: ${m.raw} → ${m.sandbox}`).join('; ')}`)} target="_blank" rel="noopener">Report this build</a>
               )}

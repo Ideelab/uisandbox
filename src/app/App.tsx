@@ -707,6 +707,7 @@ function Editor() {
               notesLabel={loaded.kit ? `What UISandbox read from ${loaded.kit.name}: its files, its brand, its fonts, its values` : 'What UISandbox read from your code: the files, the brand, the fonts, the values'}
               notes={showNotes ? (
               <div className="card popcard" role="dialog" aria-label="What was read">
+                <button type="button" className="btn btn--ghost btn--icon popcard__x" onClick={() => setShowNotes(false)} aria-label="Close" title="Close"><X size={15} /></button>
                 <h3>{loaded.kit ? `What we read from ${loaded.kit.name}` : 'What we read from your code'}</h3>
                 <ul className="notes">
                   {loaded.report.notes.map((n, i) => <li key={i}>{n}</li>)}
@@ -719,7 +720,6 @@ function Editor() {
                     </li>
                   )}
                 </ul>
-                <div style={{ marginTop: 14 }}><button type="button" className="btn btn--secondary btn--sm" onClick={() => setShowNotes(false)}>Close</button></div>
               </div>
               ) : null}
             />

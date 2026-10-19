@@ -350,6 +350,10 @@ button { background: none; border: 0; padding: 0; cursor: pointer; }
 .notes li { margin: 5px 0; }
 .notes li::marker { color: var(--app-fg-faint); }
 .popcard { position: absolute; right: 16px; top: 62px; z-index: 50; width: min(480px, 90vw); padding: 24px 26px; }
+/* Every card closes the same way: a cross top right, not a Close button at
+   the foot (the heading leaves room for it). */
+.popcard__x { position: absolute; top: 12px; right: 12px; margin: 0 !important; }
+.popcard h3 { padding-right: 28px; }
 .popcard h3 { margin: 0 0 14px; font-size: 15px; font-weight: 650; letter-spacing: -0.01em; color: var(--app-fg); }
 .popcard ul { margin: 0; padding-left: 18px; display: grid; gap: 7px; }
 .popcard li { line-height: 1.5; }
@@ -358,7 +362,7 @@ button { background: none; border: 0; padding: 0; cursor: pointer; }
 .stage__frame .popcard--low { border-color: color-mix(in srgb, var(--app-warn) 45%, var(--app-border)); }
 /* The low cards (reach, a warning) stack instead of overlapping. */
 .stage__low { position: absolute; right: 12px; bottom: 12px; z-index: 50; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; pointer-events: none; }
-.stage__low .popcard { position: static; pointer-events: auto; }
+.stage__low .popcard { position: relative; pointer-events: auto; }
 kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px solid var(--app-border); border-bottom-width: 2px; border-radius: 5px; background: var(--app-surface); }
 /* The credit line's links stay in the chrome's own ink. */
 .intake__fine a { color: var(--app-fg-muted); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--app-fg-muted) 40%, transparent); text-underline-offset: 2px; }
