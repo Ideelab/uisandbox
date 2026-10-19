@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type RefObject } from 'react'
-import { ExternalLink, RefreshCw, ShieldCheck, Star } from 'lucide-react'
+import { ExternalLink, Plus, RefreshCw, ShieldCheck, Star } from 'lucide-react'
 import { ScreenPicker } from './ScreenPicker'
 import type { SandboxProject, Screen } from '../sandbox/project'
 import { identitySid, rawSid, sandboxUrl } from '../sandbox/host'
@@ -26,7 +26,20 @@ interface StageProps {
    *  whenever the 1:1 check is not; one card at a time, never two on top of
    *  each other. */
   notes?: React.ReactNode
+  /** The tabs (merge phase 3). On a kit: its components sheet, its screens,
+   *  and "Your app", whose empty state is the door. */
+  tab?: StageTab
+  onTab?: (t: StageTab) => void
+  /** Set when the stage shows a kit build of ours, not somebody's app. */
+  kitName?: string
+  /** The ways in, shown on the "Your app" tab while a kit is on the stage. */
+  door?: React.ReactNode
 }
+
+export type StageTab = 'components' | 'screens' | 'app'
+
+/** A kit build's components sheet is its index page; every other page is a screen. */
+const isSheet = (s: Screen) => /^(index\.html?)?$/i.test(s.path.replace(/^\//, ''))
 
 const WIDTHS: Array<{ id: string; label: string; w: number | null }> = [
   { id: 'fit', label: 'Fit', w: null },
@@ -53,7 +66,7 @@ function reportUrl(project: SandboxProject, detail: string): string {
   return `https://github.com/Ideelab/uisandbox/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}&labels=build-report`
 }
 
-export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, changedCount, warning, warningTitle, coverage, notes }: StageProps) {
+export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, changedCount, warning, warningTitle, coverage, notes, tab = 'app', onTab, kitName, door }: StageProps) {
   const [showCov, setShowCov] = useState(false)
   const [width, setWidth] = useState<string>('fit')
   const [verify, setVerify] = useState<VerifyResult | { busy: true } | null>(null)
@@ -98,10 +111,30 @@ export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, ch
     }
   }
 
+  // On a kit the tabs pick the screen: the sheet, or one of the others.
+  const sheet = kitName ? project.screens.find(isSheet) : undefined
+  const others = kitName ? project.screens.filter((s) => !isSheet(s)) : project.screens
+  const atDoor = !!kitName && tab === 'app'
+  const pickTab = (t: StageTab) => {
+    onTab?.(t)
+    if (t === 'components' && sheet && screen !== sheet) onScreen(sheet)
+    if (t === 'screens' && isSheet(screen) && others.length) onScreen(others.find((s) => /overview/i.test(s.path)) ?? others[0]!)
+  }
+  // Whatever the screen picker lands on decides the tab it belongs to.
+  useEffect(() => { if (kitName && tab !== 'app') onTab?.(isSheet(screen) ? 'components' : 'screens') }, [screen, kitName]) // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <section className="stage">
       <div className="stage__bar">
-        <ScreenPicker screens={project.screens} current={screen} onPick={onScreen} onPin={onPin} />
+        {kitName && (
+          <div className="stage__tabs" role="tablist" aria-label="What the stage shows">
+            <button type="button" role="tab" aria-selected={tab === 'components'} className={`stage__tab ${tab === 'components' ? 'stage__tab--on' : ''}`} onClick={() => pickTab('components')}>Components</button>
+            <button type="button" role="tab" aria-selected={tab === 'screens'} className={`stage__tab ${tab === 'screens' ? 'stage__tab--on' : ''}`} onClick={() => pickTab('screens')}>Screens</button>
+            <button type="button" role="tab" aria-selected={tab === 'app'} className={`stage__tab stage__tab--app ${tab === 'app' ? 'stage__tab--on' : ''}`} onClick={() => pickTab('app')}><Plus size={13} strokeWidth={2} /> Your app</button>
+          </div>
+        )}
+        {(!kitName || tab === 'screens') && <ScreenPicker screens={others} current={screen} onPick={onScreen} onPin={onPin} />}
+        {!atDoor && <>
         <div className="seg" role="group" aria-label="Viewport width">
           {WIDTHS.map((x) => (
             <button key={x.id} className={`seg__opt ${x.id === width ? 'seg__opt--on' : ''}`} onClick={() => setWidth(x.id)}>{x.label}</button>
@@ -114,8 +147,13 @@ export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, ch
         <a className="btn btn--ghost btn--sm" href={src} target="_blank" rel="noreferrer" title="Open this screen in a new tab (same sandbox)">
           <ExternalLink size={13} strokeWidth={2} /> Open
         </a>
+        </>}
       </div>
-      <div className={`stage__frame ${w ? 'stage__frame--w' : ''}`}>
+      <div className={`stage__frame ${w ? 'stage__frame--w' : ''} ${atDoor ? 'stage__frame--door' : ''}`}>
+        {/* The door sits OVER the kit, which stays loaded and measured under
+            it: the knobs, the reach and the export keep working while a
+            visitor decides what to bring. */}
+        {atDoor && <div className="stage__door">{door}</div>}
         <iframe
           key={project.id}
           name={`us:${project.id}`}

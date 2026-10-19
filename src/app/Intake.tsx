@@ -1,13 +1,12 @@
-import { Mark, DropGlyph } from './Mark'
+import { DropGlyph } from './Mark'
 import { useEffect, useRef, useState } from 'react'
-import { FileArchive, FolderOpen, GitBranch, Check, Info, ShieldCheck, X, Plug } from 'lucide-react'
+import { FileArchive, FolderOpen, GitBranch, Check, ShieldCheck, X, Plug } from 'lucide-react'
 import { archiveFromFiles, isZip, openZip, type Archive } from '../audit/intake/readZip'
 import { filesFromDrop } from '../audit/intake/readFiles'
 import { STAGES, fmtBytes, type Progress } from './progress'
 import { InstallLine } from './InstallLine'
-import { Footer } from './Footer'
 
-interface IntakeProps {
+interface DoorProps {
   onArchive: (archive: Archive) => void
   /** A zip by URL — the repo route (App fetches, through the proxy when needed). */
   onUrl?: (url: string) => void
@@ -29,11 +28,13 @@ const SAMPLES = [
 ]
 
 /**
- * The door. Three ways in — a zip of the build, a folder (build or source),
- * a public GitHub repo — and, while it works, the stages with their numbers.
- * Everything stays in the tab; the repo route says the one thing that does not.
+ * The door. Ways in — a zip of the build, a folder (build or source), a public
+ * GitHub repo, a running app — and, while it works, the stages with their
+ * numbers. Everything stays in the tab; the repo route says the one thing that
+ * does not. It is the empty state of the stage's "Your app" tab, and what a
+ * failed load falls back to; the story around it lives on /about.
  */
-export function Intake({ onArchive, onUrl, onSample, busy, error }: IntakeProps) {
+export function Door({ onArchive, onUrl, onSample, busy, error }: DoorProps) {
   const [way, setWay] = useState<Way>('zip')
   const [showPrivacy, setShowPrivacy] = useState(false)
   const [over, setOver] = useState(false)
@@ -66,24 +67,7 @@ export function Intake({ onArchive, onUrl, onSample, busy, error }: IntakeProps)
   ]
 
   return (
-    <div className="intake">
-      <section className="hero">
-        <div className="intake__mark"><Mark size={44} /></div>
-        {/* Each sentence its own line: the break belongs at the full stop, and a
-            <br /> would put it wherever the width happens to run out. */}
-        <h1><span>Play with your app's design.</span><span>Right in the browser.</span></h1>
-        {/* The three beats carry the mechanism, so the paragraph does not have
-            to repeat the loop and can spend its words on what the beats cannot
-            say: where it runs, how faithful it is, and what comes out. */}
-        <p className="hero__beats">Drop your build, turn the knobs, export the code.</p>
-        <p className="hero__sub">In your browser, or straight from your agent via MCP. Every colour, font, radius and spacing in its CSS becomes a knob, and the real app follows 1:1. Nothing is sent to a server and nothing is stored: close the tab and it is all undone. The code comes out as a patch, design tokens, or a DESIGN.md for your agent.</p>
-        <InstallLine compact />
-        <ul className="hero__proof" aria-label="In short">
-          <li><Check size={13} strokeWidth={2.5} /> Free</li>
-          <li><Check size={13} strokeWidth={2.5} /> Open source <a href="https://github.com/Ideelab/uisandbox/blob/main/LICENSE" target="_blank" rel="noopener license">(MIT)</a></li>
-          <li><Check size={13} strokeWidth={2.5} /> Your files never leave your browser <button type="button" className="hero__info" onClick={() => setShowPrivacy(true)} aria-label="How your files stay private" title="How your files stay private"><Info size={13} /></button></li>
-        </ul>
-      </section>
+    <div className="intake intake--door">
       {showPrivacy && <PrivacyCard onClose={() => setShowPrivacy(false)} />}
       <div className="door">
       <div className="card intake__card">
@@ -188,7 +172,6 @@ export function Intake({ onArchive, onUrl, onSample, busy, error }: IntakeProps)
         {(error || localError) && <div className="intake__error">{error || localError}</div>}
       </div>
       </div>
-      {!busy && <><Landing /><Footer /></>}
     </div>
   )
 }
@@ -196,7 +179,7 @@ export function Intake({ onArchive, onUrl, onSample, busy, error }: IntakeProps)
 /** The claim, verifiable: what leaves the tab (nothing), and three checks a
  *  sceptic can run in a minute. Every line here is something a reader can go
  *  and check, which is the only reason it is safe to write it down. */
-function PrivacyCard({ onClose }: { onClose: () => void }) {
+export function PrivacyCard({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', onKey)
@@ -220,8 +203,9 @@ function PrivacyCard({ onClose }: { onClose: () => void }) {
   )
 }
 
-/** The one-pager under the door: what it does, what moves, how it stays honest, for agents. Plain, black and white, no claims the meter would contradict. */
-function Landing() {
+/** The story: what it does, what moves, how it stays honest, for agents.
+ *  Plain, black and white, no claims the meter would contradict. On /about. */
+export function Landing() {
   // CSS can suppress an animation but not an autoplaying video, so the clip
   // asks here and hands over the controls instead of starting on its own.
   const [stillPlease] = useState(() => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches)
@@ -316,7 +300,7 @@ function Landing() {
         <h2>From your terminal, or from your agent</h2>
         <p>The same engine runs as an MCP server, and as a <b>Claude Code skill</b>, <code>/uisandbox</code>. Say <em>"open this app in UISandbox"</em> and it builds, loads and opens the real sandbox in your browser; what you turn comes back, so <em>"export what I changed"</em> just works. The plugin installs the skill and the server in one step; any MCP client (Cursor, Claude Desktop, Codex) gets the server and its own <code>/uisandbox:open</code> prompt. Or <code>npx uisandbox-mcp open</code> inside your project, without any agent.</p>
         <InstallLine />
-        <p className="landing__more"><b>Or a link.</b> <code>uisandbox.org/?load=</code> followed by a public GitHub or GitLab repository URL, or a direct link to a <code>.zip</code> that allows CORS, opens straight into the sandbox. It is how the samples above load, and it is a way to show somebody a build without asking them to find it: <a href="https://uisandbox.org/?load=https://github.com/edwardtufte/tufte-css" target="_blank" rel="noopener">uisandbox.org/?load=https://github.com/edwardtufte/tufte-css</a>.</p>
+        <p className="landing__more"><b>Or a link.</b> <code>uisandbox.org/?load=</code> followed by a public GitHub or GitLab repository URL, or a direct link to a <code>.zip</code> that allows CORS, opens straight into the sandbox. It is how the samples load, and it is a way to show somebody a build without asking them to find it: <a href="https://uisandbox.org/?load=https://github.com/edwardtufte/tufte-css" target="_blank" rel="noopener">uisandbox.org/?load=https://github.com/edwardtufte/tufte-css</a>.</p>
       </section>
       <section className="landing__sec landing__sec--quiet">
         <h2>Who made this</h2>

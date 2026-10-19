@@ -1,6 +1,6 @@
 import DOOR from '../kits/door.json'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Download, Info, PanelLeftOpen, X } from 'lucide-react'
+import { Download, Info, PanelLeftOpen, X, BookOpen } from 'lucide-react'
 import { SandboxPanel } from '../panel/SandboxPanel'
 import type { Config } from '../tokens/types'
 import { useConfig } from '../state/useConfig'
@@ -26,8 +26,9 @@ import { nestedDocs } from '../sandbox/verify'
 import { applyScheme } from '../sandbox/scheme'
 import { googleFontsImport, isCustomFont, customFontFamily, SYSTEM_FONT } from '../tokens/fonts'
 import { customFontUrl } from '../tokens/customFonts'
-import { Intake } from './Intake'
-import { Stage } from './Stage'
+import { Door } from './Intake'
+import { About } from './About'
+import { Stage, type StageTab } from './Stage'
 import { ExportDialog } from './ExportDialog'
 import { genPatch, genPatchedFiles } from '../export/genSheet'
 
@@ -44,7 +45,17 @@ interface Loaded {
   kit?: { id: string; name: string }
 }
 
+/** Where a visitor lands: the editor, on this kit as it ships (merge phase 3).
+ *  Nothing to upload before the first knob; their own app is a tab away. */
+const DEFAULT_KIT = 'shadcn'
+const isAbout = () => /^\/about\/?$/.test(location.pathname)
+
 export function App() {
+  if (isAbout()) return <About />
+  return <Editor />
+}
+
+function Editor() {
   const { cfg, tokens, dispatch, undo, redo, reset, canUndo, canRedo } = useConfig()
   const [loaded, setLoaded] = useState<Loaded | null>(null)
   const [busy, setBusyRaw] = useState<Progress | null>(null)
@@ -55,6 +66,11 @@ export function App() {
   const [panelOpen, setPanelOpen] = useState(() => typeof window === 'undefined' || window.innerWidth > 700)
   const [showExport, setShowExport] = useState(false)
   const [showNotes, setShowNotes] = useState(false)
+  // The stage's tabs. On a kit: its components sheet, its screens, and the
+  // door to your own app. `?tab=app` (from /about) opens on the door.
+  const [tab, setTab] = useState<StageTab>(() => new URLSearchParams(location.search).get('tab') === 'app' ? 'app' : 'components')
+  // Only the very first load honours `?tab=app`; a kit loaded later opens on its sheet.
+  const doorFirst = useRef(new URLSearchParams(location.search).get('tab') === 'app')
   const frameRef = useRef<HTMLIFrameElement | null>(null)
   const cfgRef = useRef(cfg)
   cfgRef.current = cfg
@@ -112,7 +128,7 @@ export function App() {
   // The tab title says which project is open (a hostile page may rewrite it —
   // security.md — so it is set from here on every load, not trusted).
   useEffect(() => {
-    document.title = loaded ? `UISandbox · ${loaded.project.name}` : "UISandbox · Play with your app's design. Right in the browser"
+    document.title = loaded && !loaded.kit ? `UISandbox · ${loaded.project.name}` : "UISandbox · Play with your app's design. Right in the browser"
   }, [loaded])
   const changedCount = useMemo(() => {
     if (!loaded) return 0
@@ -320,7 +336,10 @@ export function App() {
       const wanted = new URLSearchParams(location.search).get('screen')
       const first = (wanted && project.screens.find((s) => s.path === wanted || s.label === wanted)) || project.screens[0]!
       setLoaded({ project, report, screen: first, archive, kit })
-      setShowNotes(true)
+      // Their own app is what they came for: show it, and what was read from it.
+      // A kit opens on its sheet, quietly, unless the visitor asked for the door.
+      if (kit) { setTab(doorFirst.current ? 'app' : 'components'); doorFirst.current = false }
+      else { setTab('app'); setShowNotes(true) }
     } catch (err) {
       setError((err as Error).message)
     } finally {
@@ -364,8 +383,8 @@ export function App() {
   }
   useEffect(() => {
     if (loadedFromUrl.current) return
-    const url = new URLSearchParams(location.search).get('load')
-    if (!url) return
+    // No `?load`: the default kit, so the first screen is the editor itself.
+    const url = new URLSearchParams(location.search).get('load') ?? `/kits/${DEFAULT_KIT}.zip`
     loadedFromUrl.current = true
     // A GitHub or GitLab repository URL works too — `?load=https://github.com/user/repo[/tree/branch]`
     // goes through the repo route — so any agent can say a working link.
@@ -395,26 +414,32 @@ export function App() {
   }, [undo, redo])
 
 
-  const closeProject = () => { if (!loaded) return; disown(loaded.project); purgeGuestStorage(); setLoaded(null); reset(DEFAULT_CONFIG) }
+  // Closing your own app goes back to where everybody starts: the default kit.
+  const closeProject = () => { if (!loaded) return; disown(loaded.project); purgeGuestStorage(); setLoaded(null); reset(DEFAULT_CONFIG); void loadFromUrl(`/kits/${DEFAULT_KIT}.zip`) }
+  const door = <Door onArchive={onArchive} onUrl={(u) => void loadFromUrl(`/__repo/?u=${encodeURIComponent(u)}`)} onSample={(p) => void loadFromUrl(p)} busy={busy} error={error} />
   return (
     <div className="app">
       <header className="app__topbar">
-        <a className="app__brand" href="/" title={loaded ? 'Close this project and go home' : 'UISandbox'} onClick={(e) => { if (loaded) { e.preventDefault(); closeProject() } }}><span className="app__brand-mark"><Mark size={16} /></span>UISandbox <small>{loaded ? loaded.project.name : 'Interface Design Playground'}</small></a>
+        <a className="app__brand" href="/" title={loaded && !loaded.kit ? 'Close your app and start over' : 'UISandbox'} onClick={(e) => { if (loaded && !loaded.kit) { e.preventDefault(); closeProject() } }}><span className="app__brand-mark"><Mark size={16} /></span>UISandbox <small>{loaded ? (loaded.kit ? loaded.kit.name : loaded.project.name) : 'Interface Design Playground'}</small></a>
         <span className="app__spacer" />
-        {!loaded && (
-          <div className="app__group">
-            <McpButton />
-            <StarButton />
-          </div>
-        )}
-        {loaded && (
-          <div className="app__group">
+        <div className="app__group">
+          <a className="btn btn--ghost btn--sm" href="/about"><BookOpen size={14} /> How it works</a>
+          {!loaded && <><McpButton /><StarButton /></>}
+          {loaded && <>
             <button type="button" className="btn btn--ghost btn--sm" onClick={() => setShowNotes((v) => !v)} title={loaded.kit ? 'What we read from the kit' : 'What we read from your code'}><Info size={14} /> Read</button>
             <button type="button" className="btn btn--primary btn--sm" onClick={() => setShowExport(true)}><Download size={14} /> Export</button>
-            <button type="button" className="btn btn--ghost btn--sm" onClick={closeProject} title="Close this project"><X size={14} /> Close</button>
-          </div>
-        )}
+            {!loaded.kit && <button type="button" className="btn btn--ghost btn--sm" onClick={closeProject} title="Close your app and go back to the kit"><X size={14} /> Close</button>}
+          </>}
+        </div>
       </header>
+      {/* One line that says what this is, on the kit everybody lands on. The
+          page's h1 lives here: the homepage IS the editor now. */}
+      {loaded?.kit && (
+        <div className="app__intro">
+          <h1>Play with your app's design, right in the browser.</h1>
+          <span>This is {loaded.kit.name} as it ships. Turn a knob on the left, then <button type="button" className="app__intro-link" onClick={() => setTab('app')}>try it on your own app</button>.</span>
+        </div>
+      )}
       <div className="app__body">
         {loaded && (
           <>
@@ -451,6 +476,10 @@ export function App() {
               warningTitle={!thin && !missingFiles.length && flutterWeb ? 'A Flutter web build' : undefined}
               warning={thin ?? (missingFiles.length ? `${missingFiles.length === 1 ? 'A file' : `${missingFiles.length} files`} this page asked for ${missingFiles.length === 1 ? 'is' : 'are'} not in the archive: ${missingFiles.slice(0, 3).join(', ')}${missingFiles.length > 3 ? '…' : ''}. That usually means source, not the built output: parts of the page cannot run here.` : flutterWeb ? `Flutter paints this app into a <canvas>: there is almost no CSS for the knobs to move (${loaded.project.table.entries.length} values found). The 1:1 check and the reach meter still tell the truth about it; a design pass on a Flutter app belongs in its ThemeData.` : null)}
               coverage={coverage}
+              tab={tab}
+              onTab={setTab}
+              kitName={loaded.kit?.name}
+              door={door}
               notes={showNotes ? (
               <div className="card popcard" role="dialog" aria-label="What was read">
                 <h3>{loaded.kit ? `What we read from ${loaded.kit.name}` : 'What we read from your code'}</h3>
@@ -471,7 +500,9 @@ export function App() {
             />
           </>
         )}
-        {!loaded && <Intake onArchive={onArchive} onUrl={(u) => void loadFromUrl(`/__repo/?u=${encodeURIComponent(u)}`)} onSample={(p) => void loadFromUrl(p)} busy={busy} error={error} />}
+        {/* Nothing on the stage yet: the first load's stages, or, when a load
+            failed, the door with the reason and every other way in. */}
+        {!loaded && door}
       </div>
       {loaded && <Footer />}
       {showExport && loaded && (

@@ -605,3 +605,24 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
 .live__status--error { color: var(--app-fg); }
 .live__frame { display: block; width: 100%; height: 320px; margin-top: 12px; border: 1px solid var(--app-border); border-radius: 8px; background: var(--app-surface); }
 .live__frame[hidden] { display: none }
+
+/* ── Merge phase 3: the stage's tabs, the door over a kit, /about ─────────── */
+.stage__tabs { display: inline-flex; padding: 3px; gap: 2px; background: var(--app-surface); border: 1px solid var(--app-border); border-radius: 10px; }
+.stage__tab { height: 26px; padding: 0 11px; border-radius: 7px; font-size: 12.5px; font-weight: 500; color: var(--app-fg-muted); display: inline-flex; align-items: center; gap: 5px; }
+.stage__tab:hover { background: var(--app-hover); color: var(--app-fg); }
+.stage__tabs .stage__tab--on, .stage__tabs .stage__tab--on:hover { background: var(--app-fg); color: var(--app-bg); }
+/* The kit stays rendered and measured under the door: hidden, never removed
+   (a display:none frame has no boxes, so the reach meter would read zero). */
+.stage__frame--door .stage__iframe { visibility: hidden; }
+.stage__door { position: absolute; inset: 0; z-index: 40; overflow-y: auto; background: var(--app-bg); display: flex; justify-content: center; }
+.stage__door .intake { padding-top: 28px; padding-bottom: 28px; }
+/* The door alone, without the story around it (that lives on /about). */
+.intake--door { justify-content: flex-start; }
+.app__body--page { overflow-y: auto; display: block; }
+.app__body--page .intake { overflow: visible; }
+.hero__ctas { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin: 6px 0 18px; }
+.hero__ctas .btn { text-decoration: none; }
+.app__intro { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; padding: 8px 16px; border-bottom: 1px solid var(--app-border); font-size: 13px; color: var(--app-fg-muted); }
+.app__intro h1 { font-size: 13px; font-weight: 600; letter-spacing: 0; margin: 0; color: var(--app-fg); }
+.app__intro-link { color: var(--app-fg); text-decoration: underline; text-underline-offset: 2px; text-decoration-color: color-mix(in srgb, currentColor 35%, transparent); font: inherit; }
+.app__intro-link:hover { text-decoration-color: currentColor; }

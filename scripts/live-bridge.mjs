@@ -57,8 +57,10 @@ const ctx = await browser.newContext({ viewport: { width: 1280, height: 1000 }, 
 
 async function door() {
   const page = await ctx.newPage()
-  await page.goto(`${sandbox}/`, { waitUntil: 'networkidle' })
-  await page.click('.intake__way:has-text("running app")')
+  // The door is the "Your app" tab of the editor now (merge phase 3), over
+  // the default kit; `?tab=app` opens on it.
+  await page.goto(`${sandbox}/?tab=app`, { waitUntil: 'networkidle' })
+  await page.click('.stage__door .intake__way:has-text("running app")')
   await page.waitForSelector('.live__snippet')
   return page
 }

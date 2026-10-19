@@ -2391,3 +2391,38 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     here as 01e8380. SOURCE.md now lists every engine file that differs from
     37ed9bc with its decision, so `cmp` against the frozen copy stays a
     check rather than a chore.
+
+189. Merge phase 3, step 1: the homepage is the editor, on shadcn/ui.
+
+    Until now a visitor met a hero, a paragraph and a drop zone, and could
+    turn nothing before handing over a build. Now `/` loads the shadcn/ui
+    kit build (measured cold: screen 0.8 s, knobs 1.7 s) and opens the
+    editor on it. `?load=` and `?sync=` work as before: a load parameter
+    replaces the default, so the gates, the MCP server and every shared
+    link are unchanged.
+
+    - The stage has tabs on a kit: Components (the kit's sheet, its
+      index page), Screens (the other five, with the picker) and Your app,
+      whose empty state is the door: zip, folder, repo, running app,
+      samples, kits. The door sits OVER the kit, which stays rendered
+      (visibility, not display: a display:none frame has no boxes and the
+      reach meter would read zero), so the knobs and the export keep working
+      while a visitor decides. A failed load falls back to the door with
+      the reason, as before.
+    - Their own app opens on its own screen with the notes, as before;
+      Close goes back to the kit, not to an empty page. A kit has no Close.
+    - One line on top of a kit carries the page's h1 and says what this is:
+      the kit as it ships, turn a knob, then try it on your own app.
+    - The story moves to /about, unchanged in substance (how it works,
+      Inspect, how to check it, privacy, agents, who made it), with its
+      own title and canonical, and a sitemap entry. The beats line now reads
+      "Start from a kit or your own app, turn the knobs, export the code".
+    - index.html's pre-mount block is the editor's skeleton with the same
+      h1 and a description, for a crawler and for a visitor without JS, so
+      the swap on mount does not flash a hero that is no longer there.
+
+    The bridge gate opened the door on `/`; it now opens `/?tab=app`. Gates:
+    vitest 446; kit gates 101 + 18; hold-outs kit-shadcn, AdminLTE, SB Admin
+    and the six edge fixtures as before (three ok, three refused with their
+    reason). Next in this phase: the top bar (Engine, Look, Light/Dark,
+    Share), the export on a kit, the phone layout.
