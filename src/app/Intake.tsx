@@ -14,6 +14,8 @@ interface DoorProps {
   onSample?: (path: string) => void
   busy: Progress | null
   error: string | null
+  /** Said when knobs were turned on the kit behind the door: they come along. */
+  carryNote?: string
 }
 type Way = 'zip' | 'folder' | 'repo' | 'app'
 
@@ -34,7 +36,7 @@ const SAMPLES = [
  * does not. It is the empty state of the stage's "Your app" tab, and what a
  * failed load falls back to; the story around it lives on /about.
  */
-export function Door({ onArchive, onUrl, onSample, busy, error }: DoorProps) {
+export function Door({ onArchive, onUrl, onSample, busy, error, carryNote }: DoorProps) {
   const [way, setWay] = useState<Way>('zip')
   const [showPrivacy, setShowPrivacy] = useState(false)
   const [over, setOver] = useState(false)
@@ -95,6 +97,7 @@ export function Door({ onArchive, onUrl, onSample, busy, error }: DoorProps) {
           </ol>
         ) : (
           <>
+            {carryNote && <p className="intake__carry">{carryNote}</p>}
             <div className="intake__ways" role="tablist">
               {ways.map((w) => (
                 <button key={w.id} type="button" role="tab" aria-selected={way === w.id} className={`intake__way ${way === w.id ? 'intake__way--on' : ''}`} onClick={() => { setWay(w.id); setLocalError(null) }}>{w.icon} {w.label}</button>

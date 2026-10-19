@@ -2510,3 +2510,41 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     (the button row of shadcn's runs off a 360px frame). That is the kit
     build's layout (scenes.mjs), not the editor's, and it scrolls inside its
     frame. A follow-up, with the kit builds.
+
+193. What you turned on a kit comes with you to your own app, measured.
+
+    Phase 3's open question (roadmap): does a knob turned on the kit mean
+    anything on the app you bring after it? The knobs were built for it: a
+    colour or a font is an absolute pick, a dial is a multiplier centred on
+    ×1 = as your code has it. So only what was turned travels
+    (state/carry.ts), and every knob left alone starts where the new build's
+    own code puts it. The door says which ones come along, and "What we
+    read" says which ones came.
+
+    The measurement: brand #e11d48 and radius ×2 on the shadcn kit, then a
+    build brought through the door (route A), against the same build loaded
+    fresh with the same two knobs turned by hand (route B). Computed
+    background, colour and radius of every element compared. The control is
+    the fresh build untouched against B.
+
+                          A vs B          control
+      SB Admin            0 of 360        80
+      Bootstrap docs      0 of 1191       220
+      VitePress           0 of 195        33
+
+    Two wrong turns on the way, both caught by that table:
+    - VitePress first differed on 2 elements: a build's baseline is
+      corrected from its RENDERED page (the declared #5468ff, painted
+      #5672cd), and that correction only runs while every knob stands at
+      the baseline. Letting it run under the carried knobs was worse (it
+      read the moved page and took #e11d48 as the brand, 33 = the control).
+      The carried knobs now wait for the first render and land after the
+      correction, as a hand would.
+    - Radius did not travel: `radius` is both a top-level key (the radius
+      style) and a dial (the multiplier), and the first version wrote the
+      style. Dials are namespaced `sb.<key>` in carry.ts now, with a test
+      that keeps the two apart.
+
+    The knob names the panel uses moved from ExportDialog into carry.ts
+    (KNOB_LABEL), so the export's "Settings" list, the door and the note
+    name a knob the same way.

@@ -20,6 +20,7 @@ import { measure } from '../export/measured'
 import { roleValues } from '../kits/values'
 import type { RoleValues } from '../kits/engine/generate.mjs'
 import { kitExport, kitPackage } from '../kits/kitExport'
+import { knobLabel } from '../state/carry'
 import { pinToBuild, lightDeclarations } from '../kits/pin'
 import type { KitId } from '../kits/engine/detect.mjs'
 import { genReadme } from '../export/genReadme'
@@ -366,25 +367,12 @@ export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName,
   // the key on its capitals gave "Border Tone", "Grad Angle", "Sat" and
   // "C Accent" for knobs the panel calls Border tone, Gradient angle,
   // Saturation and Accent.
-  const KNOB_LABEL: Record<string, string> = useMemo(() => {
-    const m: Record<string, string> = {}
-    for (const d of DIALS) m[d.key] = d.label
-    const extra: Array<[string, string]> = [
-      ['bgTone', 'Background tone'], ['dark', 'Dark mode'], ['cBackground', 'Background'],
-      ['cPrimary', 'Brand'], ['cSecondary', 'Secondary'], ['cAccent', 'Accent'], ['cSuccess', 'Success'],
-      ['cWarning', 'Warning'], ['cDanger', 'Danger'], ['cInfo', 'Info'],
-      ['fontDisplay', 'Display font'], ['fontBody', 'Body font'], ['radius', 'Radius'],
-      ['typeScale', 'Text size'], ['neutral', 'Grey tint'], ['colorTheme', 'Colour theme'],
-    ]
-    for (const [k, label] of extra) m[k] = label
-    return m
-  }, [])
 
   const turned = useMemo(() => {
     const out: Array<{ label: string; from: string; to: string; swatch?: boolean }> = []
     const add = (key: string, from: string, to: string) => {
       out.push({
-        label: KNOB_LABEL[key] ?? key.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase()),
+        label: knobLabel(key),
         from, to, swatch: /^#/.test(to),
       })
     }
@@ -403,7 +391,7 @@ export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName,
       add(String(k), String(a), String(b))
     }
     return out
-  }, [cfg, base, KNOB_LABEL])
+  }, [cfg, base])
 
   // Six destinations; the formats are tabs INSIDE one, never a wall of files.
   // Each destination names what it LANDS IN, at its own foot. The marks are the

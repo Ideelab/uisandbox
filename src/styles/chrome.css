@@ -672,3 +672,4 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
 .ebar__scheme .seg__opt { display: inline-flex; align-items: center; }
 .ebar__share { position: relative; display: inline-flex; }
 .ebar__pop { position: absolute; top: calc(100% + 8px); right: 0; z-index: 80; width: max-content; max-width: 320px; padding: 8px 10px; border: 1px solid var(--app-border); border-radius: 8px; background: var(--app-surface); box-shadow: var(--app-shadow-sm); font-size: 12px; line-height: 1.45; color: var(--app-fg); overflow-wrap: anywhere; }
+.intake__carry { margin: 0 0 14px; padding: 8px 12px; border-radius: 8px; background: var(--app-hover); font-size: 12.5px; line-height: 1.45; color: var(--app-fg); text-align: left; }

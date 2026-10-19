@@ -32,6 +32,7 @@ import { Stage, type StageTab } from './Stage'
 import { ExportDialog } from './ExportDialog'
 import { EngineSelect, SchemeSwitch, ShareButton } from './EditorBar'
 import { encode, readHash } from '../state/hash'
+import { carryOver, differingKeys, knobLabel, withKeys } from '../state/carry'
 import { genPatch, genPatchedFiles } from '../export/genSheet'
 
 interface Loaded {
@@ -45,6 +46,10 @@ interface Loaded {
   /** A build WE made from a kit (the kit door, /kits/<id>.zip on this origin),
    *  not somebody's code: the panel and the notes say "the kit", not "your code". */
   kit?: { id: string; name: string }
+  /** Knobs carried over from the kit it was brought after (state/carry.ts),
+   *  waiting for the first render: the baseline is corrected from the
+   *  UNTOUCHED page, and only then are they put on top, as a hand would. */
+  pendingCarry?: { cfg: Config; keys: string[] }
   /** What `?load=` would need to open this build again (a zip URL, a repo
    *  URL); none for a build dropped from somebody's machine. Share uses it. */
   source?: string
@@ -305,6 +310,14 @@ function Editor() {
     }
     if (doc && loaded) stopObserver.current = observeFrame(doc, loaded.project.table, () => { setSheetVersion((v) => v + 1); refineBaseline(); remeasure() })
     refineBaseline()
+    // The knobs carried from a kit land now: after the untouched page had its
+    // chance to correct the baseline, on top of the corrected one.
+    const cur = loadedRef.current
+    if (cur?.pendingCarry) {
+      const { cfg: carried, keys } = cur.pendingCarry
+      cur.pendingCarry = undefined
+      dispatch({ type: 'REPLACE', cfg: withKeys(cur.report.baseline.cfg, carried, keys) })
+    }
     discoverScreens()
     remeasure()
     // A router renders after load; look once more.
@@ -333,6 +346,8 @@ function Editor() {
       setBusy({ stage: 'derive', total: project.table.entries.length, what: archive.rootName })
       const report = await deriveBaseline(archive, project.table)
       setBusy({ stage: 'open', what: archive.rootName })
+      // What was turned on a kit travels to the app brought after it (state/carry.ts).
+      const from = loadedRef.current?.kit ? { name: loadedRef.current.kit.name, base: loadedRef.current.report.baseline.cfg, cfg: cfgRef.current } : null
       if (loaded) disown(loaded.project)
       // A previous tenant's leftovers, before the next one renders: the frame
       // is same-origin, so what the last app wrote to localStorage is still
@@ -341,10 +356,19 @@ function Editor() {
       own(project, () => varsRef.current)
       // A fresh project is a fresh start: no history, no hash from the last one.
       reset(report.baseline.cfg)
+      // A shared link's knobs, once; else what was turned on the kit before.
+      let pendingCarry: Loaded['pendingCarry']
       if (sharedCfg.current) { dispatch({ type: 'REPLACE', cfg: sharedCfg.current }); sharedCfg.current = null }
+      else if (from && !kit) {
+        const carried = carryOver(from.base, from.cfg, report.baseline.cfg)
+        if (carried.keys.length) {
+          pendingCarry = { cfg: carried.cfg, keys: carried.keys }
+          report.notes.unshift(`Carried over from ${from.name}: ${carried.keys.map(knobLabel).join(', ')}. Every other knob starts where your code puts it; Reset puts it all back.`)
+        }
+      }
       const wanted = new URLSearchParams(location.search).get('screen')
       const first = (wanted && project.screens.find((s) => s.path === wanted || s.label === wanted)) || project.screens[0]!
-      setLoaded({ project, report, screen: first, archive, kit, source })
+      setLoaded({ project, report, screen: first, archive, kit, source, pendingCarry })
       // Their own app is what they came for: show it, and what was read from it.
       // A kit opens on its sheet, quietly, unless the visitor asked for the door.
       if (kit) { setTab(doorFirst.current ? 'app' : 'components'); doorFirst.current = false }
@@ -441,7 +465,9 @@ function Editor() {
     void loadFromUrl(`/kits/${id}.zip`)
   }
   const hasScheme = !!loaded && (loaded.project.scheme.media || loaded.project.scheme.hooks.length > 0)
-  const door = <Door onArchive={onArchive} onUrl={(u) => void loadFromUrl(`/__repo/?u=${encodeURIComponent(u)}`)} onSample={(p) => void loadFromUrl(p)} busy={busy} error={error} />
+  const turnedOnKit = loaded?.kit ? differingKeys(loaded.report.baseline.cfg, cfg) : []
+  const carryNote = turnedOnKit.length ? `What you turned on ${loaded!.kit!.name} comes with it: ${turnedOnKit.map(knobLabel).join(', ')}. Everything else starts as your code has it.` : undefined
+  const door = <Door carryNote={carryNote} onArchive={onArchive} onUrl={(u) => void loadFromUrl(`/__repo/?u=${encodeURIComponent(u)}`)} onSample={(p) => void loadFromUrl(p)} busy={busy} error={error} />
   return (
     <div className="app">
       <header className="app__topbar">
