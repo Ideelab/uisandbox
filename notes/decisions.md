@@ -2426,3 +2426,33 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     and the six edge fixtures as before (three ok, three refused with their
     reason). Next in this phase: the top bar (Engine, Look, Light/Dark,
     Share), the export on a kit, the phone layout.
+
+190. Merge phase 3, step 2: Engine, Light / Dark and Share in the top bar.
+
+    - Engine: the eight kits that render, as a plain select (it is the one
+      control a phone and a screen reader both already understand). On a
+      kit it switches kits; on your own app it says what the page runs on,
+      as the detector read it ("Your app · runs on Bootstrap", or "none of
+      the nine"), and picking a kit asks first, because your app was only in
+      this tab.
+    - Light / Dark: the page's OWN scheme, the same switch as the Dark mode
+      knob, shown only when the CSS has a scheme to switch. Measured on the
+      shadcn kit: html gets `.dark`, the body goes from rgb(255,255,255) to
+      rgb(10,10,10).
+    - Share: a link that opens the same build with the same knobs. Every
+      project now remembers what `?load=` needs to open it again (the kit,
+      a zip URL, the repo URL behind the proxy route); a build dropped from
+      somebody's machine has no address, and the button says so instead of
+      copying a link to something else. The knobs were already the URL
+      hash, but a load reset them; a shared link's hash is now read before
+      the first load and applied once it is in.
+      Measured, with a control: knobs turned (brand #e11d48, radius ×2), the
+      link opened in a fresh browser, computed background, colour, radius
+      and font of every element compared. Default kit 0 of 240 differ,
+      Bootstrap kit 0 of 217, the SB Admin sample 0 of 360. The same link
+      without its hash: 69, 64 and 80 differ, so the comparison can see a
+      difference when there is one.
+
+    Look (the kits' start cards as presets on another kit's components)
+    follows separately: it rests on converting each kit's radius into the
+    radius dial's multiplier, and that wants its own measurement.

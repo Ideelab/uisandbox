@@ -30,6 +30,8 @@ import { Door } from './Intake'
 import { About } from './About'
 import { Stage, type StageTab } from './Stage'
 import { ExportDialog } from './ExportDialog'
+import { EngineSelect, SchemeSwitch, ShareButton } from './EditorBar'
+import { encode, readHash } from '../state/hash'
 import { genPatch, genPatchedFiles } from '../export/genSheet'
 
 interface Loaded {
@@ -43,6 +45,9 @@ interface Loaded {
   /** A build WE made from a kit (the kit door, /kits/<id>.zip on this origin),
    *  not somebody's code: the panel and the notes say "the kit", not "your code". */
   kit?: { id: string; name: string }
+  /** What `?load=` would need to open this build again (a zip URL, a repo
+   *  URL); none for a build dropped from somebody's machine. Share uses it. */
+  source?: string
 }
 
 /** Where a visitor lands: the editor, on this kit as it ships (merge phase 3).
@@ -69,6 +74,9 @@ function Editor() {
   // The stage's tabs. On a kit: its components sheet, its screens, and the
   // door to your own app. `?tab=app` (from /about) opens on the door.
   const [tab, setTab] = useState<StageTab>(() => new URLSearchParams(location.search).get('tab') === 'app' ? 'app' : 'components')
+  // A shared link's knobs: read before the first load resets them, applied
+  // once that load is in (onArchive), then forgotten.
+  const sharedCfg = useRef<Config | null>(readHash())
   // Only the very first load honours `?tab=app`; a kit loaded later opens on its sheet.
   const doorFirst = useRef(new URLSearchParams(location.search).get('tab') === 'app')
   const frameRef = useRef<HTMLIFrameElement | null>(null)
@@ -309,7 +317,7 @@ function Editor() {
     return onSheetGrow(() => { if (t) clearTimeout(t); t = setTimeout(() => { setSheetVersion((v) => v + 1); refineBaseline() }, 80) })
   }, [refineBaseline])
 
-  const onArchive = async (archive: Archive, root?: string, kit?: Loaded['kit']) => {
+  const onArchive = async (archive: Archive, root?: string, kit?: Loaded['kit'], source?: string) => {
     setError(null)
     if (!busy) fromUrlRef.current = false
     try {
@@ -333,9 +341,10 @@ function Editor() {
       own(project, () => varsRef.current)
       // A fresh project is a fresh start: no history, no hash from the last one.
       reset(report.baseline.cfg)
+      if (sharedCfg.current) { dispatch({ type: 'REPLACE', cfg: sharedCfg.current }); sharedCfg.current = null }
       const wanted = new URLSearchParams(location.search).get('screen')
       const first = (wanted && project.screens.find((s) => s.path === wanted || s.label === wanted)) || project.screens[0]!
-      setLoaded({ project, report, screen: first, archive, kit })
+      setLoaded({ project, report, screen: first, archive, kit, source })
       // Their own app is what they came for: show it, and what was read from it.
       // A kit opens on its sheet, quietly, unless the visitor asked for the door.
       if (kit) { setTab(doorFirst.current ? 'app' : 'components'); doorFirst.current = false }
@@ -378,7 +387,9 @@ function Editor() {
       // names shadcn.zip is still their code.
       const kitId = (() => { try { const u = new URL(url, location.href); return u.origin === location.origin ? u.pathname.match(/^\/kits\/([a-z0-9]+)\.zip$/)?.[1] : undefined } catch { return undefined } })()
       const door = kitId ? DOOR.find((d) => d.id === kitId) : undefined
-      await onArchive(await openZip(new File([blob], name.endsWith('.zip') ? name : `${name}.zip`, { type: 'application/zip' })), undefined, door ? { id: door.id, name: door.name } : undefined)
+      // What a link needs to open this again: the repo URL behind the proxy route, or the zip URL itself.
+      const source = (() => { try { const u = new URL(url, location.href); return u.pathname.startsWith('/__repo/') ? u.searchParams.get('u') ?? undefined : u.origin === location.origin ? u.pathname : u.href } catch { return undefined } })()
+      await onArchive(await openZip(new File([blob], name.endsWith('.zip') ? name : `${name}.zip`, { type: 'application/zip' })), undefined, door ? { id: door.id, name: door.name } : undefined, source)
     } catch (err) { setError((err as Error).message); setBusy(null) }
   }
   useEffect(() => {
@@ -416,6 +427,20 @@ function Editor() {
 
   // Closing your own app goes back to where everybody starts: the default kit.
   const closeProject = () => { if (!loaded) return; disown(loaded.project); purgeGuestStorage(); setLoaded(null); reset(DEFAULT_CONFIG); void loadFromUrl(`/kits/${DEFAULT_KIT}.zip`) }
+  // Share: the default kit is `/`; anything else with an address is `?load=`;
+  // the knobs ride along as the hash, unless nothing was turned.
+  const shareUrl = (() => {
+    if (!loaded) return null
+    const base = loaded.kit?.id === DEFAULT_KIT ? `${location.origin}/` : loaded.source ? `${location.origin}/?load=${encodeURIComponent(loaded.source)}` : null
+    if (!base) return null
+    const same = encode(cfg) === encode(loaded.report.baseline.cfg)
+    return same ? base : `${base}#${encode(cfg)}`
+  })()
+  const pickKit = (id: string) => {
+    if (loaded && !loaded.kit && !confirm(`Switch to ${DOOR.find((d) => d.id === id)?.name ?? id}? Your app was only in this tab: switching closes it, and you can bring it again from the Your app tab.`)) return
+    void loadFromUrl(`/kits/${id}.zip`)
+  }
+  const hasScheme = !!loaded && (loaded.project.scheme.media || loaded.project.scheme.hooks.length > 0)
   const door = <Door onArchive={onArchive} onUrl={(u) => void loadFromUrl(`/__repo/?u=${encodeURIComponent(u)}`)} onSample={(p) => void loadFromUrl(p)} busy={busy} error={error} />
   return (
     <div className="app">
@@ -426,6 +451,9 @@ function Editor() {
           <a className="btn btn--ghost btn--sm" href="/about"><BookOpen size={14} /> How it works</a>
           {!loaded && <><McpButton /><StarButton /></>}
           {loaded && <>
+            <EngineSelect kitId={loaded.kit?.id} ownApp={!loaded.kit} detected={coverage ? coverage.kit : undefined} onPick={pickKit} />
+            {hasScheme && <SchemeSwitch value={cfg.sb.dark ?? 'light'} onChange={(v) => dispatch({ type: 'SET', patch: { sb: { ...cfg.sb, dark: v } } })} />}
+            <ShareButton url={shareUrl} />
             <button type="button" className="btn btn--ghost btn--sm" onClick={() => setShowNotes((v) => !v)} title={loaded.kit ? 'What we read from the kit' : 'What we read from your code'}><Info size={14} /> Read</button>
             <button type="button" className="btn btn--primary btn--sm" onClick={() => setShowExport(true)}><Download size={14} /> Export</button>
             {!loaded.kit && <button type="button" className="btn btn--ghost btn--sm" onClick={closeProject} title="Close your app and go back to the kit"><X size={14} /> Close</button>}
@@ -489,7 +517,7 @@ function Editor() {
                   {loaded.project.candidates.length > 1 && (
                     <li>Other roots in the archive:{' '}
                       {loaded.project.candidates.filter((c) => c !== loaded.project.root).slice(0, 6).map((c) => (
-                        <button key={c} type="button" className="btn btn--secondary btn--sm" style={{ marginRight: 6, marginTop: 4 }} onClick={() => { const a = loaded.archive; disown(loaded.project); setLoaded(null); void onArchive(a, c, loaded.kit) }}>{c || '/'}</button>
+                        <button key={c} type="button" className="btn btn--secondary btn--sm" style={{ marginRight: 6, marginTop: 4 }} onClick={() => { const a = loaded.archive; disown(loaded.project); setLoaded(null); void onArchive(a, c, loaded.kit, loaded.source) }}>{c || '/'}</button>
                       ))}
                     </li>
                   )}
