@@ -115,6 +115,27 @@ function keyOf(el: Element, top: Document): string {
  *  digits are the load's, not the design's. */
 const normRef = (v: string) => v.replace(/url\(("|')?#([A-Za-z_-]+)\d+\1?\)/g, 'url(#$2N)')
 
+/** Only one frame on the page can hold focus. A page that focuses an element
+ *  on load (flutter-meshsight's first <a>) therefore has a focus ring in
+ *  whichever of the two frames loaded LAST: measured, the difference flipped
+ *  direction between two runs of the same build. That is a race between two
+ *  loads, not a difference between two stylesheets, so neither frame keeps
+ *  focus while it is measured. The deepest focused element is blurred,
+ *  through shadow roots and same-origin frames, then each one above it. */
+export function blurDeep(doc: Document): void {
+  const chain: Element[] = []
+  let root: Document | ShadowRoot | null = doc
+  while (root) {
+    const el: Element | null = root.activeElement
+    if (!el || el === doc.body || chain.includes(el)) break
+    chain.push(el)
+    let inner: Document | null = null
+    if (el.tagName === 'IFRAME') { try { inner = (el as HTMLIFrameElement).contentDocument } catch { inner = null } }
+    root = el.shadowRoot ?? inner
+  }
+  for (const el of chain.reverse()) (el as HTMLElement).blur?.()
+}
+
 export function compareDocuments(raw: Document, sandbox: Document, props: readonly string[] = VERIFY_PROPS): VerifyResult {
   // Every document the sandbox serves carries the guard; a document without
   // it came from somewhere else (the host's own index after the worker was
@@ -122,6 +143,7 @@ export function compareDocuments(raw: Document, sandbox: Document, props: readon
   if (!raw.getElementById('us-guard') || !sandbox.getElementById('us-guard')) {
     return { ok: false, refusal: 'The sandbox did not serve this screen (the worker is gone or the page left the sandbox) — nothing of yours was compared.', elements: 0, unpaired: { raw: 0, sandbox: 0 }, mismatches: [] }
   }
+  blurDeep(raw); blurDeep(sandbox)
   const a = allElements(raw.body).filter((el) => !isOurs(el) && inFlatTree(el))
   const b = allElements(sandbox.body).filter((el) => !isOurs(el) && inFlatTree(el))
   if (!a.length || !b.length) return { ok: false, refusal: 'One of the documents has no elements to compare.', elements: 0, unpaired: { raw: a.length, sandbox: b.length }, mismatches: [] }

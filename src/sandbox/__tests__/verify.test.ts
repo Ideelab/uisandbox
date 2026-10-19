@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from 'vitest'
-import { compareDocuments, inFlatTree } from '../verify'
+import { compareDocuments, inFlatTree, blurDeep } from '../verify'
 
 /* A document with a window: jsdom's createHTMLDocument has no defaultView,
  * an iframe's contentDocument does. */
@@ -35,5 +35,41 @@ describe('inFlatTree', () => {
     expect(inFlatTree(d.getElementById('plain')!)).toBe(true)
     expect(inFlatTree(d.getElementById('named')!)).toBe(true)
     expect(inFlatTree(d.getElementById('loose')!)).toBe(false)
+  })
+})
+
+describe('blurDeep', () => {
+  it('takes focus off an element, so neither frame is measured with a focus ring', () => {
+    const d = doc('<a id="a" href="#">x</a>')
+    d.getElementById('a')!.focus()
+    expect(d.activeElement?.id).toBe('a')
+    blurDeep(d)
+    expect(d.activeElement).toBe(d.body)
+  })
+  it('reaches into a shadow root', () => {
+    const d = doc('<div id="host"></div>')
+    const sr = d.getElementById('host')!.attachShadow({ mode: 'open' })
+    sr.innerHTML = '<button id="b">x</button>'
+    ;(sr.getElementById('b') as HTMLButtonElement).focus()
+    expect(sr.activeElement?.id).toBe('b')
+    blurDeep(d)
+    expect(sr.activeElement).toBe(null)
+    expect(d.activeElement).toBe(d.body)
+  })
+  it('does nothing on a document with nothing focused', () => {
+    const d = doc('<p>x</p>')
+    blurDeep(d)
+    expect(d.activeElement).toBe(d.body)
+  })
+})
+
+describe('compareDocuments with focus taken off', () => {
+  it('still reports a real outline-color difference on the element that had focus', () => {
+    const a = doc('<a id="x" href="#" style="outline-color: rgb(255, 0, 0)">x</a>')
+    const b = doc('<a id="x" href="#" style="outline-color: rgb(0, 0, 255)">x</a>')
+    b.getElementById('x')!.focus()
+    const r = compareDocuments(a, b, ['outline-color'])
+    expect(r.ok).toBe(false)
+    expect(r.mismatches.map((m) => [m.prop, m.raw, m.sandbox])).toEqual([['outline-color', 'rgb(255, 0, 0)', 'rgb(0, 0, 255)']])
   })
 })

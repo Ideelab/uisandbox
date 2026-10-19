@@ -2182,3 +2182,34 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     one row it calls a regression is flutter-meshsight's focus ring, which
     differs on the pre-merge code too; chroma, todomvc and docsify differ as
     in every earlier gate. Against the merge gate no row got worse.
+
+182. Check 1:1 measures both frames without focus.
+
+    flutter-meshsight differed on one element, its first <a>, on
+    outline-color. Measured on the same build twice: in one run the raw frame
+    had the focus ring (rgb(0, 95, 204), Chrome's own) and the tokenised one
+    did not, in the next run the other way round. Only one frame on a page
+    can hold focus, and this page focuses that link on load, so the ring was
+    in whichever of the two loaded LAST. A race between two loads, not a
+    difference between two stylesheets.
+
+    compareDocuments now calls blurDeep on both documents before it reads a
+    single property, so the second look after 900 ms gets it too. blurDeep
+    follows the focused element through shadow roots and same-origin frames
+    and blurs the deepest first.
+
+    What this gives up, said plainly: :focus styles are no longer compared.
+    They could not be compared before either: one of the two frames was
+    always unfocused, so a pass on them was luck. A real outline-color
+    difference still counts: verify.test.ts holds that a difference on the
+    element that HAD focus is reported, with the expected values.
+
+    meshsight after: ok in 3 of 3 runs (was differs in 2 of 2, in both
+    directions).
+
+    Full gate after: 173 fixtures, ok 153, differs 5, timeout/error 0, and
+    meshsight off the regression list. Two rows flipped the other way, both
+    flakes that predate this: visx (margin-left 0 ↔ 24 px on its first div,
+    the direction flipping between runs) differs 1 in 4 runs WITHOUT the blur
+    as well, and was already "differs" in full-gate.log; anime-docs has
+    alternated ok/differs across the earlier gates (merge, triplet, s16b).
