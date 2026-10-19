@@ -26,6 +26,8 @@ import { applyScheme } from '../sandbox/scheme'
 import { googleFontsImport, isCustomFont, customFontFamily, SYSTEM_FONT } from '../tokens/fonts'
 import { customFontUrl } from '../tokens/customFonts'
 import { Door, LoadStages } from './Intake'
+import { CaptureDoor } from './CaptureDoor'
+import { captureArchive, readCapture, sanitizeHtml, screenPath, type CapturedScreen } from '../capture/receive'
 import { About } from './About'
 import { Stage, type StageTab } from './Stage'
 import { ExportDialog } from './ExportDialog'
@@ -54,6 +56,9 @@ interface Loaded {
   /** What `?load=` would need to open this build again (a zip URL, a repo
    *  URL); none for a build dropped from somebody's machine. Share uses it. */
   source?: string
+  /** Screens taken along from a running app by the bookmarklet (capture/):
+   *  a snapshot, so no routes to discover; the origin they came from. */
+  captured?: { origin: string }
 }
 
 /** Where a visitor lands: the editor, on this kit as it ships (merge phase 3).
@@ -89,6 +94,12 @@ function Editor() {
   const liveFirst = useRef(new URLSearchParams(location.search).get('live') === '1' && /^(127\.0\.0\.1|localhost)$/.test(location.hostname))
   // Only the very first load honours `?tab=app`; a kit loaded later opens on its sheet.
   const doorFirst = useRef(new URLSearchParams(location.search).get('tab') === 'app')
+  // `?capture=1`: the tab the bookmarklet opened (capture/grab.ts). It waits
+  // for screens instead of loading a kit, and every screen that arrives is
+  // added to the same project.
+  const captureMode = useRef(new URLSearchParams(location.search).get('capture') === '1')
+  const capStore = useRef({ pages: new Map<string, string>(), files: new Map<string, Blob>(), notes: [] as string[] })
+  const [captureWaiting, setCaptureWaiting] = useState(false)
   const frameRef = useRef<HTMLIFrameElement | null>(null)
   const cfgRef = useRef(cfg)
   cfgRef.current = cfg
@@ -264,7 +275,7 @@ function Editor() {
   const discoverScreens = useCallback(() => {
     const cur = loadedRef.current
     const doc = frameRef.current?.contentDocument
-    if (!cur || !doc?.body) return
+    if (!cur || !doc?.body || cur.captured) return
     const found = discoverRoutes(doc, cur.project.screens)
     if (!found.length) return
     cur.project.screens = [...cur.project.screens, ...found]
@@ -358,7 +369,7 @@ function Editor() {
     return onSheetGrow(() => { if (t) clearTimeout(t); t = setTimeout(() => { setSheetVersion((v) => v + 1); refineBaseline() }, 80) })
   }, [refineBaseline])
 
-  const onArchive = async (archive: Archive, root?: string, kit?: Loaded['kit'], source?: string) => {
+  const onArchive = async (archive: Archive, root?: string, kit?: Loaded['kit'], source?: string, extra?: { screen?: string; captured?: Loaded['captured']; notes?: string[] }) => {
     setError(null)
     if (!busy) fromUrlRef.current = false
     try {
@@ -381,7 +392,9 @@ function Editor() {
       const report = await deriveBaseline(archive, project.table)
       setBusy({ stage: 'open', what: archive.rootName })
       // What was turned on a kit travels to the app brought after it (state/carry.ts).
-      const from = loadedRef.current?.kit ? { name: loadedRef.current.kit.name, base: loadedRef.current.report.baseline.cfg, cfg: cfgRef.current } : null
+      // A screen taken along after others keeps what was turned on them.
+      const prev = loadedRef.current
+      const from = prev && (prev.kit || (extra?.captured && prev.captured)) ? { name: prev.kit?.name ?? 'the screens taken before', base: prev.report.baseline.cfg, cfg: cfgRef.current } : null
       if (loaded) disown(loaded.project)
       // A previous tenant's leftovers, before the next one renders: the frame
       // is same-origin, so what the last app wrote to localStorage is still
@@ -401,9 +414,10 @@ function Editor() {
           report.notes.unshift(`Carried over from ${from.name}: ${carried.keys.filter(isShownKnob).map(knobLabel).join(', ')}. Every other knob starts where your code puts it; Reset puts it all back.`)
         }
       }
-      const wanted = new URLSearchParams(location.search).get('screen')
+      if (extra?.notes) report.notes.push(...extra.notes)
+      const wanted = extra?.screen ?? new URLSearchParams(location.search).get('screen')
       const first = (wanted && project.screens.find((s) => s.path === wanted || s.label === wanted)) || project.screens[0]!
-      setLoaded({ project, report, screen: first, archive, kit, source, pendingCarry })
+      setLoaded({ project, report, screen: first, archive, kit, source, pendingCarry, captured: extra?.captured })
       // Their own app is what they came for: show it, and what was read from it.
       // A kit opens on its sheet, quietly, unless the visitor asked for the door.
       if (kit) { setTab(doorFirst.current ? 'app' : 'components'); doorFirst.current = false }
@@ -453,6 +467,7 @@ function Editor() {
   }
   useEffect(() => {
     if (loadedFromUrl.current) return
+    if (captureMode.current) { loadedFromUrl.current = true; return }
     // No `?load`: the default kit, so the first screen is the editor itself.
     const url = new URLSearchParams(location.search).get('load') ?? `/kits/${DEFAULT_KIT}.zip`
     loadedFromUrl.current = true
@@ -461,6 +476,45 @@ function Editor() {
     const gh = url.match(/^(?:https?:\/\/)?(?:www\.)?(github|gitlab)\.com\/[\w.-]+\/[\w.-]+/i) && !/\.zip($|\?)/i.test(url) && !/\/archive\//i.test(url)
     void loadFromUrl(gh ? `/__repo/?u=${encodeURIComponent(url.startsWith('http') ? url : `https://${url}`)}` : url)
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // A screen from the bookmarklet: filed beside the ones before it, and the
+  // project rebuilt from them all, the way a dropped build is read.
+  const takeScreen = async (screen: CapturedScreen) => {
+    const store = capStore.current
+    const path = screenPath(screen.href, new Set(store.pages.keys()))
+    store.pages.set(path, sanitizeHtml(screen.html))
+    for (const f of screen.files) store.files.set(f.path, f.blob)
+    const s = screen.stats
+    const label = '/' + path.replace(/(^|\/)index\.html$/, '')
+    const notTaken = s.sheetsRefused + s.assetsRefused
+    store.notes.push(`Taken along from ${screen.href} as ${label}: ${screen.bytes >= 1048576 ? `${(screen.bytes / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(screen.bytes / 1024))} KB`} in ${screen.files.length + 1} files, read in ${screen.captureMs} ms, handed over in ${screen.transferMs} ms, at ${screen.viewport.w}×${screen.viewport.h}. ${s.sheets} linked sheets${s.sheetsFromCssom ? ` (${s.sheetsFromCssom} from the CSSOM)` : ''}, ${s.styles} <style>${s.stylesFromCssom ? ` (${s.stylesFromCssom} from the CSSOM: rules JS inserted)` : ''}, ${s.assets} images and fonts${s.shadowRoots ? `, ${s.shadowRoots} shadow roots` : ''}${s.canvases ? `, ${s.canvases} canvases as images` : ''}.${notTaken ? ` Not taken: ${screen.refused.slice(0, 4).map((r) => `${r.url.slice(0, 80)} (${r.why})`).join('; ')}${screen.refused.length > 4 ? ` and ${screen.refused.length - 4} more` : ''}; those load from where they live, or not at all.` : ''}${s.maybeClosedShadow ? ` ${s.maybeClosedShadow} custom elements show nothing to copy (a closed shadow root, or empty).` : ''}${s.frames ? ` ${s.frames} frames left empty.` : ''}`)
+    const name = (() => { try { return new URL(screen.origin).host } catch { return 'your app' } })()
+    await onArchive(captureArchive(name, store.pages, store.files), '', undefined, undefined, { screen: path, captured: { origin: screen.origin }, notes: store.notes })
+    setCaptureWaiting(false)
+  }
+  const takeScreenRef = useRef(takeScreen)
+  takeScreenRef.current = takeScreen
+  useEffect(() => {
+    if (!captureMode.current) return
+    // The bookmarklet finds this tab again by name; a cross-site navigation cleared the one it gave.
+    window.name = 'uisandbox-capture'
+    let queue = Promise.resolve()
+    const on = (e: MessageEvent) => {
+      // Only the tab that opened this one, and only by its own origin.
+      if (!window.opener || e.source !== window.opener) return
+      const type = (e.data as { type?: unknown } | null)?.type
+      if (type === 'uisandbox:ping') { (e.source as Window).postMessage({ type: 'uisandbox:ready' }, e.origin); return }
+      if (type !== 'uisandbox:capture') return
+      const screen = readCapture(e.data, e.origin)
+      const reply = (msg: object) => { try { (e.source as Window).postMessage({ type: 'uisandbox:ack', ...msg }, e.origin) } catch { /* the app tab went away */ } }
+      if (typeof screen === 'string') { reply({ ok: false, why: screen }); setError(`A screen from ${e.origin} was refused: ${screen}.`); return }
+      reply({ ok: true, screen: new URL(screen.href).pathname })
+      setCaptureWaiting(true)
+      queue = queue.then(() => takeScreenRef.current(screen)).catch((err) => setError((err as Error).message))
+    }
+    window.addEventListener('message', on)
+    return () => window.removeEventListener('message', on)
   }, [])
 
   // Register the worker as soon as the page is idle, not on the first drop:
@@ -600,7 +654,7 @@ function Editor() {
               onPin={pinCurrent}
               changedCount={changedCount}
               warningTitle={!thin && !missingFiles.length && flutterWeb ? 'A Flutter web build' : undefined}
-              warning={thin ?? (missingFiles.length ? `${missingFiles.length === 1 ? 'A file' : `${missingFiles.length} files`} this page asked for ${missingFiles.length === 1 ? 'is' : 'are'} not in the archive: ${missingFiles.slice(0, 3).join(', ')}${missingFiles.length > 3 ? '…' : ''}. That usually means source, not the built output: parts of the page cannot run here.` : flutterWeb ? `Flutter paints this app into a <canvas>: there is almost no CSS for the knobs to move (${loaded.project.table.entries.length} values found). The 1:1 check and the reach meter still tell the truth about it; a design pass on a Flutter app belongs in its ThemeData.` : null)}
+              warning={thin ?? (missingFiles.length ? `${missingFiles.length === 1 ? 'A file' : `${missingFiles.length} files`} this page asked for ${missingFiles.length === 1 ? 'is' : 'are'} not in the archive: ${missingFiles.slice(0, 3).join(', ')}${missingFiles.length > 3 ? '…' : ''}. ${loaded.captured ? 'The page was taken along as it rendered; these it asks for here, and the capture did not see.' : 'That usually means source, not the built output: parts of the page cannot run here.'}` : flutterWeb ? `Flutter paints this app into a <canvas>: there is almost no CSS for the knobs to move (${loaded.project.table.entries.length} values found). The 1:1 check and the reach meter still tell the truth about it; a design pass on a Flutter app belongs in its ThemeData.` : null)}
               coverage={coverage}
               tab={tab}
               onTab={setTab}
@@ -634,7 +688,8 @@ function Editor() {
             stages (the same shape index.html paints before the script runs,
             so nothing flashes), or, when a load failed, the door with the
             reason and every other way in. */}
-        {!loaded && (error ? makeDoor(true) : (
+        {!loaded && captureMode.current && !busy && !error && <CaptureDoor waiting={captureWaiting || !!window.opener} />}
+        {!loaded && !(captureMode.current && !busy && !error) && (error ? makeDoor(true) : (
           <div className="skel">
             <aside className="skel__panel" aria-hidden />
             <section className="skel__stage">{busy ? <div className="skel__load"><LoadStages busy={busy} /></div> : null}</section>

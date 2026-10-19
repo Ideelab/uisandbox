@@ -694,6 +694,8 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
 .way--main .install--compact { margin: 0 0 10px; }
 .way--main .install__pill { width: 100%; max-width: none; }
 .way__fine { font-size: 12px !important; margin-bottom: 4px !important; }
+.way--next { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--app-border); }
+.way__chip { display: grid; gap: 8px; justify-items: start; margin: 0 0 12px; }
 .way__fine a { color: var(--app-fg); }
 .way__fold { width: 100%; display: flex; align-items: center; gap: 12px; margin-top: 10px; padding: 12px 14px; border: 1px solid var(--app-border); border-radius: 10px; background: var(--app-surface); text-align: left; color: var(--app-fg); }
 .way__fold:hover { background: var(--app-hover); }
@@ -736,3 +738,30 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
 /* The editor's footer line: its words from the left, Star on GitHub on the right. */
 .foot--app { justify-content: flex-start; padding-left: 22px; padding-right: 16px; }
 .foot.foot--app .star { margin-left: auto; }
+
+/* The bookmarklet's page (/?capture=1, decision 209): a thing to drag, and
+   where it goes, drawn. */
+.capture { text-align: center; }
+.capture__title { font-size: 17px; font-weight: 600; margin: 0 0 6px; text-wrap: balance; }
+.capture__sub { margin: 0 auto 18px; max-width: 44ch; font-size: 13px; color: var(--app-fg-muted); text-wrap: balance; }
+.capture__bar { width: min(420px, 100%); margin: 0 auto; border: 1px solid var(--app-border); border-radius: 10px; background: var(--app-surface); overflow: hidden; text-align: left; transition: border-color var(--app-dur) var(--app-ease), box-shadow var(--app-dur) var(--app-ease); }
+.capture__chrome { display: flex; align-items: center; gap: 5px; padding: 8px 10px; border-bottom: 1px solid var(--app-border); }
+.capture__chrome i { width: 8px; height: 8px; border-radius: 99px; background: var(--app-border); }
+.capture__url { flex: 1; height: 14px; margin-left: 8px; border-radius: 99px; background: var(--app-hover); }
+.capture__marks { display: flex; align-items: center; gap: 8px; padding: 6px 10px; }
+.capture__mark { width: 46px; height: 8px; border-radius: 99px; background: var(--app-hover); }
+.capture__slot { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border: 1.5px dashed var(--app-fg-faint); border-radius: 6px; font-size: 11px; font-weight: 600; color: var(--app-fg-muted); white-space: nowrap; }
+.capture__bar--hot { border-color: var(--app-fg); box-shadow: 0 0 0 3px var(--app-hover); }
+.capture__bar--hot .capture__slot { border-color: var(--app-fg); color: var(--app-fg); }
+.capture__arrow { display: grid; place-items: center; height: 26px; color: var(--app-fg-faint); }
+.capture__steps { list-style: none; counter-reset: step; width: min(420px, 100%); margin: 4px auto 6px; padding: 0; text-align: left; }
+.capture__steps li { counter-increment: step; position: relative; display: grid; gap: 8px; justify-items: start; padding: 12px 0 12px 34px; border-top: 1px solid var(--app-border); }
+.capture__steps li:first-child { border-top: 0; }
+.capture__steps li::before { content: counter(step); position: absolute; left: 0; top: 11px; width: 22px; height: 22px; border-radius: 99px; display: grid; place-items: center; font-size: 12px; font-weight: 600; background: var(--app-fg); color: var(--app-bg); }
+.capture__steps b { font-weight: 600; }
+.capture__chip { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px 8px 8px; border: 1.5px dashed var(--app-fg-muted); border-radius: 8px; background: var(--app-bg); color: var(--app-fg); font-size: 13.5px; font-weight: 600; text-decoration: none; cursor: grab; box-shadow: var(--app-shadow-sm); transition: transform var(--app-dur) var(--app-ease), border-color var(--app-dur) var(--app-ease); }
+.capture__chip:hover { border-color: var(--app-fg); transform: translateY(-1px); }
+.capture__chip:active { cursor: grabbing; }
+.capture__grip { color: var(--app-fg-faint); }
+.capture__hint { font-size: 12.5px; color: var(--app-fg-muted); line-height: 1.45; min-height: 1.45em; }
+.capture__hint kbd { color: var(--app-fg); }
