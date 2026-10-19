@@ -24,7 +24,7 @@ type Way = 'zip' | 'folder' | 'repo'
 /** Three real open-source builds (MIT) served from this origin — names people know, with colour everywhere the knobs reach. */
 import DOOR from '../kits/door.json'
 import { LiveAppDoor } from './LiveAppDoor'
-import { BookmarkletChip } from './CaptureDoor'
+import { BookmarkletChip, CaptureStepsDialog } from './CaptureDoor'
 
 const SAMPLES = [
   { path: '/samples/bootstrap-docs.zip', label: 'Bootstrap docs', title: 'getbootstrap.com: the Bootstrap 5.3 docs build (114 screens, 8 MB)' },
@@ -49,6 +49,7 @@ export function Door({ onArchive, onUrl, onSample, busy, error, carryNote, stand
   const [way, setWay] = useState<Way>('zip')
   const [more, setMore] = useState<'running' | 'build' | null>(error || standalone ? 'build' : null)
   const [showPrivacy, setShowPrivacy] = useState(false)
+  const [showSteps, setShowSteps] = useState(false)
   const [over, setOver] = useState(false)
   const [localError, setLocalError] = useState<string | null>(null)
   const [repo, setRepo] = useState('')
@@ -87,6 +88,7 @@ export function Door({ onArchive, onUrl, onSample, busy, error, carryNote, stand
   return (
     <div className="intake intake--door">
       {showPrivacy && <PrivacyCard onClose={() => setShowPrivacy(false)} />}
+      {showSteps && <CaptureStepsDialog onClose={() => setShowSteps(false)} />}
       <div className="door">
       <div className="card intake__card">
 
@@ -101,7 +103,7 @@ export function Door({ onArchive, onUrl, onSample, busy, error, carryNote, stand
               <h3><Bookmark size={16} strokeWidth={1.75} /> Any screen your browser shows, here in one click</h3>
               <p>Drag <b>Take this screen along</b> to your bookmarks bar, open your app (live, on staging, on localhost, behind a login) and click it on each screen you want. Your browser copies the page as you see it into a UISandbox tab. Nothing goes to a server.</p>
               <div className="way__chip"><BookmarkletChip /></div>
-              <p className="way__fine">A snapshot of what you see: the knobs and the export work on it; to click through the app itself, bring its build. <a href="/?capture=1">Step by step</a></p>
+              <p className="way__fine">A snapshot of what you see: the knobs and the export work on it; to click through the app itself, bring its build. <a href="/?capture=1" onClick={(e) => { if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return; e.preventDefault(); setShowSteps(true) }}>Step by step</a></p>
             </section>
             <section className="way way--main way--next">
               <h3><Laptop size={16} strokeWidth={1.75} /> Run it on your machine</h3>

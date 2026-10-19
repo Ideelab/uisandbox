@@ -742,6 +742,9 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
 /* The bookmarklet's page (/?capture=1, decision 209): a thing to drag, and
    where it goes, drawn. */
 .capture { text-align: center; }
+.capture { position: relative; }
+/* Over the editor (the door's "Step by step"): the card scrolls inside the scrim on a short screen. */
+.capture-dialog .capture { width: min(640px, 100%); max-height: min(92dvh, 760px); overflow-y: auto; }
 .capture__title { font-size: 17px; font-weight: 600; margin: 0 0 6px; text-wrap: balance; }
 .capture__sub { margin: 0 auto 18px; max-width: 44ch; font-size: 13px; color: var(--app-fg-muted); text-wrap: balance; }
 .capture__bar { width: min(420px, 100%); margin: 0 auto; border: 1px solid var(--app-border); border-radius: 10px; background: var(--app-surface); overflow: hidden; text-align: left; transition: border-color var(--app-dur) var(--app-ease), box-shadow var(--app-dur) var(--app-ease); }
