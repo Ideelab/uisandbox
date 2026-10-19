@@ -1,13 +1,17 @@
 # Roadmap — from a tool that works to a tool people find
 
-State on 2026-10-19, evening: merge phases 1 to 3 are done and live. The
-homepage IS the editor: `/` opens on the shadcn/ui kit, the Your app tab
-leads with `npx uisandbox-mcp open` (the sandbox from 127.0.0.1, nothing
-reaches this site), and the story lives on /about. Live on uisandbox.org as
-Worker version `2aeb544f`; `uisandbox-mcp` 0.4.0 on npm and in the MCP
-registry carries the same editor. The engine lives in `src/kits/engine/`, its
-only copy (decision 188). Full hold-out gate after phase 3: 173 fixtures, ok
-153, four known flakes, one timeout under load that is ok 3 of 3 alone (195).
+State on 2026-10-19, late evening: merge phases 1 to 3 are done and live,
+and so is the polish round after them (decisions 198 to 209). The homepage IS
+the editor on the shadcn/ui kit; the Your app tab opens with the bookmarklet
+(any screen your browser shows, logged in or not), then `npx uisandbox-mcp
+open` for a build or a running dev server, then a build. Live on
+uisandbox.org as Worker version `b8becd00` from `main` at `00035d6`.
+`uisandbox-mcp` 0.4.0 is on npm and in the MCP registry; 0.5.0 is built in
+`mcp/dist` from the same commit (the same bundle as the live site, smoke test
+green) and waits for Alexander's publish. The engine lives in
+`src/kits/engine/`, its only copy (decision 188). Full hold-out gate after
+phase 3: 173 fixtures, ok 153, four known flakes, one timeout under load that
+is ok 3 of 3 alone (195).
 
 Principles that hold across every step: nothing leaves the tab (no server
 state, no upload); the copy never claims more than the meter shows, and
@@ -46,21 +50,51 @@ server-side zone analytics); one source, no mirror; every step ends with
   three builds). The phone has the knobs in a bottom sheet. The copy follows
   the flow. No flash of the old landing page while the first screen loads.
   The door leads with the local route; the MCP package ships the new editor.
+- **Polish after phase 3** (2026-10-19, decisions 198–209):
+  - **Send:** what you turned goes back to your agent (`wait_for_send`) or to
+    the terminal that opened the sandbox.
+  - **The nulmeting:** the baseline for "phenomenal", taken on the live
+    version.
+  - **Footer and kit pages:** a footer in columns, and a static page per kit.
+  - **Top bar:** Kit and Preset in the app's own menus, with their motion.
+  - **Live mode:** `npx uisandbox-mcp open http://localhost:…` puts a running
+    dev server under the sandbox's origin, with hot reload, on Vite and
+    Next.js.
+  - **tokens.json** in the W3C shapes.
+  - **The kits on a phone:** they fit.
+  - **The kits against the kits** (207): each kit's own docs page beside our
+    canvas. A kit's own font now reaches its wall, daisyUI has its own
+    corners, and Ant Design its own ink. Material ships Roboto Flex in the zip,
+    and shadcn/ui is built as base-nova, what `shadcn init` gives today (208).
+  - **The bookmarklet** (209): one click copies any screen your browser shows
+    into a sandbox tab, tab to tab, including an app behind a login.
+    Alexander's own staging app works with it.
 
 ## Next, in this order
 
-### 1. Left over from phase 3
+### 1. Polish: make it work phenomenally
 
-- **The kits' own sheets on a phone.** The components sheet of the kit builds
-  is wider than a 360px frame (shadcn's button row runs off it). That is the
-  kit build's layout (scenes.mjs), not the editor's; it scrolls inside its
-  frame (192).
-- **A running dev server, with knobs.** The script line reads a running app's
-  kit and writes its design system, but turns no knob: the app is on another
-  origin. `npx uisandbox-mcp open` turns knobs, but on a build, not on
-  `localhost:3000` (197). Proxying the dev server through the local sandbox's
-  own origin would give both; dev servers with hot reload and websockets make
-  it uncertain, so it is a measurement first, not a promise.
+- **Publish `uisandbox-mcp` 0.5.0** (Alexander: `npm publish` from `mcp/`,
+  then `./mcp-publisher login github -token …` and `./mcp-publisher
+  publish`). Built and smoke-tested on 2026-10-19.
+- **The bookmarklet behind `Cross-Origin-Opener-Policy: same-origin`.** Such
+  an app cuts its tab off from the tab it opens, so nothing can be handed
+  over. The bookmarklet says so, but offers no other way. Saving the capture
+  as a zip to drop at the door is the candidate (209).
+- **Live mode beyond Vite and Next.js:** Nuxt, SvelteKit, Astro. Measure
+  first, then claim.
+- **The performance ceiling.**
+  - Bootswatch's 45 MB froze the tab, and the source scan takes 104 s on it.
+  - A budget of 8M characters cut that to 8 s, but gave 2 of the 23 large
+    builds a different baseline, so it was taken out (207).
+  - Next: measure CSS size against time to the first paint, and say the
+    limit at the door instead of freezing.
+- **Small leftovers:**
+  - the kits' work tables still run off a 360px frame;
+  - kit-antd timed out twice under concurrent load, and is ok on every run
+    alone; watch it.
+- **A first-use test with people:** the bookmarklet, the door and the
+  knobs, watched, not asked.
 - **/about as the launch page**, if the launch wants one: a short pitch, the
   clip, the two buttons, then the story. Only on Alexander's call.
 
@@ -90,7 +124,8 @@ waits. What does not change can start now: Stage 0 below.
 - **Search Console + Bing:** domain property `uisandbox.org` via a DNS TXT in
   Cloudflare, submit `sitemap.xml`; Bing imports from GSC in one click.
 - **Assets** to redo now that phase 3 is live: the montage GIF, the stage
-  stills and the /about clip show the old screen.
+  stills and the /about clip show the old screen, and none shows the
+  bookmarklet yet.
 
 **Stage 1 — Show HN, the soft launch (the star source):** developers star,
 fork and drop their own builds; each odd build becomes a fixture. Title and
@@ -126,9 +161,6 @@ traffic page and the registry counts, never from a script on the page.
 
 ## Parked (in order of pull)
 
-- The **performance ceiling**: measure CSS size against time to first paint
-  (Bootswatch's 45 MB froze the tab) and say the limit at the door instead of
-  freezing.
 - **iOS render** via a simulator screenshot (the Swift export exists; the
   picture does not).
 - **Reach beyond CSS**: raster logos through a colour map? Probably never.
