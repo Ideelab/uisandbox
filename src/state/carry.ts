@@ -19,6 +19,9 @@ const EXTRA: Array<[string, string]> = [
 ]
 /** The name the panel gives a knob, for every place that lists knobs. */
 export const KNOB_LABEL: Record<string, string> = Object.fromEntries([...DIALS.map((d) => [d.key, d.label] as [string, string]), ...EXTRA])
+/** A knob a person turned, as opposed to bookkeeping that moves with one:
+ *  `colorTheme` is the preset name a Brand pick sets beside the colour. */
+export const isShownKnob = (key: string) => key !== 'colorTheme'
 export const knobLabel = (key: string) => { const k = key.replace(/^sb\./, ''); return KNOB_LABEL[k] ?? k.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase()) }
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)

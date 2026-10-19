@@ -2685,3 +2685,39 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
       more, and Ideelab's OAuth app policy is not involved. What works: a
       short-lived classic token with read:org and read:user from the owner
       account, `mcp-publisher login github -token`, then revoke it.
+
+198. Send to your agent: the way back from the sandbox.
+
+    The loop out (an agent builds, `load`s, `open`s the sandbox) existed;
+    the way back did not. The user had to return to the chat and type
+    "export what I changed". Now a sandbox opened by the local server has
+    one primary button, labelled by where it goes (the server says so at
+    GET /__session/<id>): **Send to your agent** when an agent opened it
+    with `open`, **Send to the terminal** when `npx uisandbox-mcp open` did.
+    On uisandbox.org there is nobody to send to, and no button.
+
+    - Send POSTs the knobs to /__send/<id>. The new tool `wait_for_send`
+      blocks until then (240 s by default, at most 1800) and returns what
+      was turned, in the panel's own names and from → to, how many of the
+      build's values moved, the patch for the source, and the next step
+      (apply, rebuild, `load` + `verify`). When the time runs out first it
+      says `stillOpen`, so the agent waits again or asks, and no MCP call
+      hangs past a client's timeout. A send before anyone waits is kept and
+      handed over once.
+    - From the terminal the same is printed where the command runs.
+      Nothing is written to disk.
+    - The button is there only while the server's own app is on the stage:
+      a kit picked in the Engine menu is not the server's project, and the
+      knob sync now stops for it too (it would have posted the kit's knobs
+      as the app's).
+    - The preset name a Brand pick sets beside the colour (`colorTheme`) is
+      bookkeeping, not a knob, and no longer appears in a list of what was
+      turned (here, the door's carry line, the carried-over note).
+
+    Measured end to end with an MCP client and a real browser on SB Admin:
+    `wait_for_send` with 5 s before any Send says stillOpen (the control);
+    Brand turned by hand, Send pressed while `wait_for_send` waits, the
+    result arrives 46 ms later: Brand #4e73df → #0EA5E9, 23 of 470 values
+    moved, a 46-line patch. From the CLI the terminal printed the same and
+    the page said so. The MCP smoke test passes on the rebuilt bundle.
+    Version 0.5.0 (a new tool); npm and the registry are Alexander's.

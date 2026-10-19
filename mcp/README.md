@@ -21,6 +21,7 @@ npx tsx mcp/smoke.ts fixtures/x.zip        # load → set → export → verify 
 | `load` | `zipUrl` or `zipPath` | project id, screens, values, the baseline (brand, fonts, families, palette, canvas, dark mode) — or a refusal with the reason |
 | `open` | `id`, `screen?` | **the sandbox itself** in the user's browser — the web app ships in the package and is served from 127.0.0.1 by this process with the archive; what the user turns flows back (`state`) |
 | `state` | `id` | the knobs now, including what was turned by hand in an opened sandbox |
+| `wait_for_send` | `id`, `timeoutSeconds?` | waits until the user presses **Send to your agent** in the opened sandbox, then returns what they turned (from → to), how many values moved, and the patch for their source; says `stillOpen` when the time runs out first |
 | `screens` | `id` | the screens |
 | `set` | `id`, `knobs` — `cPrimary`, `fontDisplay`, `fontBody`, dials (`radius`, `space`, `type`, `lineHeight`, `tracking`, `weight`, `borderWidth`, `borderTone`, `shadow`, `motion`, `hue`, `sat`, `contrast`, `gradAngle`), `cBackground`, family colours, `dark`, `reset` | what moved (count, sample) |
 | `export` | `id`, `format` — `sheet-css` · `sheet-json` · `patch` · `tokens-css` · `tokens-json` · `tailwind` · `shadcn` · `swift` · `android-xml` · `android-kotlin` | text |
@@ -29,7 +30,7 @@ npx tsx mcp/smoke.ts fixtures/x.zip        # load → set → export → verify 
 
 `load`/`set`/`export`/`state` are pure Node. `open` serves the bundled app on 127.0.0.1 and opens the browser — nothing leaves the machine. `verify`/`screenshot` drive the app in headless Chromium (the bundled one on 127.0.0.1; `UISANDBOX_URL` to point elsewhere) with the archive served from a route inside the browser — the number an agent gets is the number a visitor gets.
 
-The conversation this is built for: *"Can I look at this app in a sandbox and change the design a bit?"* → the agent builds, `load`s, `open`s; you play in the real sandbox; *"export what I did"* → `state` → `export`.
+The conversation this is built for: *"Can I look at this app in a sandbox and change the design a bit?"* → the agent builds, `load`s, `open`s and calls `wait_for_send`; you play in the real sandbox and press **Send to your agent**; the agent gets what you turned and the patch, and applies it. (Or come back and say *"export what I did"* → `state` → `export`.) Opened from the terminal with `npx uisandbox-mcp open`, the button is **Send to the terminal** and prints the same there.
 
 ## Without an agent
 

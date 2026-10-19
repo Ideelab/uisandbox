@@ -29,11 +29,11 @@ import { Door, LoadStages } from './Intake'
 import { About } from './About'
 import { Stage, type StageTab } from './Stage'
 import { ExportDialog } from './ExportDialog'
-import { EngineSelect, LookSelect, SchemeSwitch, ShareButton } from './EditorBar'
+import { EngineSelect, LookSelect, SchemeSwitch, SendButton, ShareButton } from './EditorBar'
 import { applyLook, looks } from '../kits/looks'
 import { toPx } from '../sandbox/mapping'
 import { encode, readHash } from '../state/hash'
-import { carryOver, differingKeys, knobLabel, withKeys } from '../state/carry'
+import { carryOver, differingKeys, isShownKnob, knobLabel, withKeys } from '../state/carry'
 import { genPatch, genPatchedFiles } from '../export/genSheet'
 
 interface Loaded {
@@ -187,9 +187,23 @@ function Editor() {
   // Opened by the local MCP server (`&sync=<id>`): the knobs flow back to it,
   // so an agent can export/verify what the user turned by hand. Same origin,
   // 127.0.0.1, debounced; nothing else ever receives the state.
+  // Opened by the local server: it says where Send goes (an agent, or the
+  // terminal). No answer, no button: on uisandbox.org there is no one to send to.
+  const [sendTo, setSendTo] = useState<'agent' | 'terminal' | null>(null)
   useEffect(() => {
     const id = new URLSearchParams(location.search).get('sync')
-    if (!id || !loaded || !/^(127\.0\.0\.1|localhost)$/.test(location.hostname)) return
+    if (!id || !/^(127\.0\.0\.1|localhost)$/.test(location.hostname)) return
+    fetch(`/__session/${encodeURIComponent(id)}`).then((r) => (r.ok ? r.json() : null)).then((j) => { if (j?.to === 'agent' || j?.to === 'terminal') setSendTo(j.to) }).catch(() => {})
+  }, [])
+  const sendBack = async (): Promise<{ waiting: number } | null> => {
+    const id = new URLSearchParams(location.search).get('sync')
+    if (!id) return null
+    try { const r = await fetch(`/__send/${encodeURIComponent(id)}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cfg }) }); return r.ok ? await r.json() : null } catch { return null }
+  }
+  useEffect(() => {
+    const id = new URLSearchParams(location.search).get('sync')
+    // Only the app the server opened: a kit picked in the Engine menu is not its project.
+    if (!id || !loaded || loaded.kit || !/^(127\.0\.0\.1|localhost)$/.test(location.hostname)) return
     const t = setTimeout(() => { void fetch(`/__state/${encodeURIComponent(id)}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cfg }) }).catch(() => {}) }, 400)
     return () => clearTimeout(t)
   }, [cfg, loaded])
@@ -364,7 +378,7 @@ function Editor() {
         const carried = carryOver(from.base, from.cfg, report.baseline.cfg)
         if (carried.keys.length) {
           pendingCarry = { cfg: carried.cfg, keys: carried.keys }
-          report.notes.unshift(`Carried over from ${from.name}: ${carried.keys.map(knobLabel).join(', ')}. Every other knob starts where your code puts it; Reset puts it all back.`)
+          report.notes.unshift(`Carried over from ${from.name}: ${carried.keys.filter(isShownKnob).map(knobLabel).join(', ')}. Every other knob starts where your code puts it; Reset puts it all back.`)
         }
       }
       const wanted = new URLSearchParams(location.search).get('screen')
@@ -495,7 +509,7 @@ function Editor() {
   // baseline; "Custom" once something was turned on top of a look.
   const lookNow = !loaded || encode(cfg) === encode(loaded.report.baseline.cfg) ? null : lookApplied && encode(lookApplied.cfg) === encode(cfg) ? lookApplied.id : lookApplied ? '' : null
   const hasScheme = !!loaded && (loaded.project.scheme.media || loaded.project.scheme.hooks.length > 0)
-  const turnedOnKit = loaded?.kit ? differingKeys(loaded.report.baseline.cfg, cfg) : []
+  const turnedOnKit = loaded?.kit ? differingKeys(loaded.report.baseline.cfg, cfg).filter(isShownKnob) : []
   const carryNote = turnedOnKit.length ? `What you turned on ${loaded!.kit!.name} comes with it: ${turnedOnKit.map(knobLabel).join(', ')}. Everything else starts as your code has it.` : undefined
   const makeDoor = (standalone = false) => <Door standalone={standalone} carryNote={standalone ? undefined : carryNote} onArchive={onArchive} onUrl={(u) => void loadFromUrl(`/__repo/?u=${encodeURIComponent(u)}`)} onSample={(p) => void loadFromUrl(p)} busy={busy} error={error} />
   return (
@@ -512,7 +526,8 @@ function Editor() {
             {hasScheme && <SchemeSwitch value={cfg.sb.dark ?? 'light'} onChange={(v) => dispatch({ type: 'SET', patch: { sb: { ...cfg.sb, dark: v } } })} />}
             <ShareButton url={shareUrl} />
             <button type="button" className="btn btn--ghost btn--sm" onClick={() => setShowNotes((v) => !v)} title={loaded.kit ? 'What we read from the kit' : 'What we read from your code'}><Info size={14} /><span className="ebar__txt"> Read</span></button>
-            <button type="button" className="btn btn--primary btn--sm" onClick={() => setShowExport(true)}><Download size={14} /> Export</button>
+            <button type="button" className={`btn ${sendTo ? 'btn--secondary' : 'btn--primary'} btn--sm`} onClick={() => setShowExport(true)}><Download size={14} /> Export</button>
+            {sendTo && !loaded.kit && <SendButton to={sendTo} onSend={sendBack} />}
             {!loaded.kit && <button type="button" className="btn btn--ghost btn--sm" onClick={closeProject} title="Close your app and go back to the kit"><X size={14} /> Close</button>}
           </>}
         </div>

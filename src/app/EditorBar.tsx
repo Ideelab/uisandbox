@@ -4,7 +4,7 @@
  * Export stays the one primary button.
  */
 import { useEffect, useRef, useState } from 'react'
-import { Check, Link2, Moon, Sun } from 'lucide-react'
+import { Check, Link2, Moon, Send, Sun } from 'lucide-react'
 import DOOR from '../kits/door.json'
 import type { KitId } from '../kits/engine/detect.mjs'
 import { looks as LOOKS } from '../kits/looks'
@@ -78,5 +78,31 @@ export function LookSelect({ current, onPick }: { current: string | null; onPick
         {LOOKS.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
       </select>
     </label>
+  )
+}
+
+/** Send: the user is done, and what they turned goes back to whoever opened
+ *  this sandbox on their machine (an agent through the MCP server, or the
+ *  terminal that ran `npx uisandbox-mcp open`). Only there: on uisandbox.org
+ *  there is nobody to send to. */
+export function SendButton({ to, onSend }: { to: 'agent' | 'terminal'; onSend: () => Promise<{ waiting: number } | null> }) {
+  const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle')
+  const [note, setNote] = useState<string | null>(null)
+  const send = async () => {
+    setState('sending')
+    const r = await onSend()
+    if (!r) { setState('failed'); setNote('Could not reach the local server. Is the command that opened this still running?'); return }
+    setState('sent')
+    setNote(to === 'terminal'
+      ? 'Sent: it is printed in the terminal that opened this. Keep turning and send again, or close this tab.'
+      : r.waiting ? 'Sent to your agent: it has it now. Keep turning and send again, or close this tab.' : 'Sent. Your agent picks it up when it asks (wait_for_send). Keep turning and send again, or close this tab.')
+  }
+  return (
+    <span className="ebar__share">
+      <button type="button" className="btn btn--primary btn--sm" onClick={() => void send()} disabled={state === 'sending'} title={to === 'terminal' ? 'Print what you turned, and the patch, in the terminal' : 'Hand what you turned, and the patch, back to your agent'}>
+        {state === 'sent' ? <Check size={14} /> : <Send size={14} />} {to === 'terminal' ? 'Send to the terminal' : 'Send to your agent'}
+      </button>
+      {note && <span className="ebar__pop" role="status">{note}</span>}
+    </span>
   )
 }

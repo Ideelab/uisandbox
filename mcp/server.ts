@@ -35,6 +35,7 @@ import { openZip, type Archive } from '../src/audit/intake/readZip'
 import { buildProject, type SandboxProject } from '../src/sandbox/project'
 import { deriveBaseline, type BaselineReport } from '../src/sandbox/baseline'
 import { computeVars } from '../src/sandbox/mapping'
+import { differingKeys, isShownKnob, knobLabel } from '../src/state/carry'
 import { buildTokens } from '../src/tokens/buildTokens'
 import { formatCssColor } from '../src/sandbox/cssColor'
 import { encode } from '../src/state/hash'
@@ -51,8 +52,16 @@ import { refusalFor } from '../src/sandbox/platform'
 
 const APP_ENV = process.env.UISANDBOX_URL?.replace(/\/$/, '')
 
-interface Loaded { id: string; name: string; bytes: Uint8Array<ArrayBuffer>; project: SandboxProject; report: BaselineReport; cfg: Config; archive: Archive; touchedInBrowser?: number }
+interface Loaded {
+  id: string; name: string; bytes: Uint8Array<ArrayBuffer>; project: SandboxProject; report: BaselineReport; cfg: Config; archive: Archive; touchedInBrowser?: number
+  /** Who opened it: an agent (MCP `open`) or the terminal (`npx uisandbox-mcp open`). Decides where Send goes. */
+  via?: 'agent' | 'cli'
+  /** When the user last pressed Send in the sandbox, and whether that send was handed over yet. */
+  sent?: number; delivered?: boolean
+}
 const projects = new Map<string, Loaded>()
+/* Agents waiting in `wait_for_send`, per project: resolved by the next Send. */
+const waiting = new Map<string, Array<() => void>>()
 let seq = 0
 
 const summarise = (p: Loaded) => {
@@ -77,16 +86,34 @@ const summarise = (p: Loaded) => {
   }
 }
 
+/* What a Send hands over: what the user turned (in the panel's own names, from
+   → to), how many of the build's values moved, and the patch that writes the
+   result into their source. Ready to act on, not a dump to interpret. */
+const sentPayload = (p: Loaded) => {
+  const base = p.report.baseline.cfg
+  const at = (c: Config, k: string) => k.startsWith('sb.') ? (c.sb as unknown as Record<string, unknown>)[k.slice(3)] : (c as unknown as Record<string, unknown>)[k]
+  const turned = differingKeys(base, p.cfg).filter(isShownKnob).map((k) => ({ knob: knobLabel(k), from: at(base, k) ?? 'as in the code', to: at(p.cfg, k) ?? 'as in the code' }))
+  const vars = computeVars(p.project.table, p.report.baseline, p.cfg, buildTokens(p.cfg))
+  const { moved } = summarise(p)
+  return {
+    sent: p.sent ? new Date(p.sent).toISOString() : null, project: p.name, turned, moved, of: p.project.table.entries.length,
+    patch: genPatch(p.project.table, vars),
+    next: turned.length
+      ? 'Apply the patch to the source (each line is a literal in their CSS and the value it becomes), rebuild, then `load` the new build and `verify` to show it still renders 1:1. For a design system and a SKILL.md in their kit\'s own names, ask them to press Export in the sandbox.'
+      : 'They pressed Send without turning anything: nothing to apply.',
+  }
+}
+
 const INSTRUCTIONS = `UISandbox renders a BUILT web app 1:1 in a sandbox and turns every CSS literal into a knob that moves the app's own value; "1:1" is measured (a computed-style diff), not promised.
 
 When to use it — and offer it without being asked:
-- The user wants to LOOK at an app in a sandbox or PLAY with its design ("can I see this in a sandbox", "let me try some changes", "what would a different brand colour look like"): build the app if you are in its repo (npm run build / vite build / nuxi generate / next build with output: 'export'), zip the output folder (dist/, build/, out/ — never node_modules or source), \`load\` it, then \`open\`. The real, interactive sandbox opens in their browser from 127.0.0.1; nothing leaves the machine. Tell them it is open and that whatever they turn comes back here: when they return with "export this" / "what did I change" / "check it", call \`state\`, then \`export\` / \`verify\` / \`screenshot\`.
+- The user wants to LOOK at an app in a sandbox or PLAY with its design ("can I see this in a sandbox", "let me try some changes", "what would a different brand colour look like"): build the app if you are in its repo (npm run build / vite build / nuxi generate / next build with output: 'export'), zip the output folder (dist/, build/, out/ — never node_modules or source), \`load\` it, then \`open\`. The real, interactive sandbox opens in their browser from 127.0.0.1; nothing leaves the machine. Tell them it is open and that they press **Send to your agent** in the sandbox when they are done. Then call \`wait_for_send\`: it returns when they press it, with what they turned and the patch to apply (call it again if it reports the sandbox still open). If they come back in the chat instead ("export this" / "what did I change"), \`state\`, then \`export\` / \`verify\` / \`screenshot\`.
 - The user wants ONE change tried ("try brand #e11d48", "rounder corners"): \`load\` → \`set\` → \`verify\` → \`screenshot\` → \`export\` (patch). Offer \`open\` after.
 - The user is iterating on the look of an app you are working in: offer the sandbox proactively, once.
 
 Rules: never claim more than \`verify\` and the reach meter report — quote the numbers; if a load is refused (iOS/Android/source-only), relay the reason and suggest building first; \`verify\`/\`screenshot\` need Chromium (npx playwright install chromium once) — \`open\`, \`load\`, \`set\`, \`export\` do not.`
 
-const server = new McpServer({ name: 'uisandbox', version: '0.4.0' }, { instructions: INSTRUCTIONS })
+const server = new McpServer({ name: 'uisandbox', version: '0.5.0' }, { instructions: INSTRUCTIONS })
 
 server.registerTool('load', {
   title: 'Load a built web app',
@@ -182,6 +209,25 @@ async function localServer(): Promise<{ port: number }> {
       req.on('end', () => { try { const p = projects.get(st[1]!); const j = JSON.parse(body) as { cfg?: Config }; if (p && j.cfg) { p.cfg = j.cfg; p.touchedInBrowser = Date.now() } } catch { /* ignore */ } res.statusCode = 204; res.end() })
       return
     }
+    // Where Send goes (the page labels its button by it): GET /__session/<id>
+    const se = url.pathname.match(/^\/__session\/([a-z0-9]+)$/)
+    if (se) { const p = projects.get(se[1]!); res.setHeader('content-type', 'application/json'); if (!p) { res.statusCode = 404; res.end('{}'); return } res.end(JSON.stringify({ to: p.via === 'cli' ? 'terminal' : 'agent' })); return }
+    // Send: POST /__send/<id> {cfg} — the user is done; hand it to whoever waits.
+    const sd = url.pathname.match(/^\/__send\/([a-z0-9]+)$/)
+    if (sd && req.method === 'POST') {
+      let body = ''; req.on('data', (c) => { body += c })
+      req.on('end', () => {
+        const p = projects.get(sd[1]!)
+        res.setHeader('content-type', 'application/json')
+        if (!p) { res.statusCode = 404; res.end('{}'); return }
+        try { const j = JSON.parse(body) as { cfg?: Config }; if (j.cfg) { p.cfg = j.cfg; p.touchedInBrowser = Date.now() } } catch { /* the last synced state stands */ }
+        p.sent = Date.now(); p.delivered = false
+        const ws = waiting.get(p.id) ?? []; waiting.delete(p.id); for (const w of ws) w()
+        if (p.via === 'cli') printSent(p)
+        res.end(JSON.stringify({ to: p.via === 'cli' ? 'terminal' : 'agent', waiting: ws.length }))
+      })
+      return
+    }
     const ar = url.pathname.match(/^\/__archive\/([a-z0-9]+)\.zip$/)
     if (ar) { const p = projects.get(ar[1]!); if (!p) { res.statusCode = 404; res.end('no such project'); return } res.setHeader('content-type', 'application/zip'); res.setHeader('cache-control', 'no-store'); res.end(Buffer.from(p.bytes)); return }
     let file = join(APP_DIR!, decodeURIComponent(url.pathname))
@@ -196,6 +242,16 @@ async function localServer(): Promise<{ port: number }> {
   local = { server, port }
   return local
 }
+/** Send from a sandbox opened in the terminal: there is no agent to hand it
+ *  to, so it is printed where the command runs. Nothing is written to disk. */
+function printSent(p: Loaded): void {
+  const s = sentPayload(p)
+  p.delivered = true
+  console.log(`\n── Sent from the sandbox · ${s.project} · ${s.turned.length ? s.turned.map((t) => `${t.knob}: ${t.from} → ${t.to}`).join(' · ') : 'nothing turned'}`)
+  console.log(`${s.moved} of ${s.of} values moved. The patch (each line: a literal in your CSS and what it becomes):\n`)
+  console.log(s.patch)
+}
+
 function openInBrowser(url: string): void {
   const cmd = process.platform === 'darwin' ? ['open', url] : process.platform === 'win32' ? ['cmd', '/c', 'start', '', url] : ['xdg-open', url]
   if (process.env.UISANDBOX_NO_OPEN) return
@@ -208,17 +264,35 @@ server.registerTool('open', {
   inputSchema: { id: z.string(), screen: z.string().optional().describe('Screen path to open first') },
 }, async ({ id, screen }) => {
   const p = need(id)
+  p.via = 'agent'
   const { port } = await localServer()
   const hash = JSON.stringify(p.cfg) === JSON.stringify(p.report.baseline.cfg) ? '' : `#${encode(p.cfg)}`
   const url = `http://127.0.0.1:${port}/?load=${encodeURIComponent(`/__archive/${id}.zip`)}&sync=${id}${screen ? `&screen=${encodeURIComponent(screen)}` : ''}${hash}`
   if (!argv.includes('--no-browser')) openInBrowser(url)
-  return { content: [{ type: 'text', text: JSON.stringify({ opened: url, note: 'The sandbox is open in the browser. The user can turn the knobs there; what they turn comes back to this server — call `export`, `verify` or `screenshot` afterwards to work with it. Use `state` to read the current knobs.' }, null, 2) }] }
+  return { content: [{ type: 'text', text: JSON.stringify({ opened: url, note: 'The sandbox is open in the browser. Tell the user to press "Send to your agent" there when they are done, then call `wait_for_send`: it returns when they press it, with what they turned and the patch to apply. `state` reads the knobs at any moment.' }, null, 2) }] }
 })
 
 server.registerTool('state', {
   title: 'Current knobs', description: 'The knobs as they stand now — including what the user turned by hand in an opened sandbox (and when).',
   inputSchema: { id: z.string() },
 }, async ({ id }) => { const p = need(id); return { content: [{ type: 'text', text: JSON.stringify({ ...summarise(p), touchedInBrowser: p.touchedInBrowser ? new Date(p.touchedInBrowser).toISOString() : null }, null, 2) }] } })
+
+server.registerTool('wait_for_send', {
+  title: 'Wait for the user to send it back',
+  description: 'After `open`: wait until the user presses "Send to your agent" in the sandbox, then return what they turned (from → to, in the panel\'s own names), how many values moved, and the patch that writes it into their source. Returns at once if they already sent and you have not collected it. If the time runs out first it says the sandbox is still open: call it again (or ask them).',
+  inputSchema: { id: z.string(), timeoutSeconds: z.number().int().min(5).max(1800).optional().describe('How long to wait (default 240)') },
+}, async ({ id, timeoutSeconds }) => {
+  const p = need(id)
+  const handOver = () => { p.delivered = true; return { content: [{ type: 'text' as const, text: JSON.stringify(sentPayload(p), null, 2) }] } }
+  if (p.sent && !p.delivered) return handOver()
+  const got = await new Promise<boolean>((resolve) => {
+    const done = () => { clearTimeout(t); resolve(true) }
+    const t = setTimeout(() => { const ws = waiting.get(p.id) ?? []; waiting.set(p.id, ws.filter((w) => w !== done)); resolve(false) }, (timeoutSeconds ?? 240) * 1000)
+    waiting.set(p.id, [...(waiting.get(p.id) ?? []), done])
+  })
+  if (got) return handOver()
+  return { content: [{ type: 'text', text: JSON.stringify({ sent: false, stillOpen: true, touchedInBrowser: p.touchedInBrowser ? new Date(p.touchedInBrowser).toISOString() : null, hint: 'Nothing sent yet. Call wait_for_send again to keep waiting, or ask the user whether they are done.' }, null, 2) }] }
+})
 
 /* ── Render tools: the real app in headless Chromium ─────────────────────── */
 async function drive(p: Loaded, screenPath: string | undefined, width: number, fn: (page: import('playwright').Page) => Promise<unknown>) {
@@ -310,7 +384,7 @@ if (argv[0] === 'open') {
   if (!project.platform.renders || !project.screens.length) { console.error(refusalFor(project.platform, { files: archive.entries.length })); process.exit(2) }
   const report = await deriveBaseline(archive, project.table)
   const id = 'cli'
-  projects.set(id, { id, name: archive.rootName, bytes, project, report, cfg: report.baseline.cfg, archive })
+  projects.set(id, { id, name: archive.rootName, bytes, project, report, cfg: report.baseline.cfg, archive, via: 'cli' })
   const { port } = await localServer()
   const url = `http://127.0.0.1:${port}/?load=${encodeURIComponent(`/__archive/${id}.zip`)}&sync=${id}`
   if (!argv.includes('--no-browser')) openInBrowser(url)
