@@ -1,6 +1,6 @@
 import { DropGlyph } from './Mark'
 import { useEffect, useRef, useState } from 'react'
-import { FileArchive, FolderOpen, GitBranch, Check, Copy, ShieldCheck, X, Plug, ChevronRight, Laptop } from 'lucide-react'
+import { FileArchive, FolderOpen, GitBranch, Check, Copy, ShieldCheck, X, Plug, ChevronRight, Laptop, Bookmark } from 'lucide-react'
 import { archiveFromFiles, isZip, openZip, type Archive } from '../audit/intake/readZip'
 import { filesFromDrop } from '../audit/intake/readFiles'
 import { STAGES, fmtBytes, type Progress } from './progress'
@@ -24,6 +24,7 @@ type Way = 'zip' | 'folder' | 'repo'
 /** Three real open-source builds (MIT) served from this origin — names people know, with colour everywhere the knobs reach. */
 import DOOR from '../kits/door.json'
 import { LiveAppDoor } from './LiveAppDoor'
+import { BookmarkletChip } from './CaptureDoor'
 
 const SAMPLES = [
   { path: '/samples/bootstrap-docs.zip', label: 'Bootstrap docs', title: 'getbootstrap.com: the Bootstrap 5.3 docs build (114 screens, 8 MB)' },
@@ -35,8 +36,10 @@ const SAMPLES = [
  * The door: the empty state of the stage's "Your app" tab, and what a failed
  * load falls back to; the story around it lives on /about.
  *
- * In the order people trust it (decision 197). First the way where nothing
- * leaves their machine at all: one command in their project, the sandbox
+ * First the easiest way (decision 207): a bookmarklet that copies the screen
+ * the visitor's own browser shows into a UISandbox tab, any app, any address,
+ * logged in or not, tab to tab. Then in the order people trust it (decision
+ * 197): the way where nothing leaves their machine at all, one command in their project, the sandbox
  * served from 127.0.0.1. Then the running app, one script line. Then, folded
  * away, loading a build into this page (zip, folder, repo): it never leaves
  * the tab either, but "drop your code on a website" is what people hear, and
@@ -94,7 +97,13 @@ export function Door({ onArchive, onUrl, onSample, busy, error, carryNote, stand
         ) : (
           <>
             {carryNote && <p className="intake__carry">{carryNote}</p>}
-            <section className="way way--main">
+            <section className="way way--main way--capture">
+              <h3><Bookmark size={16} strokeWidth={1.75} /> Any screen your browser shows, here in one click</h3>
+              <p>Drag <b>Take this screen along</b> to your bookmarks bar, open your app (live, on staging, on localhost, behind a login) and click it on each screen you want. Your browser copies the page as you see it into a UISandbox tab. Nothing goes to a server.</p>
+              <div className="way__chip"><BookmarkletChip /></div>
+              <p className="way__fine">A snapshot of what you see: the knobs and the export work on it; to click through the app itself, bring its build. <a href="/?capture=1">Step by step</a></p>
+            </section>
+            <section className="way way--main way--next">
               <h3><Laptop size={16} strokeWidth={1.75} /> Run it on your machine</h3>
               <p>Is your dev server running? Paste its address and run the line in your project's terminal: the sandbox opens on your live app, hot reload included. Without an address it finds your build (<code>dist/</code>, <code>build/</code>, <code>out/</code>). Served from <code>127.0.0.1</code>: your code never leaves your machine, not even to this site. Needs Node 20.</p>
               <LocalCommand />

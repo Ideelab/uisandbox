@@ -3079,17 +3079,19 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
 
     Where it lives: `/?capture=1` shows the bookmarklet to drag and the
     console line to copy; the tab the bookmarklet opens shows "Waiting for a
-    screen". Not linked from the door. The first version showed the
+    screen". The first version showed the
     bookmarklet as a button, and Alexander clicked it: nothing happened,
     and nothing said why. It is now a dashed label with a grip, under a
     drawn bookmarks bar with its slot; a click says to drag it, and the
     shortcut for a hidden bookmarks bar is on the page. The bookmarklet is 13.6k characters
     from the production build, 26k from the dev server.
 
-    Door copy, a draft for Alexander's OK (not shipped). Under "Your running
-    app", as a third way:
-
-    > **Behind a login?** Drag *Take this screen along* to your bookmarks bar,
-    > open your app where you are logged in, and click it on each screen you
-    > want. Your browser copies the page as you see it into a UISandbox tab.
-    > Nothing goes to a server.
+    On the door, FIRST (Alexander, 2026-10-19). The login was one case of
+    it: the bookmarklet takes any screen the visitor's browser shows, live,
+    on staging, on localhost or behind a login, with no build, zip or
+    command, which makes it the easiest way in, and it keeps everything in
+    the browser as the ways under it do (decision 197's order still holds
+    below it). It says what it is not: "A snapshot of what you see: the
+    knobs and the export work on it; to click through the app itself, bring
+    its build." The page at `/?capture=1` stays as the step by step, linked
+    from the door.

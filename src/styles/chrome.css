@@ -694,6 +694,8 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
 .way--main .install--compact { margin: 0 0 10px; }
 .way--main .install__pill { width: 100%; max-width: none; }
 .way__fine { font-size: 12px !important; margin-bottom: 4px !important; }
+.way--next { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--app-border); }
+.way__chip { display: grid; gap: 8px; justify-items: start; margin: 0 0 12px; }
 .way__fine a { color: var(--app-fg); }
 .way__fold { width: 100%; display: flex; align-items: center; gap: 12px; margin-top: 10px; padding: 12px 14px; border: 1px solid var(--app-border); border-radius: 10px; background: var(--app-surface); text-align: left; color: var(--app-fg); }
 .way__fold:hover { background: var(--app-hover); }

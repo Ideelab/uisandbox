@@ -15,13 +15,36 @@ import { bookmarklet, consoleLine } from '../capture/receive'
 
 const mac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
 
-export function CaptureDoor({ waiting }: { waiting: boolean }) {
+/** The bookmarklet as a thing to pick up, and the line under it that says
+ *  what to do with it (a click here only says "drag me"). */
+export function BookmarkletChip({ onDragState }: { onDragState?: (dragging: boolean) => void }) {
   const link = useRef<HTMLAnchorElement>(null)
-  const [copied, setCopied] = useState(false)
   const [state, setState] = useState<'idle' | 'clicked' | 'dragging' | 'dropped'>('idle')
   // React refuses a javascript: href (it would be an XSS sink in any other
   // link); this one is ours, so it is set on the element after render.
   useEffect(() => { link.current?.setAttribute('href', bookmarklet(grab.toString(), location.origin)) }, [])
+  return (
+    <>
+      <a ref={link} className="capture__chip" title="Drag me to your bookmarks bar"
+        onClick={(e) => { e.preventDefault(); setState('clicked') }}
+        onDragStart={() => { setState('dragging'); onDragState?.(true) }}
+        onDragEnd={(e) => { setState(e.dataTransfer.dropEffect === 'none' ? 'idle' : 'dropped'); onDragState?.(false) }}>
+        <GripVertical size={14} strokeWidth={2} className="capture__grip" />
+        <Bookmark size={14} strokeWidth={2} /> Take this screen along
+      </a>
+      <span className="capture__hint" role="status">
+        {state === 'clicked' ? 'Not a button: drag it with the mouse up to the bookmarks bar, then click it on your app.'
+          : state === 'dragging' ? 'Drop it on your bookmarks bar.'
+          : state === 'dropped' ? 'In your bookmarks bar? Open your app and click it there.'
+          : <>No bookmarks bar? Show it with <kbd>{mac ? '⌘' : 'Ctrl'}</kbd> <kbd>{mac ? '⇧' : 'Shift'}</kbd> <kbd>B</kbd>.</>}
+      </span>
+    </>
+  )
+}
+
+export function CaptureDoor({ waiting }: { waiting: boolean }) {
+  const [copied, setCopied] = useState(false)
+  const [dragging, setDragging] = useState(false)
   const copy = async () => {
     try { await navigator.clipboard.writeText(consoleLine(grab.toString(), location.origin)); setCopied(true); setTimeout(() => setCopied(false), 1400) } catch { /* nothing to fall back to: the bookmarklet is the way */ }
   }
@@ -39,7 +62,7 @@ export function CaptureDoor({ waiting }: { waiting: boolean }) {
           <h2 className="capture__title">Any screen your browser shows, here in one click</h2>
           <p className="capture__sub">Live, on staging, on localhost, behind a login: if you can open it, it comes along.</p>
 
-          <div className={`capture__bar ${state === 'dragging' ? 'capture__bar--hot' : ''}`} aria-hidden>
+          <div className={`capture__bar ${dragging ? 'capture__bar--hot' : ''}`} aria-hidden>
             <div className="capture__chrome"><i /><i /><i /><span className="capture__url" /></div>
             <div className="capture__marks">
               <span className="capture__mark" /><span className="capture__mark" />
@@ -51,19 +74,7 @@ export function CaptureDoor({ waiting }: { waiting: boolean }) {
           <ol className="capture__steps">
             <li>
               <b>Drag this up to your bookmarks bar.</b>
-              <a ref={link} className="capture__chip" title="Drag me to your bookmarks bar"
-                onClick={(e) => { e.preventDefault(); setState('clicked') }}
-                onDragStart={() => setState('dragging')}
-                onDragEnd={(e) => setState(e.dataTransfer.dropEffect === 'none' ? 'idle' : 'dropped')}>
-                <GripVertical size={14} strokeWidth={2} className="capture__grip" />
-                <Bookmark size={14} strokeWidth={2} /> Take this screen along
-              </a>
-              <span className="capture__hint" role="status">
-                {state === 'clicked' ? 'Not a button: drag it with the mouse up to the bookmarks bar, then click it on your app.'
-                  : state === 'dragging' ? 'Drop it on your bookmarks bar.'
-                  : state === 'dropped' ? 'In your bookmarks bar? Then go to step 2.'
-                  : <>No bookmarks bar? Show it with <kbd>{mac ? '⌘' : 'Ctrl'}</kbd> <kbd>{mac ? '⇧' : 'Shift'}</kbd> <kbd>B</kbd>.</>}
-              </span>
+              <BookmarkletChip onDragState={setDragging} />
             </li>
             <li>
               <b>Open your app and click the bookmark there.</b>
