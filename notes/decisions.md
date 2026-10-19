@@ -2770,3 +2770,33 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
       canvas beside the reach meter and Check 1:1, where the merge brief
       put it.
     - "UISandbox Design System Generator" names the tool in both footers.
+
+201. The baseline for "phenomenal" (nulmeting), on the live version.
+
+    Measured in a worktree at e8fd83b (what uisandbox.org served), so
+    nothing built meanwhile could move it. Five meters:
+
+    1. 1:1, all 173 fixtures: ok 153, refused 1, no-load 14 (the refusals
+       at the door, by design), differs 5: ng-bootstrap (one margin-left
+       0 → 127px, the known layout flake), anime-docs, chroma, todomvc,
+       docsify (known: random colours and angles, Polymer). Refused:
+       mustache (0 of 2 elements paired: the two loads render too
+       differently to compare). Timeout/error 0.
+    2. Every knob does what it says (knob-render, 5 builds × 11 knobs):
+       2 findings, both Open Props: border width ×3 and spacing ×1.5 move
+       nothing although the screen paints 95 border widths and 277 spaces.
+       The rest pass or are n/a with the reason (the sheet holds none, or
+       the screen paints none).
+    3. The export lands (export-sweep, 13 builds): 12 pass; AdminLTE fails
+       on the INSTRUMENT, which looks for the card "Hand it to your agent"
+       that 191 renamed to "Design system + Skill". The sweep needs the new
+       name; the product is not shown wrong by this.
+    4. Speed, load to verdict on the 153 ok builds: median 4.5 s, p90 17 s,
+       slowest Bootswatch 106 s, ant-design site 82 s, antd-site-large 78 s.
+       The performance ceiling (parked) is the one that matters here.
+    5. First use: not measurable by a script; needs people.
+
+    Seen by Alexander while turning (screenshots, 2026-10-19): on a kit,
+    Shuffle turns Hue / Saturation / Contrast, so the dials hidden on a kit
+    reappear; the door's "comes with it" line becomes a list of every knob
+    and slides under the What we read card.
