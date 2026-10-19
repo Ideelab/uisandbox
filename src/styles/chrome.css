@@ -740,7 +740,8 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
 /* The bookmarklet's page (/?capture=1, decision 207): a thing to drag, and
    where it goes, drawn. */
 .capture { text-align: center; }
-.capture__title { font-size: 17px; font-weight: 600; margin: 0 0 18px; text-wrap: balance; }
+.capture__title { font-size: 17px; font-weight: 600; margin: 0 0 6px; text-wrap: balance; }
+.capture__sub { margin: 0 auto 18px; max-width: 44ch; font-size: 13px; color: var(--app-fg-muted); text-wrap: balance; }
 .capture__bar { width: min(420px, 100%); margin: 0 auto; border: 1px solid var(--app-border); border-radius: 10px; background: var(--app-surface); overflow: hidden; text-align: left; transition: border-color var(--app-dur) var(--app-ease), box-shadow var(--app-dur) var(--app-ease); }
 .capture__chrome { display: flex; align-items: center; gap: 5px; padding: 8px 10px; border-bottom: 1px solid var(--app-border); }
 .capture__chrome i { width: 8px; height: 8px; border-radius: 99px; background: var(--app-border); }

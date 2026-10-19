@@ -36,7 +36,8 @@ export function CaptureDoor({ waiting }: { waiting: boolean }) {
     <div className="intake intake--door">
       <div className="door">
         <div className="card intake__card capture">
-          <h2 className="capture__title">Bring a screen from an app you are logged in to</h2>
+          <h2 className="capture__title">Any screen your browser shows, here in one click</h2>
+          <p className="capture__sub">Live, on staging, on localhost, behind a login: if you can open it, it comes along.</p>
 
           <div className={`capture__bar ${state === 'dragging' ? 'capture__bar--hot' : ''}`} aria-hidden>
             <div className="capture__chrome"><i /><i /><i /><span className="capture__url" /></div>
@@ -65,7 +66,7 @@ export function CaptureDoor({ waiting }: { waiting: boolean }) {
               </span>
             </li>
             <li>
-              <b>Open your app, log in, and click the bookmark there.</b>
+              <b>Open your app and click the bookmark there.</b>
               <span className="capture__hint">The screen you see opens in a UISandbox tab. Click it again on the next screen, and it joins the first.</span>
             </li>
           </ol>
