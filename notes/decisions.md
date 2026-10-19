@@ -2671,3 +2671,17 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     fold now, and its download and "offers no download" checks are scoped
     to the bridge door, because the fold's own text says "design system"
     and the first run clicked the fold instead of the download. 18 of 18.
+
+    Published 0.4.0 (npm and the MCP registry, 2026-10-19), and two things
+    that changed since 0.3.3, so the next release does not rediscover them:
+    - npm now requires 2FA for every publish, and asks for it only in an
+      interactive terminal: run `npm publish` in a Terminal tab, not as a
+      `!` line in the chat (there it gets no prompt and answers 403/404).
+    - The MCP registry grants io.github.Ideelab/* only to an org OWNER, read
+      from GET /user/memberships/orgs, which needs read:org. The browser
+      device login does not carry it and falls back to the personal
+      namespace without saying why ("permission to publish:
+      io.github.AlexanderKaan/*"). A public membership is not enough any
+      more, and Ideelab's OAuth app policy is not involved. What works: a
+      short-lived classic token with read:org and read:user from the owner
+      account, `mcp-publisher login github -token`, then revoke it.
