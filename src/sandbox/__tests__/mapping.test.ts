@@ -251,3 +251,47 @@ describe('Background is a colour: canvas + its zone move by delta', () => {
     expect(at('#6b7280')).toBe('#6b7280')                 // ink stays
   })
 })
+
+describe("a kit's translucent grey scale is grey, not the brand (Radix: --slate-a3 is #0000330f)", () => {
+  // Radix's own spelling: a grey step is a dark navy at low alpha, an accent step
+  // the accent at low alpha. Both sit in the hue window of an indigo brand.
+  const RADIX = `:root{--slate-a3:#0000330f;--slate-a8:#00083046;--slate-a11:#0007149f;--indigo-a3:#0047f112;--indigo-9:#3e63dd}
+.rt-Button{background:var(--indigo-9)}.rt-variant-soft{background:var(--indigo-a3)}.rt-Card{border-color:var(--slate-a8)}`
+  const setupRadix = (css = RADIX) => {
+    const table = new SubstitutionTable()
+    rewriteCss(css, table, 'kit.css')
+    const cfg: Config = { ...theirCfg, cPrimary: '#3e63dd', neutral: 'neutral' }   // as the app's baseline (baseline.ts)
+    const families = familiesOf(table, cfg.cPrimary)
+    return { table, cfg, families, fam: (v: string) => families.of.get(table.find('color', v)!.id) }
+  }
+
+  it('puts the grey steps in neutral and keeps the accent steps in brand', () => {
+    const { fam } = setupRadix()
+    for (const v of ['#0000330f', '#00083046', '#0007149f']) expect(fam(v), v).toBe('neutral')
+    expect(fam('#0047f112')).toBe('brand')
+    expect(fam('#3e63dd')).toBe('brand')
+  })
+
+  it('a brand pick moves the buttons and leaves the greys where they are', () => {
+    const { table, cfg, families } = setupRadix()
+    const baseline: Baseline = { cfg, tokens: buildTokens(cfg), families }
+    const pick = { ...cfg, cPrimary: COLOR_THEMES.rose.cPrimary }
+    const out = computeVars(table, baseline, pick, buildTokens(pick))
+    const at = (v: string) => out[varName(table.find('color', v)!.id)]!
+    expect(at('#3e63dd')).not.toBe('#3e63dd')
+    expect(at('#0047f112')).not.toBe('#0047f112')
+    for (const v of ['#0000330f', '#00083046', '#0007149f']) expect(at(v), v).toBe(v)
+  })
+
+  it('needs the grey NAME: a tinted translucent shadow stays the brand\'s', () => {
+    // Bootswatch tints .alert-primary's shadow to its brand; the same literal,
+    // used on a selector and not named as a grey step, is a choice.
+    const { fam } = setupRadix(`.btn{background:#3e63dd}.alert-primary{box-shadow:0 1px 2px #0000330f}`)
+    expect(fam('#0000330f')).toBe('brand')
+  })
+
+  it('and every site must name a grey step: one other use keeps it out', () => {
+    const { fam } = setupRadix(`:root{--slate-a3:#0000330f}.btn{background:#3e63dd}.ring{outline-color:#0000330f}`)
+    expect(fam('#0000330f')).toBe('brand')
+  })
+})

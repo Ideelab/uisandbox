@@ -94,6 +94,18 @@ export const namesBrand = (prop: string) => BRAND_NAME.test(prop) || BRAND_NAME.
  *  — its brand is the magenta `--accent-primary`), `--bg-primary` its canvas. */
 const ROLE_PRIMARY = /(^|[-_.])(text|bg|background|surface|border|fg|foreground|ink|content|font|label|icon|heading|body)[-_.]primary/i
 export const greyBrandEntry = (e: Entry): boolean => e.sites.length > 0 && e.sites.length === e.count && e.sites.every((s) => namesBrand(s.prop) && !ROLE_PRIMARY.test(s.prop))
+/** A translucent step of a GREY SCALE is a grey. Radix writes its greys as a
+ *  dark navy at low alpha (`--slate-a3: #0000330f`): the base has chroma 0.10
+ *  at hue 264, so it sat in a blue brand's window and a brand pick moved every
+ *  border and hover with it. Over the page it paints #f0f0f3, the grey of the
+ *  solid `--slate-3`. Two things decide it, both needed: what it adds over
+ *  white (about chroma times alpha) is under the neutral line, and every site
+ *  names it a step of a grey scale. Measurement alone is not enough: a dark
+ *  translucent shadow can be tinted on purpose (Bootswatch tints
+ *  `.alert-primary`'s shadow to its brand), and that tint stays the brand's. */
+const GREY_STEP = /^--(?:[\w-]*-)?(gray|grey|neutral|slate|zinc|stone|mauve|sage|olive|sand)-a?\d+$/i
+const translucentGrey = (e: Entry, c: Okla) => c.a < 1 && c.C * c.a < NEUTRAL_CHROMA &&
+  e.sites.length > 0 && e.sites.length === e.count && e.sites.every((s) => GREY_STEP.test(s.prop))
 const FAMILY_HUE_WINDOW = 32
 // OKLCH hues: red ≈ 20–30, amber ≈ 60–85, green ≈ 140–160, blue ≈ 240–260
 const STATUS: Array<[Family, number, number]> = [['success', 110, 175], ['danger', 335, 40], ['warning', 45, 100], ['info', 215, 265]]
@@ -163,6 +175,7 @@ export function familiesOf(table: SubstitutionTable, brandHex: string, opts: { p
       if (c.C >= 0.012 && st && evidenceOf(e).status.has(st[0])) { rest.push({ e, c }); continue }
       of.set(e.id, 'neutral'); continue
     }
+    if (translucentGrey(e, c)) { of.set(e.id, 'neutral'); continue }
     if (brand && Math.abs(hueDelta(c.H, brand.H)) <= FAMILY_HUE_WINDOW) { of.set(e.id, 'brand'); chroma.push({ e, c }); continue }
     rest.push({ e, c })
   }

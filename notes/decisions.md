@@ -2302,3 +2302,52 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     No Radix page gives either a colour (their Callout docs show blue, green
     and red with the same text and no meaning), so a pick would be ours. It
     is Alexander's call; the table is the one place to add it.
+
+186. Radix's translucent greys are greys: a brand pick leaves them alone.
+
+    Turning Brand on the Radix kit moved the greys with the buttons: icon
+    buttons, tab labels, code labels, the select, the menu. Radix writes its
+    grey scale as a dark navy at low alpha (`--slate-a3: #0000330f`). The
+    base colour has chroma 0.10 at hue 264, inside an indigo brand's hue
+    window (267), so familiesOf put it in the brand family. Over the page it
+    paints #f0f0f3, the grey of the solid `--slate-3`, which was a neutral
+    all along.
+
+    Decided by measurement: what a translucent colour adds over white is
+    about its chroma times its alpha. For every light-mode slate step that is
+    0.002 to 0.025, under the neutral line (0.035), as for the solid twin.
+    But measurement alone moved too much. The first version (translucent,
+    dark base, chroma times alpha under the line) also moved four other
+    builds' brand families (s12-element-plus 109 to 105 entries,
+    s12-vue-element-admin 59 to 56, s16-iro 10 to 9, s6-bootswatch 365 to
+    351), and some family on fifteen non-Radix zips in all: dark shadows that are tinted on
+    purpose (Bootswatch tints `.alert-primary`'s shadow to its brand). So the
+    rule (mapping.ts translucentGrey) needs both: it paints grey over white,
+    AND every site names it a step of a grey scale (`--slate-a3`,
+    `--gray-a5`, `--mauve-a8`; Radix's six greys and Tailwind's five). A
+    translucent ACCENT step keeps the brand: `--indigo-a3: #0047f112` adds
+    0.018 over white too, but it is the soft button's background and must
+    follow the knob, and it is not named a grey.
+
+    Measured statically on 181 zips (173 fixtures, 8 kits), declared brand,
+    brand-family size and every family's tally, before and after: only
+    radix.zip and its fixture copy change. Brand family at the static brand
+    (#0090ff) 192 to 180 entries; at the rendered one (#3e63dd) 204 to 185;
+    no grey-named entry is left in it. Every other zip is identical in every
+    family. In the browser, Brand to Rose: 18 of 220 elements change colour
+    (Publish rgb(244, 63, 94), Preview, Later, the brand badges, switch,
+    slider, progress, and the two callouts that wear the accent, see #185);
+    Remove stays red, the icon buttons, tabs and code labels stay grey. The
+    control, same script on the old mapping.ts: 84 of 220. The app's own
+    counter reads 185 values moved, as the static count. mapping.test.ts
+    holds the slate and indigo steps, a rose pick on them, the tinted shadow
+    and a shared literal; the first two fail on the old code.
+
+    Seen and left, in the engine (src/kits/engine/wall-bindings.mjs, which
+    must stay byte-identical to uicockpit dsg/ at 37ed9bc): the two <hr>
+    separators still follow a brand pick. Radix's Separator defaults to
+    color="gray" (their API table); the binding writes
+    `divider: () => <hr class="rt-reset rt-Separator rt-r-size-4">` with no
+    data-accent-color, so it wears the root's accent. Proposed change, for
+    both copies: add ` data-accent-color="gray"` to that <hr>, then
+    `pnpm kits:build radix`.
