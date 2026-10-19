@@ -3035,3 +3035,72 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     Bootswatch: indigo for rose and a different scale). A faster wrong
     start is not a fix, so it is not the default, and the unused option was
     taken back out.
+
+208. Material in Roboto Flex, shadcn/ui as base-nova (Alexander's call on 207's
+    two open points).
+
+    Material carries its letter. The kit build loaded no font, so its
+    typeface ("Roboto Flex, Roboto, Noto Sans, system-ui", from @material/web's
+    own sheet) fell through to SF Pro on a Mac. Roboto Flex now travels in the
+    zip as a file: the Latin weight axis from @fontsource-variable/roboto-flex
+    5.3.0, 34 KB, OFL, with its licence. In the editor's frame it loads, and
+    the Publish label measures 46.64px, which is Roboto Flex's width for that
+    word and not the system font's (48.51px). No request leaves the tab for
+    it: what the page fetched off localhost was the editor's own Inter and
+    GitHub's star count.
+
+    shadcn/ui is what `shadcn init --defaults` installs today. shadcn 4.22.1
+    makes base-nova its default (Base UI primitives, the nova style, neutral,
+    Lucide, Geist) and ui.shadcn.com renders it; the kit was new-york-v4. The
+    data is re-read by scripts/kit-shadcn.mjs, and nothing in it is typed:
+
+    - The theme from what init really writes. The script runs `shadcn init
+      --base base --preset nova` in an empty Vite app and reads its @theme
+      inline block back: Geist as --font-sans, and a radius scale that
+      MULTIPLIES --radius (sm x0.6 to 4xl x2.6) where new-york subtracted
+      pixels. The CLI builds that block in code, so running it is the only
+      way to read it. The colours are the same as neutral.json's, all 32.
+    - The components from what `shadcn add` writes into that project, not from
+      the registry's JSON. The registry's source carries marker classes
+      (cn-font-heading, cn-menu-target, cn-menu-translucent) that the CLI
+      rewrites on the way in; read from the registry, fidelity counted three
+      invented classes. Read from the installed files: 494 of 494 theirs.
+    - registry-read.mjs came across from dsg/ (it had stayed behind with
+      fetch-kits.mjs) and learnt Base UI: useRender's slots, parts drawn
+      through a render prop, the element inside a slot (the radio's dot), and
+      attributes read per element. Base UI writes className before data-slot
+      as often as after it, and reading "the next className" had given the
+      progress bar no track and the slider its Control's classes: both were
+      missing on the wall until read per element.
+    - The wall's markup uses Base UI's attributes (data-checked, data-open,
+      data-active, data-orientation), and the build imports shadcn's own
+      tailwind.css, whose variants map those attributes. Geist travels in the
+      zip like Roboto Flex (@fontsource-variable/geist 5.3.0, 29 KB, OFL).
+    - The export follows: components.json in the kit's style, the install line
+      `npx shadcn@latest init --base base --preset nova` (`--preset base-nova`
+      is refused by the CLI), shadcn/tailwind.css, html { @apply font-sans }.
+
+    Measured on ui.shadcn.com's own previews against our canvas: default and
+    outline button, input, checked switch, tabs, active tab and badge have the
+    same height, corner, border, padding, size, weight and shadow. The badge
+    was 32px corners against their 26px until init's radius scale went in.
+    Left: the font is the same face under two names (their "Geist", the
+    package's "Geist Variable"), a card with other content is another height,
+    and a checkbox or radio inherits the text size of the page around it.
+
+    One mistake of 207, found by this: the fallback letter on :where(html) was
+    unlayered, and an unlayered rule beats every layer whatever its
+    specificity, so it also beat Tailwind's preflight in @layer base. It hid
+    Geist, and it had been setting Tailwind's and daisyUI's text in
+    ui-sans-serif where Tailwind 4.3.3's own stack starts with -apple-system.
+    The fallback now sits in a layer, us-fallback, which each kit page
+    declares before its stylesheet, so it is the weakest of all: Tailwind,
+    daisyUI and shadcn show their own letter (58, 58 and 59 text elements),
+    Radix, Ant Design, Material, Bootstrap and Mantine are unchanged against
+    207's builds. The Body font knob turned to Georgia reaches shadcn 59/80,
+    Tailwind 58/79, daisyUI 58/78, Material 55/73, Bootstrap 61/79, Ant Design
+    62/83; what stays is monospace.
+
+    Gates: fidelity 100% on all eight, kit-export 101 and live-bridge 18
+    checks with 0 failed, kit hold-outs ok 9 of 9, tests green. shadcn.zip
+    318 KB, material.zip 509 KB.

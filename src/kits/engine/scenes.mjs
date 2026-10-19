@@ -694,8 +694,13 @@ body{margin:0;overflow:hidden}
  * was a second body font: everything on the wall inherits from #strip before
  * it reaches <body>, so Bootstrap's and Mantine's own body font never arrived
  * (set --bs-body-font-family to Georgia and the button stayed ui-sans-serif).
- * On :where(html) it weighs nothing: any kit rule on html or body wins. */
-:where(html){font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
+ * Weightless is not enough on its own: Tailwind, daisyUI and shadcn set their
+ * letter in @layer base, and an unlayered rule beats every layer whatever its
+ * specificity, so a bare :where(html) took shadcn's Geist away. So it lives in
+ * a layer of its own, us-fallback, which the page declares BEFORE the kit's
+ * stylesheet (kit-builds.mjs): the first layer named is the weakest, and every
+ * kit rule wins over it, layered or not. */
+@layer us-fallback{:where(html){font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}}
 html[data-quiet] #strip{scrollbar-width:none;-ms-overflow-style:none}
 /* THE QUIET FRAME IS A BOUQUET, NOT A STRIP. On the homepage the shot is one
    board filling the whole width, so the pan-strip's fixed columns would leave

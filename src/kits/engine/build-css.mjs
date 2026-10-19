@@ -46,7 +46,11 @@ export async function buildCss(VALUES, IDS, kits, body, log = console.log, extra
      are tw-animate-css utilities, which its own globals.css imports. Left out,
      its menu, dialog, popover and tooltip have no entrance at all. */
   const TW = [['tailwind', ''], ['daisyui', '@plugin "daisyui";'],
-    ['shadcn', kits.shadcn?.animates ? '@import "tw-animate-css";' : '']].filter(([id]) => IDS.includes(id))
+    ['shadcn', [kits.shadcn?.animates ? '@import "tw-animate-css";' : '',
+      /* and its own tailwind.css, which init imports beside it: the data-checked,
+         data-open and data-horizontal variants that Base UI's attributes need
+         (base-nova, decision 208). Left out, a checked switch is unchecked. */
+      kits.shadcn?.prelude ? `@import "${kits.shadcn.prelude.import}";` : ''].filter(Boolean).join('\n')]].filter(([id]) => IDS.includes(id))
   /* Only the versions of kits that are actually in this build. Naming daisyUI's
      version while building Bootstrap alone read it off a kit that was never
      loaded, and the whole preview died before it compiled anything. */
@@ -62,6 +66,7 @@ export async function buildCss(VALUES, IDS, kits, body, log = console.log, extra
     dev.tailwindcss = `^${kits.tailwind.version}`
     if (kits.daisyui) dev.daisyui = `^${kits.daisyui.version}`
     if (kits.shadcn?.animates) dev[kits.shadcn.animates.npm] = `^${kits.shadcn.animates.version}`
+    if (kits.shadcn?.prelude) dev[kits.shadcn.prelude.npm] = kits.shadcn.prelude.version
   }
   writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: 'p', private: true, type: 'module', devDependencies: dev }))
   for (const [id, plugin] of TW) {

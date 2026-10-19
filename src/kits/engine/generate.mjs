@@ -46,6 +46,12 @@ ${decl(r.vars)}
       .filter((n) => n !== '--radius')
       .map((n) => [n.replace(/^--/, '--color-'), `var(${n})`]))
     const radius = all['--radius']
+    /* What init writes into @theme inline besides the colour bridge, read by
+       running it (scripts/kit-shadcn.mjs): base-nova's letter, Geist as
+       --font-sans, and its radius scale, which MULTIPLIES --radius (sm ×0.6 to
+       4xl ×2.6) where new-york subtracted pixels. Its badge is rounded-4xl:
+       26px from the scale, 32px from Tailwind's default without it. */
+    const own = kit.theme ? Object.fromEntries(Object.entries(kit.theme).filter(([n]) => !n.startsWith('--color-'))) : null
     return `/* ${stamp(kit)}: the variables its components read, its published
    defaults with your values over them. The dark half is below. */
 :root {
@@ -55,7 +61,7 @@ ${decl(all)}
 /* The bridge into Tailwind's namespace, so bg-primary and border-input exist.
    Without it the variables above are set and nothing reads them. */
 @theme inline {
-${decl(bridge)}${radius ? `
+${decl(bridge)}${own ? `\n${decl(own)}` : radius ? `
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -74,7 +80,8 @@ ${decl(bridge)}${radius ? `
  * and it was wrong in the package we hand people. */
 @layer base {
   * { @apply border-border outline-ring/50; }
-  body { @apply bg-background text-foreground; }
+  body { @apply bg-background text-foreground; }${own?.['--font-sans'] ? `
+  html { @apply font-sans; }` : ''}
 }`
   },
 
@@ -208,11 +215,14 @@ export const theme: ThemeConfig = {
 // <ConfigProvider theme={theme}> around your app, and nothing else to import.
 `,
   }),
-  shadcn: () => ({
+  /* the style the kit data was read from (base-nova since decision 208), so
+     `shadcn add` installs the same components the wall showed */
+  shadcn: (r, kit) => ({
     'components.json': JSON.stringify({
       $schema: 'https://ui.shadcn.com/schema.json',
-      style: 'new-york', rsc: true, tsx: true,
+      style: kit?.style ?? 'base-nova', rsc: true, tsx: true,
       tailwind: { config: '', css: 'app/globals.css', baseColor: 'neutral', cssVariables: true },
+      iconLibrary: 'lucide',
       aliases: { components: '@/components', ui: '@/components/ui', utils: '@/lib/utils' },
     }, null, 2) + '\n',
   }),
@@ -233,10 +243,11 @@ const INSTALL = {
     `import '@material/web/textfield/outlined-text-field.js'  // and so on`,
     `/* their typography classes ship in the package too: */`,
     `import { styles } from '@material/web/typography/md-typescale-styles.js'`],
-  shadcn: (k) => [`npx shadcn@latest init`, `npx shadcn@latest add button card input dialog table  # whatever you picked`,
+  shadcn: (k) => [k.init ?? `npx shadcn@latest init`, `npx shadcn@latest add button card input dialog table  # whatever you picked`,
     ...(k.animates ? [`npm install ${k.animates.npm}@${k.animates.version}`,
       `/* in your globals.css, as shadcn's own init writes it: */`,
       `@import "tw-animate-css";`,
+      ...(k.prelude ? [`@import "${k.prelude.import}";  /* the data-checked, data-open variants Base UI needs */`] : []),
       `/* their menu, dialog, popover and tooltip name ten utilities that live  */`,
       `/* in that package and nowhere else. Without it those classes have no    */`,
       `/* rule and every one of those components appears with no entrance.      */`] : [])],
