@@ -222,10 +222,10 @@ export function Landing() {
             decided to hand over a folder is asking a different question. */}
         <p className="landing__lead">What would your app look like in a different brand colour, at a bigger type scale, or in dark mode? Find out in about a minute, on the real app, instead of guessing or spending an afternoon on it. Keep what you see and it comes out as code. Close the tab and nothing happened.</p>
         <ol className="steps">
-          <li><b>Drop your build in.</b> A zip of <code>dist/</code>, <code>build/</code> or <code>out/</code>, a folder, or a public GitHub or GitLab repo. It is read here in the page and served to the frame by a service worker; nothing is sent to a server.</li>
+          <li><b>Start on a kit, then bring your own app.</b> The editor opens on shadcn/ui as it ships, so you can turn a knob before you hand over anything, and seven more kits are one pick away. Your own app comes in through the Your app tab: a zip of <code>dist/</code>, <code>build/</code> or <code>out/</code>, a folder, a public GitHub or GitLab repo, or your running app with one script line. What you turned on the kit comes along. It is read here in the page and served to the frame by a service worker; nothing is sent to a server.</li>
           <li><b>It is your actual app, not a preview of one.</b> Every CSS literal becomes a variable holding that same value, so the page renders exactly as it was, runtime styles, CDN stylesheets and nested frames included. There is a button that proves it.</li>
-          <li><b>Turn one knob, the whole app follows.</b> A colour used 144 times moves once. Brand and the colour families your CSS actually contains, background, fonts, size, spacing, radius, elevation, motion, hue, saturation, contrast, your own dark mode. Every dial has <em>×1 = as in your code</em> at its centre, so you always know your way back.</li>
-          <li><b>Keep it, or bin it.</b> Keep it and you get code: your own files patched in place, a find and replace list, design tokens (CSS, Tailwind, shadcn), Swift and Android constants, or a <code>DESIGN.md</code> for your agent. Bin it by closing the tab.</li>
+          <li><b>Turn one knob, the whole app follows.</b> A colour used 144 times moves once. Brand and the colour families your CSS actually contains, background, fonts, size, spacing, radius, elevation, motion, hue, saturation, contrast, your own dark mode. Every dial has <em>×1 = as in your code</em> at its centre, so you always know your way back. Or pick a Look: another kit's own brand, background, font and corners, through the same knobs.</li>
+          <li><b>Keep it, or bin it.</b> Keep it and you get code. When your app runs on one of the kits, that is a design system and a <code>SKILL.md</code> in the kit's own names, so your agent builds the next screen the same way. Or your own files patched in place, design tokens (CSS, Tailwind, shadcn), Swift and Android constants. Share sends the same build with the same knobs as a link. Bin it by closing the tab.</li>
         </ol>
         {/* The boundary, drawn. People have read "drop your build" as "connect
             your project" and expected their own folder to change under them.
@@ -290,8 +290,8 @@ export function Landing() {
         </div>
         <figure className="shot shot--stack" aria-label="Three things the tool says out loud">
           <picture><source srcSet="/shot-verify-dark.png" media="(prefers-color-scheme: dark)" /><img src="/shot-verify.png" alt="The 1:1 check card: 67 elements paired, zero computed-style differences across 18 properties" loading="lazy" width="880" height="296" /></picture>
-          <picture><source srcSet="/shot-reach-dark.png" media="(prefers-color-scheme: dark)" /><img src="/shot-reach.png" alt="The reach card: of 66 visible elements, how many the knobs touch — colours, type, radii — and what lies outside" loading="lazy" width="880" height="376" /></picture>
-          <picture><source srcSet="/shot-refusal-dark.png" media="(prefers-color-scheme: dark)" /><img src="/shot-refusal.png" alt="A refusal at the door: web source without a built page — build it first, then drop the output folder" loading="lazy" width="1148" height="110" /></picture>
+          <picture><source srcSet="/shot-reach-dark.png" media="(prefers-color-scheme: dark)" /><img src="/shot-reach.png" alt="The reach card: of 66 visible elements, how many colours, type and radii the knobs touch, and what lies outside" loading="lazy" width="880" height="376" /></picture>
+          <picture><source srcSet="/shot-refusal-dark.png" media="(prefers-color-scheme: dark)" /><img src="/shot-refusal.png" alt="A refusal at the door: web source without a built page. Build it first, then drop the output folder" loading="lazy" width="1148" height="110" /></picture>
           <figcaption>The check, the reach meter, a refusal. Each a real screenshot.</figcaption>
         </figure>
       </section>
@@ -308,7 +308,7 @@ export function Landing() {
       <section className="landing__sec landing__sec--quiet">
         <h2>Who made this</h2>
         <p>I'm <a href="https://github.com/AlexanderKaan" target="_blank" rel="noopener">Alexander Kaan</a>, and I build open-source tooling for user interfaces. UISandbox came out of the design system generator I made before it: I could hand somebody a finished kit, but I could not show them what their own app would look like in it. This does that other half.</p>
-        <p>I won't pretend I knew what I was doing at the start. Every decision, and every trap I fell into on the way, is written down in the repo's <a href="https://github.com/Ideelab/uisandbox/blob/main/notes/decisions.md" target="_blank" rel="noopener">notes</a> — including the ones I had to undo. It's <a href="https://github.com/Ideelab/uisandbox" target="_blank" rel="noopener">MIT</a>, and issues and pull requests are welcome.</p>
+        <p>I won't pretend I knew what I was doing at the start. Every decision, and every trap I fell into on the way, is written down in the repo's <a href="https://github.com/Ideelab/uisandbox/blob/main/notes/decisions.md" target="_blank" rel="noopener">notes</a>, including the ones I had to undo. It's <a href="https://github.com/Ideelab/uisandbox" target="_blank" rel="noopener">MIT</a>, and issues and pull requests are welcome.</p>
       </section>
     </div>
   )

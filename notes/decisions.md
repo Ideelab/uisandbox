@@ -2581,3 +2581,24 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
 
     On a phone Look is left out of the top bar (Engine stays): presets are a
     desk-sized pleasure, and the bar is full at 390px.
+
+195. The copy follows the flow: kit first, your app second.
+
+    The page descriptions, the JSON-LD, /about's how it works and llms.txt
+    still told the old story, "drop your build, turn the knobs". They now
+    say what a visitor meets: the editor opens on shadcn/ui, so a knob turns
+    before you bring anything; your own app comes in through the Your app
+    tab and renders 1:1 (measured), and what you turned on the kit comes
+    along (measured in 193); a Look applies another kit's start values; the
+    export is a design system and a SKILL.md in the kit's own names when
+    the app runs on one; Share reopens the same build with the same knobs.
+    "Before you upload anything" was written once and taken out: nothing is
+    uploaded, then or later. llms.txt also names the kit links
+    (`?load=/kits/<id>.zip`) and `?tab=app` for agents, and the em-dashes it
+    and /about still carried are gone. scripts/llms-preamble.md carries the
+    same text (llms-full.txt is regenerated from it and the README).
+
+    No voice profile exists for UISandbox; the register is the site's own
+    and brand/marketing/copy.md's (the measurement first, the limit named
+    before anyone asks). The README is phase 4's sweep and still tells the
+    old story until then.
