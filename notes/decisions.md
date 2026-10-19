@@ -2602,3 +2602,11 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     and brand/marketing/copy.md's (the measurement first, the limit named
     before anyone asks). The README is phase 4's sweep and still tells the
     old story until then.
+
+    Full gate after phase 3 (189–195): 173 fixtures, ok 153, differs 4
+    (anime-docs, chroma, todomvc, docsify, the known flakes), timeout 1:
+    kit-antd, at row 15, while the probes for 190 and 192 were loading the
+    same dev server. Run alone afterwards it is ok 3 of 3, in 4 to 5 s. The
+    load is the likely cause and not a proven one; the gate is the place to
+    see it again. Against the gate before (182) nothing else got worse, and
+    visx flipped back to ok.
