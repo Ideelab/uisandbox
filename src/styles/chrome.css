@@ -739,7 +739,7 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
 .foot--app { justify-content: flex-start; padding-left: 22px; padding-right: 16px; }
 .foot.foot--app .star { margin-left: auto; }
 
-/* The bookmarklet's page (/?capture=1, decision 207): a thing to drag, and
+/* The bookmarklet's page (/?capture=1, decision 209): a thing to drag, and
    where it goes, drawn. */
 .capture { text-align: center; }
 .capture__title { font-size: 17px; font-weight: 600; margin: 0 0 6px; text-wrap: balance; }

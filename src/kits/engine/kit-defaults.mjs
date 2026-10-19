@@ -17,8 +17,17 @@
 import { oklchStrToHex } from './color.mjs'
 
 /* the vars each kit's defaults live in. `need` throws when absent, the rest
- * skip: absence of an optional var is a fact about the kit, not a failure. */
-const TABLE = {
+ * skip: absence of an optional var is a fact about the kit, not a failure.
+ *
+ * READ WHERE IT IS WRITTEN. A role is read from the variable roles.mjs writes
+ * it to, or a kit built with its own defaults is not that kit. daisyUI's
+ * radius was read from --radius-field (4px) and written to --radius-box, which
+ * its field and selector follow at half: every corner came out at half of
+ * daisyUI's. Ant Design's ink was read from colorText (88% black, flattened to
+ * #1f1f1f) and written to colorTextBase, from which its algorithm takes 88%
+ * again; its muted ink was read from the tertiary text and written to the
+ * secondary. kit-defaults.test.mjs holds this, with the few exceptions named. */
+export const TABLE = {
   /* Tailwind the framework names no house colour, but Tailwind Plus — their
      own component kit — dresses every primary in indigo-600: the buttons are
      bg-indigo-600, the badges indigo, the logo is requested at
@@ -33,7 +42,7 @@ const TABLE = {
   daisyui: { stack: ['tailwind', 'daisyui'],
     vars: { brand: '--color-primary', page: '--color-base-100', ink: '--color-base-content',
       line: '--color-base-300', success: '--color-success', warning: '--color-warning',
-      danger: '--color-error', radius: '--radius-field' },
+      danger: '--color-error', radius: '--radius-box' },
     need: ['brand', 'page', 'ink'] },
   bootstrap: { stack: ['bootstrap'],
     vars: { brand: '--bs-primary', page: '--bs-body-bg', ink: '--bs-body-color',
@@ -67,7 +76,7 @@ const TABLE = {
     need: ['brand', 'page', 'ink', 'fontBody'] },
   antd: { stack: ['antd'],
     vars: { brand: '--ant-color-primary', page: '--ant-color-bg-container',
-      ink: '--ant-color-text', inkMuted: '--ant-color-text-tertiary',
+      ink: '--ant-color-text-base', inkMuted: '--ant-color-text-secondary',
       line: '--ant-color-border', success: '--ant-color-success', warning: '--ant-color-warning',
       danger: '--ant-color-error', fontBody: '--ant-font-family', radius: '--ant-border-radius' },
     need: ['brand', 'page', 'ink', 'fontBody'] },

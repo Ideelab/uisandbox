@@ -4,7 +4,8 @@
  * Two of these render markup the kit does not literally ship, and it is worth
  * saying which and why:
  *
- *   · shadcn/ui is React source over Radix. Its LOOK is Tailwind classes, so
+ *   · shadcn/ui is React source over Base UI (base-nova; it was Radix until
+ *     decision 208). Its LOOK is Tailwind classes, so
  *     the preview borrows the composition it ships and the package tells you to
  *     run `shadcn add`. Same call the A2UI bindings made, same reason.
  *   · Material Web is custom elements, not classes. The frame loads Google's
@@ -402,12 +403,21 @@ const bootstrap = {
  * are carried too — not decoration: half their classes key on them, so
  * data-state="checked" is what makes a checked switch really checked rather
  * than a picture of one. */
-let SC = {}, SC_SLOT = {}
+let SC = {}, SC_SLOT = {}, SC_INNER = {}
 export const useShadcnParts = (map) => {
   SC = map ?? {}
-  SC_SLOT = {}
-  for (const part of Object.values(SC)) for (const [k, v] of Object.entries(part.slots ?? {})) SC_SLOT[k] ??= v
+  SC_SLOT = {}; SC_INNER = {}
+  for (const part of Object.values(SC)) {
+    for (const [k, v] of Object.entries(part.slots ?? {})) SC_SLOT[k] ??= v
+    for (const [k, v] of Object.entries(part.inner ?? {})) SC_INNER[k] ??= v
+  }
 }
+/* BASE UI'S STATES, SINCE BASE-NOVA (decision 208). Its primitives mark state
+   with bare attributes, data-checked and data-unchecked, data-open, data-active,
+   data-orientation, where Radix wrote data-state="checked". shadcn's own
+   tailwind.css maps its data-checked: variant onto both, so the markup below
+   carries what Base UI renders, not what Radix did. */
+const bState = (on, yes = 'checked', no = 'unchecked') => on ? `data-${yes}` : `data-${no}`
 /** A slot, by the name shadcn puts in its own data-slot attribute. */
 const sSlot = (name) => SC_SLOT[name] ?? `shadcn-missing-${name}`
 /** A cva, by the name it is declared under, with the variants picked. */
@@ -441,7 +451,7 @@ const shadcn = {
     `<button aria-label="${esc(i)}" data-slot="button" data-variant="ghost" data-size="icon" class="${sCva('button', 'buttonVariants', { variant: 'ghost', size: 'icon' })}">${ico(i)}</button>`).join('')}</div>`,
   input:   (n) => `<input data-slot="input" class="${sSlot('input')}" value="${esc(n.value ?? '')}" placeholder="${esc(n.placeholder ?? '')}">`,
   textarea: (n) => `<textarea rows="3" data-slot="textarea" class="${sSlot('textarea')}" placeholder="${esc(n.placeholder ?? '')}">${esc(n.value ?? '')}</textarea>`,
-  /* their select is a Radix trigger with a popover; a native select wearing the
+  /* their select is a Base UI trigger with a popup; a native select wearing the
      trigger's classes is the honest static stand-in, and the manifest says so */
   /* THEIR SELECT IS NOT A <select>.
      select-trigger is the class for a BUTTON that opens a panel of their own
@@ -453,28 +463,34 @@ const shadcn = {
   select:  (n) => `<div class="relative">
     <button type="button" role="combobox" aria-expanded="false" data-slot="select-trigger" data-size="default" class="${sSlot('select-trigger')} w-full">
       <span data-slot="select-value">${esc(list(n.options)[0] ?? '')}</span>${ico('chevron-down')}</button>
-    <div data-slot="select-content" data-state="closed" data-side="bottom" class="${sSlot('select-content')} absolute mt-1 w-full p-1" hidden>${
-      list(n.options).map((o, i) => `<div role="option" aria-selected="${i === 0}" data-slot="select-item" class="${sSlot('select-item')}"><span data-slot="select-item-indicator" class="${sSlot('select-item-indicator')}">${i === 0 ? ico('check') : ''}</span>${esc(o)}</div>`).join('')
+    <div data-slot="select-content" data-closed data-side="bottom" class="${sSlot('select-content')} absolute mt-1 w-full p-1" hidden>${
+      list(n.options).map((o, i) => `<div role="option" aria-selected="${i === 0}" data-slot="select-item" class="${sSlot('select-item')}"><span class="${SC.select?.renders?.ItemText ?? ''}">${esc(o)}</span><span class="${SC.select?.renders?.ItemIndicator ?? sSlot('select-item-indicator')}">${i === 0 ? ico('check') : ''}</span></div>`).join('')
     }</div></div>`,
-  /* their checkbox, radio and switch are Radix buttons whose classes key on
-     data-state — so the checked state here is theirs, not a drawing of it */
-  checkbox: (n) => `<label class="${sSlot('label')}" data-slot="label"><button type="button" role="checkbox" aria-checked="${!!n.on}" data-slot="checkbox" data-state="${n.on ? 'checked' : 'unchecked'}" class="${sSlot('checkbox')}">${
-    n.on ? `<span data-slot="checkbox-indicator" data-state="checked" class="${sSlot('checkbox-indicator')}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="size-3.5"><path d="M20 6 9 17l-5-5"/></svg></span>` : ''}</button>${esc(n.text ?? '')}</label>`,
+  /* their checkbox, radio and switch are Base UI primitives whose classes key
+     on data-checked — so the checked state here is theirs, not a drawing of it */
+  checkbox: (n) => `<label class="${sSlot('label')}" data-slot="label"><button type="button" role="checkbox" aria-checked="${!!n.on}" data-slot="checkbox" ${bState(n.on)} class="${sSlot('checkbox')}">${
+    n.on ? `<span data-slot="checkbox-indicator" data-checked class="${sSlot('checkbox-indicator')}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="size-3.5"><path d="M20 6 9 17l-5-5"/></svg></span>` : ''}</button>${esc(n.text ?? '')}</label>`,
   radio:   (n) => `<div role="radiogroup" data-slot="radio-group" class="${sSlot('radio-group')}">${list(n.items).map((t, i) => {
     const on = i === (n.on ?? 0)
-    /* their indicator holds a CircleIcon — fill-primary, size-2, centred — and
-       an empty span meant no radio on this wall ever looked chosen */
-    return `<label class="${sSlot('label')}" data-slot="label"><button type="button" role="radio" aria-checked="${on}" data-slot="radio-group-item" data-state="${on ? 'checked' : 'unchecked'}" class="${sSlot('radio-group-item')}">${
-      on ? `<span data-slot="radio-group-indicator" data-state="checked" class="${sSlot('radio-group-indicator')}"><svg viewBox="0 0 24 24" fill="currentColor" class="fill-primary absolute top-1/2 left-1/2 size-2 -translate-x-1/2 -translate-y-1/2"><circle cx="12" cy="12" r="10"/></svg></span>` : ''}</button>${esc(t)}</label>` }).join('')}</div>`,
-  switch:  (n) => `<label class="${sSlot('label')}" data-slot="label"><button type="button" role="switch" aria-checked="${!!n.on}" data-slot="switch" data-size="default" data-state="${n.on ? 'checked' : 'unchecked'}" class="${sSlot('switch')}"><span data-slot="switch-thumb" data-state="${n.on ? 'checked' : 'unchecked'}" class="${sSlot('switch-thumb')}"></span></button>${esc(n.text ?? '')}</label>`,
+    /* their indicator holds a dot: in base-nova the chosen radio fills with
+       the primary and the dot is the text colour on it (read from their
+       source, SC_INNER) — an empty span meant no radio ever looked chosen */
+    return `<label class="${sSlot('label')}" data-slot="label"><button type="button" role="radio" aria-checked="${on}" data-slot="radio-group-item" ${bState(on)} class="${sSlot('radio-group-item')}">${
+      on ? `<span data-slot="radio-group-indicator" data-checked class="${sSlot('radio-group-indicator')}"><span class="${SC_INNER['radio-group-indicator'] ?? ''}"></span></span>` : ''}</button>${esc(t)}</label>` }).join('')}</div>`,
+  switch:  (n) => `<label class="${sSlot('label')}" data-slot="label"><button type="button" role="switch" aria-checked="${!!n.on}" data-slot="switch" data-size="default" ${bState(n.on)} class="${sSlot('switch')}"><span data-slot="switch-thumb" ${bState(n.on)} class="${sSlot('switch-thumb')}"></span></button>${esc(n.text ?? '')}</label>`,
   /* THE THUMB IS A ROLE, NOT A DECORATION.
      Their component renders role=slider, a tabindex and the three aria-value
      attributes on it; the class strings the registry publishes cannot carry
      those, so leaving them off meant the thumb could not be focused, its own
      focus-visible rule never fired, and nothing on the wall could be dragged.
      Every div-built slider here gets what its real one has. */
-  slider:  (n) => `<span data-slot="slider" data-orientation="horizontal" class="${sSlot('slider')}"><span data-slot="slider-track" data-orientation="horizontal" class="${sSlot('slider-track')}"><span data-slot="slider-range" data-orientation="horizontal" class="${sSlot('slider-range')}" style="width:${n.value ?? 60}%"></span></span><span data-slot="slider-thumb" role="slider" tabindex="0" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${n.value ?? 60}" aria-orientation="horizontal" class="${sSlot('slider-thumb')}" style="position:absolute;left:calc(${n.value ?? 60}% - 8px)"></span></span>`,
-  progress: (n) => `<div data-slot="progress" class="${sSlot('progress')}"><div data-slot="progress-indicator" class="${sSlot('progress-indicator')}" style="transform:translateX(-${100 - (n.value ?? 60)}%)"></div></div>`,
+  /* Base UI's slider is root, Control, Track with its Indicator, and the
+     Thumb beside the track inside the Control, which it positions at the value
+     (inset-inline-start and a -50% translate) while it runs. */
+  slider:  (n) => `<div data-slot="slider" data-orientation="horizontal" class="${sSlot('slider')}"><div data-orientation="horizontal" class="${SC.slider?.renders?.Control ?? ''}"><div data-slot="slider-track" data-orientation="horizontal" class="${sSlot('slider-track')}"><div data-slot="slider-range" data-orientation="horizontal" class="${sSlot('slider-range')}" style="width:${n.value ?? 60}%"></div></div><div data-slot="slider-thumb" role="slider" tabindex="0" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${n.value ?? 60}" aria-orientation="horizontal" class="${sSlot('slider-thumb')}" style="position:absolute;left:${n.value ?? 60}%;top:50%;translate:-50% -50%"></div></div></div>`,
+  /* Base UI's progress: a root, a Track, and the Indicator inside it at the
+     value's width (Radix moved a full-width bar with translateX instead) */
+  progress: (n) => `<div data-slot="progress" role="progressbar" aria-valuenow="${n.value ?? 60}" class="${sSlot('progress')}"><div data-slot="progress-track" class="${sSlot('progress-track')}"><div data-slot="progress-indicator" class="${sSlot('progress-indicator')}" style="width:${n.value ?? 60}%"></div></div></div>`,
   badge:   (n, k) => A(n, k, 'span', sCva('badge', 'badgeVariants', { variant: SC_BADGE[n.tone ?? 'neutral'] }), ` data-slot="badge"`),
   alert:   (n, k) => `<div role="alert" data-slot="alert" class="${sCva('alert', 'alertVariants', { variant: n.tone === 'danger' ? 'destructive' : 'default' })}"><div data-slot="alert-description" class="${sSlot('alert-description')}">${n.text != null ? esc(n.text) : k}</div></div>`,
   stat:    (n) => `<div data-slot="card" class="${sSlot('card')}"><div data-slot="card-header" class="${sSlot('card-header')}"><div data-slot="card-description" class="${sSlot('card-description')}">${esc(n.label)}</div><div data-slot="card-title" class="${sSlot('card-title')} text-2xl tabular-nums">${esc(n.value)}</div></div></div>`,
@@ -499,8 +515,8 @@ const shadcn = {
     <div data-slot="empty-title" class="${sSlot('empty-title')}">${esc(n.title)}</div>
     <div data-slot="empty-description" class="${sSlot('empty-description')}">${esc(n.text)}</div></div>
     <div data-slot="empty-content" class="${sSlot('empty-content')}">${k}</div></div>`,
-  tabs:    (n) => `<div data-slot="tabs" class="${sSlot('tabs')}"><div role="tablist" data-slot="tabs-list" data-variant="default" class="${sCva('tabs', 'tabsListVariants', { variant: 'default' })}">${
-    list(n.items).map((t, i) => `<button role="tab" data-slot="tabs-trigger" data-state="${i === 0 ? 'active' : 'inactive'}" class="${sSlot('tabs-trigger')}">${esc(t)}</button>`).join('')}</div></div>`,
+  tabs:    (n) => `<div data-slot="tabs" data-orientation="horizontal" class="${sSlot('tabs')}"><div role="tablist" data-slot="tabs-list" data-variant="default" data-orientation="horizontal" class="${sCva('tabs', 'tabsListVariants', { variant: 'default' })}">${
+    list(n.items).map((t, i) => `<button role="tab" aria-selected="${i === 0}" data-slot="tabs-trigger" data-orientation="horizontal"${i === 0 ? ' data-active' : ''} class="${sSlot('tabs-trigger')}">${esc(t)}</button>`).join('')}</div></div>`,
   navbar:  (n, k) => `<header class="bg-background flex flex-wrap items-center gap-x-6 gap-y-2 border-b px-4 py-3">
     <span class="text-sm font-semibold">${esc(n.brand)}</span>
     <nav data-slot="navigation-menu" class="${sSlot('navigation-menu')}"><ul data-slot="navigation-menu-list" class="${sSlot('navigation-menu-list')}">${
@@ -516,12 +532,12 @@ const shadcn = {
       i === a.length - 1 ? `<span role="link" aria-current="page" data-slot="breadcrumb-page" class="${sSlot('breadcrumb-page')}">${esc(t)}</span>`
         : `<a href="#" data-slot="breadcrumb-link" class="${sSlot('breadcrumb-link')}">${esc(t)}</a>`}</li>`).join('')}</ol></nav>`,
   /* their dropdown-menu, open. The content class reads
-     --radix-dropdown-menu-content-* variables their primitive sets while
+     --transform-origin and --available-height variables Base UI sets while
      positioning; on a wall those are simply unset, which is what `origin-()`
      and a max-height with no value mean anyway. */
   menu:    (n) => `<div class="relative inline-block">
     <button data-slot="button" data-variant="outline" data-size="default" aria-haspopup="menu" aria-expanded="true" class="${sCva('button', 'buttonVariants', { variant: 'outline', size: 'default' })}">${esc(n.trigger ?? 'Actions')}${ico('chevron-down', 14)}</button>
-    <div data-slot="dropdown-menu-content" data-state="open" data-side="bottom" class="${sSlot('dropdown-menu-content')} mt-1">
+    <div data-slot="dropdown-menu-content" data-open data-side="bottom" class="${sSlot('dropdown-menu-content')} mt-1">
       <div data-slot="dropdown-menu-label" class="${sSlot('dropdown-menu-label')}">${esc(n.label ?? '')}</div>
       ${list(n.items).map((t) => `<div role="menuitem" data-slot="dropdown-menu-item" class="${sSlot('dropdown-menu-item')}">${esc(t)}</div>`).join('')}
       <div role="separator" data-slot="dropdown-menu-separator" class="${sSlot('dropdown-menu-separator')}"></div>

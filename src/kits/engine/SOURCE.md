@@ -102,6 +102,17 @@ table with its decision.
 | `generate.mjs` | tokens.json in the W3C shapes (sRGB colour objects, {value, unit} lengths, fontFamily lists); what has no shape is named | 205 |
 | `generate.test.mjs` | holds those shapes | 205 |
 | `scenes.mjs` | on glass a column takes the board's width, so a kit's own responsive rules fold it | 206 |
+| `scenes.mjs` | the fallback font on :where(html), not #strip: a kit's own body font reaches its wall | 207 |
+| `kit-defaults.mjs` | each default read from the variable the build writes it into (daisyUI radius, Ant Design ink and muted ink); TABLE exported | 207 |
+| `kit-defaults.test.mjs` | new: holds that rule, with the exceptions named | 207 |
+| `kits/shadcn.json` | re-read as shadcn 4.22.1 `init --defaults` installs it: preset base-nova (Base UI, Geist, the multiplying radius scale), the parts from the files `shadcn add` writes; by `scripts/kit-shadcn.mjs`, not by hand | 208 |
+| `registry-read.mjs` | new here (it stayed behind in `dsg/` with `fetch-kits.mjs`): STYLE base-nova, Base UI's useRender slots, render-prop parts, inner elements, `readInstalled` | 208 |
+| `generate.mjs` | shadcn: init's own @theme inline (Geist, radius scale) in the bridge, `html { @apply font-sans }`, components.json in the kit's style, the real init command | 208 |
+| `build-css.mjs` | shadcn compiles with `shadcn/tailwind.css` (the data-checked, data-open variants) | 208 |
+| `wall-bindings.mjs` | shadcn markup in Base UI's attributes (data-checked, data-open, data-active, data-orientation); the select indicator and the radio dot from their source | 208 |
+| `zip.mjs` | takes bytes as well as text, for the kit fonts | 208 |
+| `scenes.mjs` | the fallback letter in the layer us-fallback, declared before the kit's sheet, so Tailwind's layered base wins | 208 |
+| `generate.test.mjs`, `wall.test.mjs` | shadcn's behaviour is @base-ui/react; its buttons are h-8 | 208 |
 
 The byte-for-byte rule above still holds for what it was for: the tests were
 not edited on the way across. A test changed from here on is changed here,

@@ -33,9 +33,11 @@
  * version in kits/<id>.json, into a throwaway directory. None of it becomes a
  * dependency of UISandbox.
  */
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
+import { readFileSync, writeFileSync, mkdirSync, mkdtempSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { execFileSync } from 'node:child_process'
+import { tmpdir } from 'node:os'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const ENGINE = join(root, 'src/kits/engine')
@@ -121,13 +123,61 @@ const radixTheme = () => Object.entries(kits.radix.choices ?? {})
   .map(([a, v]) => ` ${a}="${v}"`).join('')
 const rootOf = (id, values) => `${ROOT[id] ?? ''}${choicesOf(id, values)}`
 
+/* A KIT'S LETTER, CARRIED IN THE ZIP. Material's typeface is "Roboto Flex,
+ * Roboto, Noto Sans, system-ui" (@material/web's own sheet) and its setup loads
+ * the font from Google Fonts; shadcn's base-nova names Geist and installs it
+ * from @fontsource-variable/geist. The builds loaded neither, so on a Mac both
+ * kits were painted in SF Pro (asked through CDP: .SF NS): the kit in
+ * everything but its letter. The font goes in the zip as a file, the Latin
+ * weight axis (OFL, about 30 KB) with its licence, so the canvas shows the
+ * kit's letter and no request leaves the tab. Pinned, like every package the
+ * door reads. Decision 208. */
+const KIT_FONTS = {
+  material: { pkg: '@fontsource-variable/roboto-flex@5.3.0', file: 'roboto-flex-latin-wght-normal.woff2', family: 'Roboto Flex',
+    why: "the first family Material's typeface names" },
+  shadcn: { pkg: '@fontsource-variable/geist@5.3.0', file: 'geist-latin-wght-normal.woff2', family: 'Geist Variable',
+    why: "the letter shadcn's base-nova preset installs (font-geist)" },
+}
+function kitFont(id) {
+  const f = KIT_FONTS[id]
+  const dir = mkdtempSync(join(tmpdir(), 'kit-font-'))
+  const tgz = execFileSync('npm', ['pack', f.pkg, '--silent', '--pack-destination', dir], { encoding: 'utf8' }).trim().split('\n').pop()
+  execFileSync('tar', ['xzf', join(dir, tgz), '-C', dir])
+  const pkg = join(dir, 'package')
+  const css = readFileSync(join(pkg, 'wght.css'), 'utf8')
+  const face = css.split('@font-face').find((b) => b.includes(f.file))
+  const range = /unicode-range:\s*([^;]+);/.exec(face ?? '')?.[1]
+  const weight = /font-weight:\s*([^;]+);/.exec(face ?? '')?.[1]
+  if (!range || !weight) throw new Error(`${f.pkg} no longer ships ${f.file}`)
+  const local = f.file.replace('-normal', '')
+  return {
+    css: `/* ${f.family}, ${f.why}, from ${f.pkg}
+   (SIL Open Font License 1.1, fonts/OFL.txt). Carried in the build so the
+   canvas shows the kit's letter without a request leaving the tab. */
+@font-face {
+  font-family: '${f.family}';
+  font-style: normal;
+  font-display: swap;
+  font-weight: ${weight};
+  src: url(fonts/${local}) format('woff2-variations'), url(fonts/${local}) format('woff2');
+  unicode-range: ${range};
+}
+`,
+    file: local,
+    woff2: new Uint8Array(readFileSync(join(pkg, 'files', f.file))),
+    licence: readFileSync(join(pkg, 'LICENSE'), 'utf8'),
+  }
+}
+
 const page = (id, screen, values) => `<!doctype html>
 <html${rootOf(id, values)}>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${screen.title ?? screen.id} · ${kits[id].name}</title>
-<link rel="stylesheet" href="kit.css">${id === 'material' ? `
+<style>@layer us-fallback; /* named first, so it is the weakest layer: the wall's fallback letter loses to every rule of the kit (scenes.mjs) */</style>
+<link rel="stylesheet" href="kit.css">${KIT_FONTS[id] ? `
+<link rel="stylesheet" href="font.css">` : ''}${id === 'material' ? `
 <script type="module" src="material.js"></script>` : ''}
 <style>
 /* One screen per page here, so it is shown, at its own size. The wall hides a
@@ -176,6 +226,13 @@ for (const id of IDS) {
     const mdw = materialElements()
     files[`${id}/material.js`] = mdw.js
     console.log(`  · @material/web ${mdw.version}: ${mdw.bundled.length} real elements, ${Math.round(mdw.js.length / 1024)} KB`)
+  }
+  if (KIT_FONTS[id]) {
+    const font = kitFont(id)
+    files[`${id}/font.css`] = font.css
+    files[`${id}/fonts/${font.file}`] = font.woff2
+    files[`${id}/fonts/OFL.txt`] = font.licence
+    console.log(`  · ${KIT_FONTS[id].family}, Latin weight axis: ${Math.round(font.woff2.length / 1024)} KB, OFL`)
   }
   SCREENS.forEach((s, i) => { files[`${id}/${i === 0 ? 'index' : s.id}.html`] = page(id, s, values) })
   const bytes = zip(files)

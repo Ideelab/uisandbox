@@ -2958,12 +2958,160 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
       same server (probes, a first run straight after a deploy), and is ok
       on every run alone. Watched, not chased.
 
-207. Take this screen along: a bookmarklet for the app behind a login.
+207. The kits against the kits: each kit's own docs page beside our canvas.
+
+    Every gate so far asked whether a kit build is alive and whether every
+    class on it is the kit's own. None asked whether it looks like the kit.
+    So the same four components (primary and secondary button, text field,
+    card) were measured on each kit's official docs page and on our canvas
+    (the kit build in the editor's frame): fill, text colour, border, corner,
+    font, size, weight, height, padding, shadow. A difference only counts
+    once traced to its source; the docs sites dress themselves (Material's
+    in gold and Google Sans, Ant Design's in AlibabaSans, a lime demo on
+    Mantine's) and those are theirs, not the kit's.
+
+    Radix: 4 of 4 identical. Three real defects, all ours:
+
+    - The strip set a body font of its own. `#strip{font-family:...}`
+      (scenes.mjs) was meant for Ant Design, the one kit that sets no global
+      body font, but everything on the wall inherits from #strip before it
+      reaches <body>, so Bootstrap's and Mantine's own body font never
+      arrived. Control: set --bs-body-font-family to Georgia and the button
+      stayed ui-sans-serif. Now the fallback sits on :where(html), where any
+      kit rule on html or body wins: the same control turns Bootstrap's and
+      Mantine's button to Georgia. Counted per text element, old build
+      against new: Tailwind, daisyUI, shadcn, Ant Design and Material
+      unchanged; Bootstrap (58), Mantine (55) and Radix (12 captions) move
+      to their own font. Ant Design's captions keep the fallback, not Times.
+    - daisyUI's corners were half of daisyUI's: 2px fields and 4px boxes
+      where daisyUI ships 4px and 8px. kit-defaults read the radius from
+      --radius-field and the build wrote it into --radius-box, which the
+      field follows at half.
+    - Ant Design's text was a shade lighter than Ant Design's: its ink was
+      read from colorText (88% black, flattened to #1f1f1f) and written
+      into colorTextBase, from which their algorithm takes 88% again
+      (rgba(31,31,31,0.88)); its muted ink was read from the tertiary text
+      and written into the secondary (#8c8c8c where theirs is 65% black).
+
+    One meter moved with it: Radix's type reach went from 15% to 0%. The
+    15% were our 12 captions in the strip's font, which the Body font knob
+    did reach. Turned to Georgia through the editor, it reaches 12 of 81
+    text elements on the old Radix build and 1 of 81 on the new: Radix's own
+    text (its --default-font-family) never followed the knob, and the meter
+    now says so instead of counting our captions. Bootstrap 61/79, Mantine
+    59/77 and Ant Design 62/83 follow it as before. Why the knob misses
+    Radix's family is open.
+
+    Both are the same mistake, so the rule is now a test:
+    kit-defaults.test.mjs holds that every default is read from the variable
+    the build writes it into, with the exceptions named and why (Tailwind's
+    own role names and the Tailwind Plus corner, Bootstrap's link colour,
+    Material's derived roles, Ant Design's two white backgrounds). Control:
+    with the old mapping it fails on exactly those three. After the rebuild
+    the sweep shows 0 differences on font, corner and text colour for
+    Bootstrap, daisyUI, Mantine and Ant Design. The daisyUI preset now says
+    8px corners. Ant Design's secondary text is #595959, theirs rgba(0,0,0,
+    0.65): the same on white, a flattened copy on grey.
+
+    Open, for Alexander:
+
+    - Material renders in SF Pro, not Roboto. Its typeface is "Roboto Flex,
+      Roboto, Noto Sans, system-ui" (from @material/web's own labs sheet)
+      and no font is loaded, so the browser paints .SF NS (asked through
+      CDP). Material's own setup loads Roboto from Google Fonts. Bundling
+      Roboto (OFL) in the kit zip would make it Material without a request
+      leaving the tab.
+    - shadcn/ui has moved on. shadcn 4.22.1's `init --defaults` takes the
+      preset base-nova, and ui.shadcn.com renders it: buttons and fields
+      32px high with 10px corners and no shadow, cards without a border,
+      a black primary. Our kit is built from r/styles/new-york-v4: 36px,
+      8px corners, shadow-xs. Still installable and faithful to itself,
+      but not what someone starting today gets.
+
+    The source scan's budget (performance, parked): reading at most 8M
+    characters of source cut Bootswatch's derive from 103.7 s to 8.3 s and
+    antd's site from 25.2 s to 3.1 s, but 2 of the 23 builds over 8M got a
+    different baseline (element-plus: colour theme rose for cobalt;
+    Bootswatch: indigo for rose and a different scale). A faster wrong
+    start is not a fix, so it is not the default, and the unused option was
+    taken back out.
+
+208. Material in Roboto Flex, shadcn/ui as base-nova (Alexander's call on 207's
+    two open points).
+
+    Material carries its letter. The kit build loaded no font, so its
+    typeface ("Roboto Flex, Roboto, Noto Sans, system-ui", from @material/web's
+    own sheet) fell through to SF Pro on a Mac. Roboto Flex now travels in the
+    zip as a file: the Latin weight axis from @fontsource-variable/roboto-flex
+    5.3.0, 34 KB, OFL, with its licence. In the editor's frame it loads, and
+    the Publish label measures 46.64px, which is Roboto Flex's width for that
+    word and not the system font's (48.51px). No request leaves the tab for
+    it: what the page fetched off localhost was the editor's own Inter and
+    GitHub's star count.
+
+    shadcn/ui is what `shadcn init --defaults` installs today. shadcn 4.22.1
+    makes base-nova its default (Base UI primitives, the nova style, neutral,
+    Lucide, Geist) and ui.shadcn.com renders it; the kit was new-york-v4. The
+    data is re-read by scripts/kit-shadcn.mjs, and nothing in it is typed:
+
+    - The theme from what init really writes. The script runs `shadcn init
+      --base base --preset nova` in an empty Vite app and reads its @theme
+      inline block back: Geist as --font-sans, and a radius scale that
+      MULTIPLIES --radius (sm x0.6 to 4xl x2.6) where new-york subtracted
+      pixels. The CLI builds that block in code, so running it is the only
+      way to read it. The colours are the same as neutral.json's, all 32.
+    - The components from what `shadcn add` writes into that project, not from
+      the registry's JSON. The registry's source carries marker classes
+      (cn-font-heading, cn-menu-target, cn-menu-translucent) that the CLI
+      rewrites on the way in; read from the registry, fidelity counted three
+      invented classes. Read from the installed files: 494 of 494 theirs.
+    - registry-read.mjs came across from dsg/ (it had stayed behind with
+      fetch-kits.mjs) and learnt Base UI: useRender's slots, parts drawn
+      through a render prop, the element inside a slot (the radio's dot), and
+      attributes read per element. Base UI writes className before data-slot
+      as often as after it, and reading "the next className" had given the
+      progress bar no track and the slider its Control's classes: both were
+      missing on the wall until read per element.
+    - The wall's markup uses Base UI's attributes (data-checked, data-open,
+      data-active, data-orientation), and the build imports shadcn's own
+      tailwind.css, whose variants map those attributes. Geist travels in the
+      zip like Roboto Flex (@fontsource-variable/geist 5.3.0, 29 KB, OFL).
+    - The export follows: components.json in the kit's style, the install line
+      `npx shadcn@latest init --base base --preset nova` (`--preset base-nova`
+      is refused by the CLI), shadcn/tailwind.css, html { @apply font-sans }.
+
+    Measured on ui.shadcn.com's own previews against our canvas: default and
+    outline button, input, checked switch, tabs, active tab and badge have the
+    same height, corner, border, padding, size, weight and shadow. The badge
+    was 32px corners against their 26px until init's radius scale went in.
+    Left: the font is the same face under two names (their "Geist", the
+    package's "Geist Variable"), a card with other content is another height,
+    and a checkbox or radio inherits the text size of the page around it.
+
+    One mistake of 207, found by this: the fallback letter on :where(html) was
+    unlayered, and an unlayered rule beats every layer whatever its
+    specificity, so it also beat Tailwind's preflight in @layer base. It hid
+    Geist, and it had been setting Tailwind's and daisyUI's text in
+    ui-sans-serif where Tailwind 4.3.3's own stack starts with -apple-system.
+    The fallback now sits in a layer, us-fallback, which each kit page
+    declares before its stylesheet, so it is the weakest of all: Tailwind,
+    daisyUI and shadcn show their own letter (58, 58 and 59 text elements),
+    Radix, Ant Design, Material, Bootstrap and Mantine are unchanged against
+    207's builds. The Body font knob turned to Georgia reaches shadcn 59/80,
+    Tailwind 58/79, daisyUI 58/78, Material 55/73, Bootstrap 61/79, Ant Design
+    62/83; what stays is monospace.
+
+    Gates: fidelity 100% on all eight, kit-export 101 and live-bridge 18
+    checks with 0 failed, kit hold-outs ok 9 of 9, tests green. shadcn.zip
+    318 KB, material.zip 509 KB.
+
+209. Take this screen along: a bookmarklet for the app behind a login.
 
     An app that runs only where it is deployed, behind a login (an SPA whose
     env files are not on the machine), cannot be fetched by URL and cannot
     be started on localhost. Only the user's own logged-in browser sees it
-    rendered, so the capture runs there. Prototype, not on the door yet.
+    rendered, so the capture runs there. Built as a prototype, measured,
+    then put first on the door (below).
 
     How it works. A bookmarklet (src/capture/grab.ts; the link is the
     function's own source, so it carries everything it needs) serialises the

@@ -32,7 +32,7 @@ function crc32(bytes) {
    same input producing the same bytes — a package you can diff. */
 const DOS_TIME = 0, DOS_DATE = (2026 - 1980) << 9 | 1 << 5 | 1
 
-/** @param files path -> string  @returns Uint8Array */
+/** @param files path -> string, or bytes for a binary file (a font)  @returns Uint8Array */
 export function zip(files) {
   const enc = new TextEncoder()
   const locals = [], central = []
@@ -40,7 +40,7 @@ export function zip(files) {
 
   for (const [path, text] of Object.entries(files)) {
     const name = enc.encode(path)
-    const body = enc.encode(text)
+    const body = text instanceof Uint8Array ? text : enc.encode(text)
     const sum = crc32(body)
 
     const local = new Uint8Array(30 + name.length + body.length)

@@ -1,7 +1,7 @@
 /**
  * The tab a bookmarklet opens (`/?capture=1`), before its first screen
  * arrives: what is happening, and, for someone who came here by hand, the
- * bookmarklet to drag. Not linked from the door yet (decision 207).
+ * bookmarklet to drag; the door links here as its step by step (decision 209).
  *
  * A bookmarklet is dragged, not clicked, and a link styled as a button reads
  * as one to click (Alexander clicked it, and nothing happened). So it looks

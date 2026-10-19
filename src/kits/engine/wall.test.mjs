@@ -17,7 +17,9 @@ const KITS = Object.keys(WALL)
  * these is a number of ours: a size class, a component class, or a custom
  * element that carries the height in its shadow root. */
 const HEIGHT = {
-  tailwind: /min-h-9|\bh-9\b|\bsize-9\b/, shadcn: /min-h-9|\bh-9\b|\bsize-9\b/,
+  tailwind: /min-h-9|\bh-9\b|\bsize-9\b/,
+  // base-nova's default button is h-8 and its icon button size-8: 32px (decision 208)
+  shadcn: /\bh-8\b|\bsize-8\b/,
   daisyui: /\bbtn\b/, bootstrap: /\bbtn\b/,
   material: /^<md-[a-z-]*(button|icon-button)/,
   radix: /\brt-r-size-\d/,

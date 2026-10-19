@@ -48,7 +48,7 @@ of a PUBLIC zip passing through; nothing is stored, no token is ever involved
 `gitlab.com` targets are accepted, only same-origin callers (`Sec-Fetch-Site: same-origin` / Origin),
 200 MB cap. The intake says this in one sentence next to the field.
 
-## Screens taken along: what the capture tab accepts (decision 207)
+## Screens taken along: what the capture tab accepts (decision 209)
 
 `/?capture=1` is the tab the "Take this screen along" bookmarklet opens. It
 listens to one window only, the one that opened it (`e.source ===

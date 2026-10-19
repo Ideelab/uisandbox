@@ -688,11 +688,19 @@ body{margin:0;overflow:hidden}
  * the tool and wrong in a hero, where two bars around the one picture the page
  * is built on read as a component that overflowed. The bars go, the panning
  * stays: this hides the furniture, it does not take the movement away. */
-/* THE STRIP'S OWN FURNITURE CARRIES ITS OWN LETTER. The captions and board
- * names are ours, not the kit's — and Ant Design, alone of the eight, sets no
- * global body font, so ours fell back to the browser's Times inside its frame.
- * Inheritance still lets every kit that styles text win on its own content. */
-#strip{font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
+/* A LETTER FOR THE KIT THAT SETS NONE, AND ONLY FOR THAT ONE. Ant Design,
+ * alone of the eight, sets no global body font, so its captions fell back to
+ * the browser's Times inside its frame. This used to sit on #strip, and that
+ * was a second body font: everything on the wall inherits from #strip before
+ * it reaches <body>, so Bootstrap's and Mantine's own body font never arrived
+ * (set --bs-body-font-family to Georgia and the button stayed ui-sans-serif).
+ * Weightless is not enough on its own: Tailwind, daisyUI and shadcn set their
+ * letter in @layer base, and an unlayered rule beats every layer whatever its
+ * specificity, so a bare :where(html) took shadcn's Geist away. So it lives in
+ * a layer of its own, us-fallback, which the page declares BEFORE the kit's
+ * stylesheet (kit-builds.mjs): the first layer named is the weakest, and every
+ * kit rule wins over it, layered or not. */
+@layer us-fallback{:where(html){font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}}
 html[data-quiet] #strip{scrollbar-width:none;-ms-overflow-style:none}
 /* THE QUIET FRAME IS A BOUQUET, NOT A STRIP. On the homepage the shot is one
    board filling the whole width, so the pan-strip's fixed columns would leave

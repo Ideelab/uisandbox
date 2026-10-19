@@ -36,7 +36,7 @@ const SAMPLES = [
  * The door: the empty state of the stage's "Your app" tab, and what a failed
  * load falls back to; the story around it lives on /about.
  *
- * First the easiest way (decision 207): a bookmarklet that copies the screen
+ * First the easiest way (decision 209): a bookmarklet that copies the screen
  * the visitor's own browser shows into a UISandbox tab, any app, any address,
  * logged in or not, tab to tab. Then in the order people trust it (decision
  * 197): the way where nothing leaves their machine at all, one command in their project, the sandbox

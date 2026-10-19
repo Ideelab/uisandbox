@@ -126,7 +126,7 @@ async function externalCss(event, url) {
   // A sheet whose server sends no CORS cannot be read here, but the <link> may
   // still load it as the raw control does: sent there, it applies untouched
   // (outside the knobs' reach, never missing). A 502 dropped it from the
-  // tokenised render only, and Check 1:1 said so (decision 207).
+  // tokenised render only, and Check 1:1 said so (decision 209).
   try { res = await fetch(target, { mode: 'cors', credentials: 'omit' }) } catch { return Response.redirect(target, 302) }
   if (!res.ok || !sid) return res
   const css = absolutise(await res.text(), target)

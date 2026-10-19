@@ -200,14 +200,15 @@ test('the contrast audit names the line for the job that makes it a requirement'
 
 test('the manifest says what the stack is really made of, in four bands', () => {
   /* "shadcn on Tailwind" hid the two things that make a stack a stack: shadcn
-     BRINGS the Radix behaviour package and its own tokens, and leans on
-     Tailwind for the engine. Read from what the packages declare, not typed. */
+     BRINGS a behaviour package (Base UI since base-nova, decision 208; Radix
+     before) and its own tokens, and leans on Tailwind for the engine. Read
+     from what the packages declare, not typed. */
   const ids = ['tailwind', 'shadcn']
   const kits = Object.fromEntries([...ids, 'openprops', 'daisyui'].map((id) => [id, JSON.parse(readFileSync(`kits/${id}.json`, 'utf8'))]))
   const md = generate(VALUES, ids, kits)['MANIFEST.md']
   const bands = section(md, '## What this stack is made of')
   assert.equal(bands.length, 4, 'a stack has four bands')
-  assert.match(bands[0], /radix-ui/, 'the behaviour shadcn brings is not named')
+  assert.match(bands[0], /@base-ui\/react/, 'the behaviour shadcn brings is not named')
   assert.match(bands[0], /shadcn\/ui brings/, 'it has to say who brings it')
   assert.match(bands[1], /Tailwind CSS/)
   assert.match(bands[3], /shadcn\/ui/)
