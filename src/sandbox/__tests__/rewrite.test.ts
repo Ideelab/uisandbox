@@ -36,6 +36,10 @@ describe('splicesFor', () => {
     expect(kinds('--mantine-webkit-font-smoothing', 'antialiased')).toEqual([])
     expect(kinds('--x-font-family', 'clamp(6px, 2vw, 12px)')).toEqual([])
     expect(kinds('--font-sans', '"Inter", sans-serif')).toEqual(['font-family:"Inter", sans-serif'])
+    // brackets inside a quoted name are part of the name, not a function (Radix)
+    const radix = "-apple-system, BlinkMacSystemFont, 'Segoe UI (Custom)', Roboto, sans-serif"
+    expect(kinds('--default-font-family', radix)).toEqual([`font-family:${radix}`])
+    expect(kinds('--x-font-family', "min('a', 2vw)")).toEqual([])
   })
   it('gradient directions: numeric angles and single sides, not corners, not radial', () => {
     expect(kinds('background-image', 'linear-gradient(135deg,#6f42c1,#7952b3)')).toEqual(['angle:135deg', 'color:#6f42c1', 'color:#7952b3'])

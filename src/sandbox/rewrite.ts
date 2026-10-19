@@ -426,8 +426,12 @@ export function splicesFor(prop: string, value: string): Splice[] {
         // Must look like a family list, not a size, a weight, a function or a
         // keyword: `-apple-system, …` IS one (a system stack starts with a dash;
         // Mantine's --mantine-font-family was skipped for it), `antialiased`
-        // (…-font-smoothing) and `clamp(6px, …)` are not.
-        if (/^-?[a-z"'][^;{}()]*$/i.test(value.trim()) && !/var\(/i.test(m) && !/^(normal|bold|\d{3})/.test(bare) && !FONT_KEYWORD.test(bare)) {
+        // (…-font-smoothing) and `clamp(6px, …)` are not. Brackets count only
+        // OUTSIDE quotes: Radix names 'Segoe UI (Custom)' in its stack, and the
+        // whole --default-font-family was skipped for those two brackets, so the
+        // font knobs reached 1 of 81 texts on a Radix page (decision 209).
+        const unquoted = value.trim().replace(/'[^']*'|"[^"]*"/g, "''")
+        if (/^-?[a-z"'][^;{}()]*$/i.test(unquoted) && !/var\(/i.test(m) && !/^(normal|bold|\d{3})/.test(bare) && !FONT_KEYWORD.test(bare)) {
           return [{ start: 0, end: value.length, kind: 'font-family', raw: value }]
         }
         return []

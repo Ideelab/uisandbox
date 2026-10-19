@@ -3104,3 +3104,17 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     Gates: fidelity 100% on all eight, kit-export 101 and live-bridge 18
     checks with 0 failed, kit hold-outs ok 9 of 9, tests green. shadcn.zip
     318 KB, material.zip 509 KB.
+
+209. The font knobs reach Radix: brackets inside a quoted family name are
+    part of the name.
+
+    Since 207 the meter said 0% type on the Radix kit, and turning Body font
+    to Georgia moved 1 of its 81 text elements. The tokeniser takes a font
+    family held in a custom property only when it looks like a family list,
+    and to keep `clamp(6px, …)` out it refused any value with a bracket.
+    Radix's --default-font-family names 'Segoe UI (Custom)' and 'Open Sans
+    (Custom)', two faces it declares itself, so the whole stack was refused
+    and its text never got a token. Brackets now count only outside quotes
+    (rewrite.ts; rewrite.test.ts holds Radix's stack in and a min() with a
+    quoted argument out). On the Radix kit: type reach 0% to 100%, and the
+    knob turns 63 of 81 texts; the 18 left are Menlo, its code face.
