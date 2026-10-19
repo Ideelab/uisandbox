@@ -44,6 +44,7 @@ export const KIT_ICON_SETS = {
  * reports it. */
 export const TRANSLATIONS = {
   heroicons: {
+    'chevron-left': 'chevron-left', 'chevron-right': 'chevron-right', 'x': 'x-mark', 'loader-circle': 'arrow-path',
     'archive': 'archive-box', 'arrow-left-right': 'arrows-right-left', 'bell': 'bell',
     'car': 'truck', 'check': 'check', 'chevron-down': 'chevron-down',
     'coffee': 'building-storefront', 'copy': 'document-duplicate', 'credit-card': 'credit-card',
@@ -54,6 +55,7 @@ export const TRANSLATIONS = {
     'user': 'user',
   },
   'bootstrap-icons': {
+    'chevron-left': 'chevron-left', 'chevron-right': 'chevron-right', 'x': 'x-lg', 'loader-circle': 'arrow-repeat',
     'archive': 'archive', 'arrow-left-right': 'arrow-left-right', 'bell': 'bell',
     'car': 'car-front', 'check': 'check-lg', 'chevron-down': 'chevron-down',
     'coffee': 'cup-hot', 'copy': 'copy', 'credit-card': 'credit-card',
@@ -64,6 +66,7 @@ export const TRANSLATIONS = {
     'user': 'person',
   },
   'material-symbols': {
+    'chevron-left': 'chevron_left', 'chevron-right': 'chevron_right', 'x': 'close', 'loader-circle': 'progress_activity',
     'archive': 'archive', 'arrow-left-right': 'swap_horiz', 'bell': 'notifications',
     'car': 'directions_car', 'check': 'check', 'chevron-down': 'keyboard_arrow_down',
     'coffee': 'local_cafe', 'copy': 'content_copy', 'credit-card': 'credit_card',
@@ -74,6 +77,7 @@ export const TRANSLATIONS = {
     'user': 'person',
   },
   'radix-icons': {
+    'chevron-left': 'chevron-left', 'chevron-right': 'chevron-right', 'x': 'cross-2', 'loader-circle': 'reload',
     'archive': 'archive', 'arrow-left-right': 'width', 'bell': 'bell',
     'car': null, 'check': 'check', 'chevron-down': 'chevron-down',
     'coffee': null, 'copy': 'copy', 'credit-card': null,
@@ -84,6 +88,7 @@ export const TRANSLATIONS = {
     'user': 'person',
   },
   tabler: {
+    'chevron-left': 'chevron-left', 'chevron-right': 'chevron-right', 'x': 'x', 'loader-circle': 'loader-2',
     'archive': 'archive', 'arrow-left-right': 'arrows-left-right', 'bell': 'bell',
     'car': 'car', 'check': 'check', 'chevron-down': 'chevron-down',
     'coffee': 'coffee', 'copy': 'copy', 'credit-card': 'credit-card',
@@ -94,6 +99,7 @@ export const TRANSLATIONS = {
     'user': 'user',
   },
   'antd-icons': {
+    'chevron-left': 'LeftOutlined', 'chevron-right': 'RightOutlined', 'x': 'CloseOutlined', 'loader-circle': 'LoadingOutlined',
     'archive': 'ContainerOutlined', 'arrow-left-right': 'SwapOutlined', 'bell': 'BellOutlined',
     'car': 'CarOutlined', 'check': 'CheckOutlined', 'chevron-down': 'DownOutlined',
     'coffee': 'CoffeeOutlined', 'copy': 'CopyOutlined', 'credit-card': 'CreditCardOutlined',

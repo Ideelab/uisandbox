@@ -39,6 +39,8 @@ export function ScreenPicker({ screens, current, onPick, onPin, pinnable, named 
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
 
+  // The order a person steps through: a kit's own, else the list as found.
+  const ordered = useMemo(() => (named ? [...screens].sort((a, b) => (a.order ?? 99) - (b.order ?? 99)) : screens), [screens, named])
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase()
     return needle ? screens.filter((s) => s.label.toLowerCase().includes(needle) || s.path.toLowerCase().includes(needle)) : screens
@@ -53,8 +55,11 @@ export function ScreenPicker({ screens, current, onPick, onPin, pinnable, named 
       if (!m.has(g)) m.set(g, [])
       m.get(g)!.push(s)
     }
+    // A kit's screens come in the order the kit build gives them (overview
+    // first), not by file name; anything else by folder.
+    if (named) for (const list of m.values()) list.sort((a, b) => (a.order ?? 99) - (b.order ?? 99))
     return [...m.entries()].sort((a, b) => a[0].localeCompare(b[0]))
-  }, [filtered])
+  }, [filtered, named])
   const flat = useMemo(() => groups.flatMap(([, list]) => list), [groups])
 
   useEffect(() => { if (open) { setQ(''); setPinPath(pinnable?.() ?? null); setHi(Math.max(0, flat.findIndex((s) => s.path === current.path))); setTimeout(() => (inputRef.current ?? listRef.current)?.focus(), 0) } }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -71,17 +76,17 @@ export function ScreenPicker({ screens, current, onPick, onPin, pinnable, named 
       const t = e.target as HTMLElement
       if (t && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return
       if (e.key !== '[' && e.key !== ']') return
-      const i = screens.findIndex((s) => s.path === current.path)
-      const n = screens[(i + (e.key === ']' ? 1 : screens.length - 1)) % screens.length]
+      const i = ordered.findIndex((s) => s.path === current.path)
+      const n = ordered[(i + (e.key === ']' ? 1 : ordered.length - 1)) % ordered.length]
       if (n) onPick(n)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [screens, current, onPick])
+  }, [ordered, current, onPick])
 
   const choose = (s: Screen) => { onPick(s); setOpen(false) }
   const tag = (s: Screen) => (s.source === 'link' ? 'link' : s.source === 'pinned' ? 'added' : null)
-  const idx = screens.findIndex((s) => s.path === current.path)
+  const idx = ordered.findIndex((s) => s.path === current.path)
   /** What a person calls the screen: a kit's own name for it ("An overview"),
    *  else the page's path, the root as Home. */
   const nameOf = (s: Screen) => (named && s.title ? s.title.split(' · ')[0]! : s.label === '/' ? 'Home' : s.label.replace(/^\//, ''))

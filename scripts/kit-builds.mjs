@@ -6,7 +6,7 @@
  *   node scripts/kit-builds.mjs                 all eight that render
  *   node scripts/kit-builds.mjs bootstrap       one
  *
- * Writes public/kits/<id>.zip: the six screens as six pages, each kit's own
+ * Writes public/kits/<id>.zip: the seven screens as seven pages, each kit's own
  * classes and elements on them, and that kit's REAL compiled CSS beside them.
  *
  * Why a build and not a special mode of the stage: the door then gets the
@@ -175,6 +175,7 @@ const page = (id, screen, values) => `<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${screen.label ?? screen.id} · ${kits[id].name}</title>
+<meta name="screen-order" content="${SCREENS.indexOf(screen)}">
 <style>@layer us-fallback; /* named first, so it is the weakest layer: the wall's fallback letter loses to every rule of the kit (scenes.mjs) */</style>
 <link rel="stylesheet" href="kit.css">${KIT_FONTS[id] ? `
 <link rel="stylesheet" href="font.css">` : ''}${id === 'material' ? `

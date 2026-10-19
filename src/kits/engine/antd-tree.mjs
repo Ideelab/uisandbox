@@ -65,6 +65,7 @@ const {
   ConfigProvider, Button, Input, Select, Checkbox, Radio, Switch, Slider, Tag, Alert, Statistic,
   Progress, Table, List, Descriptions, Avatar, Empty, Tabs, Layout, Menu, Breadcrumb, Dropdown,
   Card, Typography, Flex, Space, Divider,
+  Pagination, Segmented, Tooltip, Modal, notification, Skeleton, Spin,
 } = antd
 
 const e = React.createElement
@@ -137,10 +138,14 @@ const PART = {
   muted: (n) => e(Typography.Paragraph, { type: 'secondary', style: { margin: 0 } }, text(n.text)),
   label: (n) => e(Typography.Text, { strong: true }, text(n.text)),
 
-  button: (n) => e(Button, BTN[n.tone ?? 'brand'], text(n.text)),
+  button: (n) => e(Button, { ...BTN[n.tone ?? 'brand'], disabled: !!n.disabled }, text(n.text)),
   iconrow: (n) => e(Space, { size: 4, wrap: true },
     ...list(n.items).map((i, k) => e(Button, { key: k, type: 'text', 'aria-label': i, icon: icon(i) }))),
-  input: (n) => e(Input, { defaultValue: text(n.value), placeholder: text(n.placeholder) }),
+  /* their own error state is status="error"; the message under it is their
+     danger Text, which is how their Form shows one */
+  input: (n) => e(React.Fragment, null,
+    e(n.secret ? Input.Password : Input, { defaultValue: text(n.value), placeholder: text(n.placeholder), status: n.error ? 'error' : undefined }),
+    n.error ? e(Typography.Text, { type: 'danger' }, text(n.error)) : null),
   textarea: (n) => e(Input.TextArea, { rows: 3, defaultValue: text(n.value), placeholder: text(n.placeholder) }),
   select: (n) => e(Select, { open: true, defaultValue: list(n.options)[0], style: { width: '100%' },
     getPopupContainer: (t) => t.parentElement,
@@ -202,6 +207,25 @@ const PART = {
       { key: 'danger', label: text(n.danger ?? 'Delete'), danger: true },
     ] } },
   e(Button, { icon: icon('chevron-down', 14), iconPosition: 'end' }, text(n.trigger ?? 'Actions')))),
+  /* ── the screens' newer parts (decision 211) ──────────────────────────
+     A tooltip, a dialog and a notification are portals in a running page;
+     their own static panels (what their docs render inline) are the same
+     component drawn in place. */
+  link: (n) => e(Typography.Link, { href: '#' }, text(n.text)),
+  pagination: (n) => e(Pagination, { current: n.on ?? 1, total: (n.pages ?? 5) * 10, showSizeChanger: false }),
+  segmented: (n) => e(Segmented, { options: list(n.items), defaultValue: list(n.items)[n.on ?? 0] }),
+  tooltip: (n) => e(Flex, { align: 'center', gap: 8 },
+    e(Tooltip._InternalPanelDoNotUseOrYouWillBeFired, { title: text(n.text), placement: 'left' }),
+    e(Button, { type: 'text', 'aria-label': text(n.label ?? n.text), icon: icon(n.icon) })),
+  dialog: (n, kids) => e(Modal._InternalPanelDoNotUseOrYouWillBeFired, { title: text(n.title), footer: kids, style: { width: '100%' } },
+    e(Typography.Paragraph, { style: { margin: 0 } }, text(n.text))),
+  toast: (n) => e(notification._InternalPanelDoNotUseOrYouWillBeFired, {
+    title: text(n.title), description: text(n.text),
+    actions: n.action ? e(Button, { type: 'link', size: 'small' }, text(n.action)) : undefined }),
+  skeleton: (n) => e(Flex, { vertical: true, gap: 16 },
+    ...[['72%', '38%'], ['58%', '30%'], ['80%', '46%'], ['64%', '34%'], ['70%', '40%']].slice(0, n.rows ?? 3).map(([a, b], i) =>
+      e(Skeleton, { key: i, active: true, avatar: { size: 'small' }, title: false, paragraph: { rows: 2, width: [a, b] } }))),
+  spinner: () => e(Spin, { size: 'small' }),
   mediacard: (n) => e(Card, {
     cover: e('div', { 'data-photo': '1', style: { aspectRatio: '16 / 9', display: 'flex', alignItems: 'center',
       justifyContent: 'center', background: 'var(--ant-color-fill-quaternary)', color: 'var(--ant-color-text-quaternary)' } }),
@@ -270,11 +294,21 @@ function settle(root) {
        top:-9999px and waits for the trigger to measure the page; with the
        inline placeholder gone that rule took over and the panel opened ten
        thousand pixels above the field. */
-    pop.style.position = 'absolute'
-    pop.style.insetBlockStart = 'calc(100% + 4px)'
-    pop.style.insetInlineStart = '0'
-    pop.style.minWidth = '100%'
-    pop.style.zIndex = '3'
+    /* A select's panel floats under its field. A menu's sits in the room its
+       wrapper already reserves for it: absolute against that wrapper it hung
+       below the reserved room, over whatever came next on the screen (the
+       dialog of On top, decision 211). */
+    if (isSelect) {
+      pop.style.position = 'absolute'
+      pop.style.insetBlockStart = 'calc(100% + 4px)'
+      pop.style.insetInlineStart = '0'
+      pop.style.minWidth = '100%'
+      pop.style.zIndex = '3'
+    } else {
+      pop.style.position = 'static'
+      pop.style.marginBlockStart = '4px'
+      pop.style.width = 'max-content'
+    }
     const box = pop.parentElement
     if (box && !box.style.position) box.style.position = 'relative'
   }
@@ -303,6 +337,9 @@ async function renderAll({ token = {}, dark = false, nodes = [], icons = {} }) {
     await settled()
     settle(host)
     drawIcons(host)
+    /* a field's value is a property, and React writes a password's only as
+       one: put it in the markup, or the file shows an empty field */
+    for (const input of [...host.querySelectorAll('input')]) if (input.value && !input.hasAttribute('value')) input.setAttribute('value', input.value)
     parts[JSON.stringify(node)] = host.innerHTML
     /* NOTHING IS UNMOUNTED UNTIL THE CSS IS OUT.
        Their cache is reference-counted: unmounting the last component that

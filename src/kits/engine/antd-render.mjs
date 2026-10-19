@@ -31,14 +31,19 @@ const NEEDS = ['react', 'react-dom', 'antd', '@ant-design/cssinjs', 'happy-dom']
  * Build the bundle, or hand back the one already built.
  * Returns { version, license, home, npm, source } and leaves the bundle on disk.
  */
-export function antdBundle({ refresh = false } = {}) {
+export function antdBundle({ refresh = false, version = null } = {}) {
   if (!refresh && existsSync(BUNDLE) && existsSync(META)) return JSON.parse(readFileSync(META, 'utf8'))
 
   const dir = mkdtempSync(join(tmpdir(), 'dsg-antd-'))
   try {
     const run = (cmd, args) => execFileSync(cmd, args, { cwd: dir, stdio: 'pipe', encoding: 'utf8' })
     writeFileSync(join(dir, 'package.json'), '{"type":"module","private":true}')
-    run('npm', ['install', '--silent', '--no-audit', '--no-fund', ...NEEDS.map((n) => `${n}@latest`)])
+    /* A refresh re-renders; it does not upgrade. antd stays at the version the
+       last bundle was built from unless `version` names another, so adding a
+       part to the wall is not also a version jump (decision 211). */
+    const was = existsSync(META) ? JSON.parse(readFileSync(META, 'utf8')).version : null
+    const antdAt = version ?? was ?? 'latest'
+    run('npm', ['install', '--silent', '--no-audit', '--no-fund', ...NEEDS.map((n) => `${n}@${n === 'antd' ? antdAt : 'latest'}`)])
     copyFileSync(join(HERE, 'antd-tree.mjs'), join(dir, 'antd-tree.mjs'))
 
     /* ESM with a require shim, which is the only combination that works.

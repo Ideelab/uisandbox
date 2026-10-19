@@ -36,6 +36,8 @@ export interface Screen {
   source?: 'file' | 'link' | 'pinned'
   /** The page's own <title>, when it is an HTML file: a kit names its screens there. */
   title?: string
+  /** A kit build's own order for its screens (`<meta name="screen-order">`). */
+  order?: number
 }
 
 export interface SandboxProject {
@@ -167,6 +169,7 @@ export async function buildProject(archive: Archive, opts: { root?: string; onPr
 
   const raw = new Map<string, ServedFile>()
   const titles = new Map<string, string>()
+  const orders = new Map<string, number>()
   const rewritten = new Map<string, ServedFile>()
   const redirects = new Set<string>()
   const underPaths = new Set(under.map((e) => e.path.slice(prefix.length)))
@@ -205,6 +208,8 @@ export async function buildProject(archive: Archive, opts: { root?: string; onPr
       voteBase(html, underPaths, baseVotes)
       const t = html.match(/<title[^>]*>([^<]{1,120})<\/title>/i)?.[1]?.trim()
       if (t) titles.set(rel, t.replace(/&amp;/g, '&').replace(/&#39;|&apos;/g, "'").replace(/&quot;/g, '"'))
+      const o = html.match(/<meta\s+name=["']screen-order["']\s+content=["'](\d+)["']/i)?.[1]
+      if (o) orders.set(rel, Number(o))
       // Inlined <style> counts as stylesheet too (Astro, Next inline critical CSS).
       for (const m of html.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/gi)) { cssBytes += m[1]!.length; detectScheme(m[1]!, scheme) }
       // The control keeps every byte except <link integrity> — see stripLinkIntegrity.
@@ -224,7 +229,7 @@ export async function buildProject(archive: Archive, opts: { root?: string; onPr
     // before v1/es/…), so the first screen is a home, not the deepest a-page.
     .sort((a, b) => sortKey(a).localeCompare(sortKey(b)))
     .map((p) => ({ path: p, label: '/' + p.replace(/(^|\/)index\.html?$/i, '').replace(/\.html?$/i, ''), source: 'file' as const }))
-    .map((s) => ({ ...s, label: s.label === '/' ? '/' : s.label.replace(/\/$/, '') || '/', ...(titles.get(s.path) ? { title: titles.get(s.path) } : {}) }))
+    .map((s) => ({ ...s, label: s.label === '/' ? '/' : s.label.replace(/\/$/, '') || '/', ...(titles.get(s.path) ? { title: titles.get(s.path) } : {}), ...(orders.has(s.path) ? { order: orders.get(s.path) } : {}) }))
 
   const platform = detectPlatform(paths, screens.length > 0 || anyPage, heads)
   // The deploy prefix: the one most root-absolute asset URLs agree on.

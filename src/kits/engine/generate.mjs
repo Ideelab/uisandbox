@@ -311,6 +311,7 @@ export const COMPONENT_GAPS = {
   shadcn: [
     ['footer', 'shadcn ships no footer; the one on the wall is its own tokens on plain markup'],
     ['chart', 'its chart is Recharts in React, which cannot be a class name; the bars here are its own --chart-1 and --chart-2, the same five colours its installation ships'],
+    ['toast', 'its toast is Sonner, whose look is its own stylesheet and CSS variables, not classes; the one on the wall is the tokens shadcn hands Sonner (popover, its foreground, the border)'],
   ],
   radix: [
     ['navbar', 'Radix Themes ships no navigation bar; the one on the wall is rt-Link and rt-Heading in a flex row'],
@@ -319,6 +320,8 @@ export const COMPONENT_GAPS = {
     ['breadcrumb', 'and no breadcrumb, so rt-Link with a separator'],
     ['list', 'and no list; DataList is for a label and a value, which is what the key-and-value card really uses'],
     ['chart', 'and no chart, so the bars are its accent scale at steps 9 and 6'],
+    ['pagination', 'and no pager, so its IconButton, solid for the page you are on and ghost for the rest'],
+    ['toast', 'and no toast, so its Card on its own --shadow-5'],
   ],
   mantine: [
     ['navbar', 'the header and footer come from AppShell, which normally positions them for a whole app shell; on the wall they sit in flow'],
@@ -343,6 +346,11 @@ export const COMPONENT_GAPS = {
     ['layout', 'Material publishes colour and shape tokens but no spacing scale, and ships no layout components, so spacing between elements is yours to decide'],
     ['table', '@material/web ships no data table, though the M3 spec describes one'],
     ['avatar', '@material/web ships no avatar; compose one from its shape and colour tokens'],
+    ['pagination', 'no pager; its icon buttons, the page you are on as a tonal one'],
+    ['tooltip', 'no tooltip element; the plain tooltip of the M3 spec in its inverse-surface tokens'],
+    ['dialog', 'md-dialog opens in the top layer over the whole page, so the one drawn in place is its tokens: surface-container-high, corner-extra-large, md-elevation level 3'],
+    ['toast', 'no snackbar element; the M3 snackbar in its inverse-surface tokens, the action in inverse-primary'],
+    ['skeleton', 'no skeleton; blocks in surface-container-highest'],
     ['alert', '@material/web ships no inline alert or banner; the closest is md-filled-card re-toned with its own container token'],
     ['breadcrumb', 'no breadcrumb in the specification or the package'],
     ['chart', 'and no chart, so the bars are its primary and primary-container tokens'],

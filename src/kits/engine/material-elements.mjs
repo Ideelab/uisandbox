@@ -69,6 +69,10 @@ const IMPORTS = [
   'list/list.js', 'list/list-item.js', 'labs/badge/badge.js',
   'menu/menu.js', 'menu/menu-item.js',
   'labs/card/outlined-card.js', 'labs/card/filled-card.js',
+  /* the screens' newer parts (decision 211): their spinner, their segmented
+     control, and the elevation their floating surfaces stand on */
+  'progress/circular-progress.js', 'elevation/elevation.js',
+  'labs/segmentedbutton/outlined-segmented-button.js', 'labs/segmentedbuttonset/outlined-segmented-button-set.js',
 ]
 
 export function materialElements({ refresh = false } = {}) {

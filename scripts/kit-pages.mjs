@@ -131,7 +131,7 @@ export function kitPage(door) {
     look.radius && ['Corners', `<code>${esc(look.radius)}</code>`],
   ].filter(Boolean)
   return head({ title: `${name} theme editor · UISandbox`, description, path: `/kits/${door.id}/`, image: `/kits/${door.id}.jpg` }) + `<h1>${esc(name)} theme editor</h1>
-<p class="kp__lead">${esc(prose(k.what))}. UISandbox builds ${esc(version)} from its own package and opens it in the editor: six screens in ${esc(name)}'s own components and its own defaults. Turn the brand, the type, the spacing and the corners, and every component follows. Nothing to install, nothing uploaded.</p>
+<p class="kp__lead">${esc(prose(k.what))}. UISandbox builds ${esc(version)} from its own package and opens it in the editor: seven screens in ${esc(name)}'s own components and its own defaults. Turn the brand, the type, the spacing and the corners, and every component follows. Nothing to install, nothing uploaded.</p>
 <div class="kp__ctas"><a class="kp__btn kp__btn--primary" href="${open}">Open ${esc(name)} in the editor</a><a class="kp__btn" href="${open}&amp;tab=app">Try it on your own app</a></div>
 <figure><img src="/kits/${door.id}.jpg" width="1280" height="800" alt="${esc(name)} in the UISandbox editor: the knobs on the left, ${esc(name)}'s own components on the right" loading="lazy"><figcaption>${esc(name)} as it ships, in the editor. A real screenshot.</figcaption></figure>
 <h2>What is read from ${esc(name)}</h2>

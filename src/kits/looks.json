@@ -5,6 +5,9 @@
   "values": {
    "brand": "#4f39f6",
    "page": "#ffffff",
+   "success": "#00a63e",
+   "warning": "#fe9a00",
+   "danger": "#e7000b",
    "fontBody": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 'Noto Sans', Arial,\n    sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji'",
    "radius": "6px"
   }

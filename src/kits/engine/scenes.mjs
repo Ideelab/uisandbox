@@ -316,14 +316,14 @@ export const BOARDS = [
  * The wall answers "what is in this system"; these answer the question that
  * comes first: "what would my app feel like". Six, because that is what it
  * takes and no more — the kit on one sheet, an overview, the working screen,
- * a settings form, one flow moment, and the overview again in the kit's own
- * dark. Every screen is composed from the SAME part vocabulary the boards
+ * a settings form, signing in, what floats on top, and loading and empty
+ * (decision 211: the five that theme previews keep showing, and the dark is
+ * the page's own switch, on every screen). Every screen is composed from the SAME part vocabulary the boards
  * use, so the meters, the sweep and the tests cover a screen the same way
  * they cover a card — a screen is boards data, not a second renderer.
  *
- * `shot: true` keeps them out of the pan strip (the grid is their room),
- * `caps: true` keeps captions only where they are labels (the kit sheet),
- * and `dark: true` marks the twin the page shows in the kit's own dark.
+ * `shot: true` keeps them out of the pan strip (the grid is their room), and
+ * `caps: true` keeps captions only where they are labels (the kit sheet).
  */
 const overviewScreen = () => ({ p: 'stack', gap: 3, kids: [
   { p: 'row', between: true, kids: [
@@ -468,6 +468,10 @@ export const SCREENS = [
           ['2026-03502', 'T. Okonkwo', 'Under review', '4 Oct'],
           ['2026-03477', 'J. de Wit', 'Waiting', '11 Oct'],
         ] },
+        { p: 'row', between: true, kids: [
+          { p: 'muted', text: 'Showing 1 to 5 of 128' },
+          { p: 'pagination', pages: 5, on: 1 },
+        ] },
       ] } }] },
       { w: 420, cards: [{ id: 'shot-work-case', title: '', panel: true, node: { p: 'stack', gap: 3, kids: [
         { p: 'row', between: true, kids: [
@@ -499,6 +503,8 @@ export const SCREENS = [
         { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Name' }, { p: 'input', value: 'M. Visser' }] },
         { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Email' }, { p: 'input', value: 'm.visser@havenstad.example' }] },
         { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Time zone' }, { p: 'select', options: ['Amsterdam', 'Brussels', 'Lisbon'] }] },
+        { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Send me a digest' }, { p: 'segmented', items: ['Daily', 'Weekly', 'Never'], on: 1 }] },
+        { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Remind me before a due date' }, { p: 'slider', value: 40 }] },
         { p: 'divider' },
         { p: 'switch', on: true, text: 'A decision on one of my requests' },
         { p: 'switch', on: false, text: 'Everything else' },
@@ -520,43 +526,68 @@ export const SCREENS = [
     ],
   },
   {
-    id: 'flow', label: 'A flow moment', shot: true,
-    note: 'The step before the button: a summary, one confirmation, and send.',
+    id: 'signin', label: 'Sign in', shot: true,
+    note: 'The screen everybody copies first: fields, one in error, a way in and a way to start.',
     cols: [
-      { w: 620, cards: [{ id: 'shot-flow-main', title: '', panel: false, node: { p: 'stack', gap: 3, kids: [
-        { p: 'breadcrumb', items: ['Requests', 'New request', 'Check and send'] },
-        { p: 'panel', kids: [{ p: 'stack', gap: 3, kids: [
-          { p: 'heading', text: 'Check and send' },
-          { p: 'muted', text: 'Step 3 of 3. Nothing goes out until you send it.' },
-          { p: 'kv', rows: [
-            ['Category', 'Building work'],
-            ['Address', 'Kerkstraat 12'],
-            ['Starts', '1 Nov 2026'],
-          ] },
-          { p: 'checkbox', on: false, text: 'I filled this in truthfully' },
-          { p: 'row', between: true, kids: [
-            { p: 'button', tone: 'ghost', text: 'Back' },
-            { p: 'button', tone: 'brand', text: 'Send request' },
-          ] },
-        ] }] },
-      ] } }] },
-      { w: 380, cards: [{ id: 'shot-flow-side', title: '', panel: true, node: { p: 'stack', gap: 3, kids: [
-        { p: 'heading', text: 'What happens next' },
-        { p: 'list', rows: [
-          { icon: 'file-text', title: 'We confirm by email', sub: 'Straight away', meta: '1' },
-          { icon: 'inbox', title: 'A case worker picks it up', sub: 'Within two days', meta: '2' },
-          { icon: 'bell', title: 'You hear the decision', sub: 'Within eight weeks', meta: '3' },
+      { w: 440, cards: [{ id: 'shot-in-form', title: '', panel: true, node: { p: 'stack', gap: 3, kids: [
+        { p: 'heading', level: 2, text: 'Sign in' },
+        { p: 'muted', text: 'Use the email address you applied with.' },
+        { p: 'button', tone: 'secondary', text: 'Continue with DigiD' },
+        { p: 'divider' },
+        { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Email' }, { p: 'input', value: 'm.visser@havenstad', error: 'Enter the whole address, with the part after the dot.' }] },
+        { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Password' }, { p: 'input', value: 'correct-horse', secret: true }] },
+        { p: 'row', between: true, kids: [
+          { p: 'checkbox', on: true, text: 'Keep me signed in' },
+          { p: 'link', text: 'Forgot your password?' },
         ] },
-        { p: 'alert', tone: 'warning', text: 'Building work may also need the neighbours told.' },
+        { p: 'button', tone: 'brand', text: 'Sign in' },
+      ] } }] },
+      { w: 400, cards: [{ id: 'shot-in-new', title: '', panel: true, node: { p: 'stack', gap: 3, kids: [
+        { p: 'heading', text: 'New here?' },
+        { p: 'muted', text: 'An account keeps your requests in one place.' },
+        { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Email' }, { p: 'input', placeholder: 'you@example.org' }] },
+        { p: 'checkbox', on: false, text: 'I agree to the terms of use' },
+        { p: 'button', tone: 'brand', text: 'Create account', disabled: true },
+        { p: 'link', text: 'Read the terms of use' },
       ] } }] },
     ],
   },
   {
-    id: 'twin', label: 'The same, dark', shot: true, dark: true,
-    note: 'The overview again, in this kit\'s own dark values. Not ours.',
+    id: 'ontop', label: 'On top', shot: true,
+    note: 'What floats: a menu, a tooltip, a dialog and a toast, where shadow and corners show.',
     cols: [
-      { w: 224, cards: [{ id: 'shot-tw-rail', title: '', panel: true, node: screenRail() }] },
-      { w: 856, cards: [{ id: 'shot-tw-main', title: '', panel: false, node: overviewScreen() }] },
+      { w: 520, cards: [{ id: 'shot-top-page', title: '', panel: true, node: { p: 'stack', gap: 3, kids: [
+        { p: 'row', between: true, kids: [
+          { p: 'heading', text: '2026-04471' },
+          { p: 'tooltip', icon: 'copy', label: 'Copy reference', text: 'Copy the reference' },
+        ] },
+        { p: 'muted', text: 'Building work at Kerkstraat 12, received 2 Sep 2026.' },
+        { p: 'menu', trigger: 'Actions', label: '2026-04471', items: ['Open', 'Assign to me', 'Put on hold'], danger: 'Withdraw' },
+      ] } }] },
+      { w: 460, cards: [{ id: 'shot-top-float', title: '', panel: false, node: { p: 'stack', gap: 4, kids: [
+        { p: 'dialog', title: 'Withdraw this request?', text: '2026-04471 goes back to M. Visser and the case closes. This cannot be undone.', kids: [
+          { p: 'button', tone: 'ghost', text: 'Cancel' },
+          { p: 'button', tone: 'danger', text: 'Withdraw' },
+        ] },
+        { p: 'toast', title: 'Request withdrawn', text: '2026-04471, just now', action: 'Undo' },
+      ] } }] },
+    ],
+  },
+  {
+    id: 'states', label: 'Loading and empty', shot: true,
+    note: 'The two screens nobody designs until they ship: while it loads, and when there is nothing.',
+    cols: [
+      { w: 520, cards: [{ id: 'shot-st-load', title: '', panel: true, node: { p: 'stack', gap: 3, kids: [
+        { p: 'row', between: true, kids: [
+          { p: 'heading', text: 'Requests' },
+          { p: 'row', kids: [{ p: 'spinner' }, { p: 'muted', text: 'Loading the latest' }] },
+        ] },
+        { p: 'skeleton', rows: 4 },
+        { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Uploading plans.pdf' }, { p: 'progress', value: 72 }] },
+      ] } }] },
+      { w: 440, cards: [{ id: 'shot-st-empty', title: '', panel: true, node: { p: 'empty', icon: 'inbox', title: 'No requests match', text: 'Nothing fits this filter. Try another, or clear the search.', kids: [
+        { p: 'button', tone: 'secondary', text: 'Clear filters' },
+      ] } }] },
     ],
   },
 ]
@@ -763,7 +794,7 @@ html[data-shots][data-shot-solo] #strip{display:block}
 html[data-shots][data-shot-solo] #strip > .board[data-shot]{display:none}
 html[data-shots][data-shot-solo] #strip > .board.shotsolo{display:flex;cursor:zoom-out}
 html[data-shots][data-shot-solo] .board.shotsolo .board__note{display:block}
-html[data-shots][data-shot-solo] .board.shotsolo .board__note::after{content:' · Click the margin or press Escape for all six.'}
+html[data-shots][data-shot-solo] .board.shotsolo .board__note::after{content:' · Click the margin or press Escape for all of them.'}
 /* ── THE AUDIT SEES BOTH ROOMS. The sweep measures computed colours, and an
  * element with no box has none: in grid view the strip's boards are hidden
  * and in strip view the screens are. The audit sets data-audit on the html

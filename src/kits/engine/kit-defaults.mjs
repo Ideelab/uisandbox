@@ -37,6 +37,11 @@ export const TABLE = {
   tailwind: { stack: ['tailwind'],
     vars: { brand: '--color-indigo-600', page: '--color-white', ink: '--color-gray-900',
       inkMuted: '--color-gray-500', line: '--color-gray-200',
+      /* and their status colours, as their components set them: green-600,
+         amber-500, red-600. Without these the kit wrote no --color-danger,
+         so a field in error and every status badge on the wall had no colour
+         at all (decision 211) */
+      success: '--color-green-600', warning: '--color-amber-500', danger: '--color-red-600',
       fontBody: '--font-sans', radius: '--radius-md' },
     need: ['brand', 'ink', 'fontBody'] },
   daisyui: { stack: ['tailwind', 'daisyui'],

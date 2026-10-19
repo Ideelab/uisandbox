@@ -47,7 +47,10 @@ const { readInstalled, STYLE } = await import(join(ENGINE, 'registry-read.mjs'))
 /* Every shadcn component the wall renders, as UIcockpit's fetcher named them. */
 const PARTS = ['button', 'badge', 'alert', 'card', 'input', 'textarea', 'select', 'checkbox',
   'radio-group', 'switch', 'slider', 'progress', 'table', 'tabs', 'avatar', 'separator', 'label',
-  'breadcrumb', 'sidebar', 'navigation-menu', 'empty', 'item', 'dropdown-menu']
+  'breadcrumb', 'sidebar', 'navigation-menu', 'empty', 'item', 'dropdown-menu',
+  /* the screens' newer parts (decision 211): what floats, what waits, and the
+     controls a sign-in and a list need */
+  'dialog', 'tooltip', 'skeleton', 'spinner', 'pagination', 'toggle-group', 'toggle', 'field']
 
 /* The preset, as the CLI spells it out (shadcn 4.22.1: `nova` in its preset
    table, `base` for the component library). */

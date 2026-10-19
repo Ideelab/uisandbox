@@ -182,7 +182,7 @@ export function Door({ onArchive, onUrl, onSample, busy, error, carryNote, stand
                 <span>Or start from a kit:</span>
                 {DOOR.filter((k) => k.renders).map((k) => (
                   <button key={k.id} type="button" className="intake__sample" onClick={() => onSample(`/kits/${k.id}.zip`)}
-                    title={`${k.name}${k.version ? ` ${k.version}` : ''}: six screens in its own components and its own defaults`}>{k.name}</button>
+                    title={`${k.name}${k.version ? ` ${k.version}` : ''}: seven screens in its own components and its own defaults`}>{k.name}</button>
                 ))}
               </div>}
             </>)}

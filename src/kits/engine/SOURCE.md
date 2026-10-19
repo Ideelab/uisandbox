@@ -102,6 +102,14 @@ table with its decision.
 | `generate.mjs` | tokens.json in the W3C shapes (sRGB colour objects, {value, unit} lengths, fontFamily lists); what has no shape is named | 205 |
 | `generate.test.mjs` | holds those shapes | 205 |
 | `scenes.mjs` | on glass a column takes the board's width, so a kit's own responsive rules fold it | 206 |
+| `parts.mjs`, `scenes.mjs` | eight new parts; the screens are overview, list and detail, form, sign in, on top, loading and empty | 211 |
+| `wall-bindings.mjs` | the eight parts in every kit; a field's error and secret, a button's disabled | 211 |
+| `antd-tree.mjs`, `antd-nodes.mjs`, `antd-render.mjs` | the eight parts rendered by antd; a refresh keeps the antd version; a menu sits in its reserved room | 211 |
+| `material-elements.mjs` | md-circular-progress, md-elevation and the segmented button set in the bundle | 211 |
+| `icon-sets.mjs` | chevron-left, chevron-right, x and loader-circle in every set | 211 |
+| `kit-defaults.mjs`, `kit-defaults.test.mjs` | Tailwind's status colours, read from red-600, green-600, amber-500 | 211 |
+| `generate.mjs` | the new gaps named | 211 |
+| `kits/shadcn.json`, `kits/antd.json`, `kits/antd.render.*`, `kits/material.elements.json` | refetched and re-rendered for the new parts | 211 |
 | `scenes.mjs` | the fallback font on :where(html), not #strip: a kit's own body font reaches its wall | 207 |
 | `kit-defaults.mjs` | each default read from the variable the build writes it into (daisyUI radius, Ant Design ink and muted ink); TABLE exported | 207 |
 | `kit-defaults.test.mjs` | new: holds that rule, with the exceptions named | 207 |

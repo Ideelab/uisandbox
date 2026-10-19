@@ -21,6 +21,18 @@ import { MAP, ROLES } from './roles.mjs'
 
 const cls = (...c) => c.filter(Boolean).join(' ')
 const A = (n, k, tag, c, extra = '') => `<${tag} class="${c}"${extra}>${n.text != null ? esc(n.text) : k}</${tag}>`
+/* The states a screen asks for by name (decision 211): a button that cannot
+   be pressed yet, a field that holds a password, a field in error. Every kit
+   styles these off the same attributes, so they are written the same way. */
+const disabledAttr = (n) => (n.disabled ? ' disabled' : '')
+const secretAttr = (n) => (n.secret ? ' type="password"' : '')
+const invalidAttr = (n) => (n.error ? ' aria-invalid="true"' : '')
+/* page numbers around the one you are on, the way every pager shows them */
+const pagesOf = (n) => Array.from({ length: n.pages ?? 5 }, (_, i) => i + 1)
+/* skeleton rows that do not all end at the same place, which is what makes a
+   skeleton read as text still coming rather than as grey bars */
+const SKEL = [['72%', '38%'], ['58%', '30%'], ['80%', '46%'], ['64%', '34%'], ['70%', '40%']]
+const skelRows = (n) => SKEL.slice(0, n.rows ?? 3)
 
 /* ── the icons ────────────────────────────────────────────────────────────
  * Read at build time and HANDED IN — the same hand-in as Mantine's class map,
@@ -127,8 +139,8 @@ const tailwind = {
   text:    (n, k) => A(n, k, 'p', 'text-sm tracking-normal text-ink'),
   muted:   (n, k) => A(n, k, 'p', 'text-sm text-ink-muted'),
   label:   (n, k) => A(n, k, 'label', 'text-sm font-medium text-ink'),
-  button:  (n, k) => A(n, k, 'button', cls('inline-flex min-h-9 items-center rounded-lg px-4 text-sm font-medium', TW_RING, TW_BTN[n.tone ?? 'brand'])),
-  input:   (n) => `<input class="min-h-9 w-full rounded-lg border border-line bg-surface px-3 text-sm text-ink ${TW_RING}" value="${esc(n.value ?? '')}" placeholder="${esc(n.placeholder ?? '')}">`,
+  button:  (n, k) => A(n, k, 'button', cls('inline-flex min-h-9 items-center rounded-lg px-4 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50', TW_RING, TW_BTN[n.tone ?? 'brand']), disabledAttr(n)),
+  input:   (n) => `<input${secretAttr(n)} class="min-h-9 w-full rounded-lg border ${n.error ? 'border-danger' : 'border-line'} bg-surface px-3 text-sm text-ink ${TW_RING}" value="${esc(n.value ?? '')}" placeholder="${esc(n.placeholder ?? '')}"${invalidAttr(n)}>${n.error ? `<p class="text-xs text-danger">${esc(n.error)}</p>` : ''}`,
   select:  (n) => `<select class="min-h-9 w-full rounded-lg border border-line bg-surface px-3 text-sm text-ink ${TW_RING}">${list(n.options).map((o) => `<option>${esc(o)}</option>`).join('')}</select>`,
   checkbox: (n) => `<label class="inline-flex min-h-6 items-center gap-2 text-sm text-ink"><input type="checkbox" class="size-4 accent-brand ${TW_RING}"${n.on ? ' checked' : ''}>${esc(n.text ?? '')}</label>`,
   switch:  (n) => `<label class="inline-flex min-h-6 items-center gap-2 text-sm text-ink"><input type="checkbox" role="switch" class="h-5 w-9 appearance-none rounded-full ${TW_RING} ${n.on ? 'bg-brand' : 'bg-line'}"${n.on ? ' checked' : ''}>${esc(n.text ?? '')}</label>`,
@@ -214,8 +226,8 @@ const daisyui = {
   text:    (n, k) => A(n, k, 'p', 'text-sm'),
   muted:   (n, k) => A(n, k, 'p', 'text-sm opacity-60'),
   label:   (n, k) => A(n, k, 'label', 'label'),
-  button:  (n, k) => A(n, k, 'button', cls('btn', DA_BTN[n.tone ?? 'brand'])),
-  input:   (n) => `<input class="input w-full" value="${esc(n.value ?? '')}" placeholder="${esc(n.placeholder ?? '')}">`,
+  button:  (n, k) => A(n, k, 'button', cls('btn', DA_BTN[n.tone ?? 'brand']), disabledAttr(n)),
+  input:   (n) => `<input${secretAttr(n)} class="input w-full${n.error ? ' input-error' : ''}" value="${esc(n.value ?? '')}" placeholder="${esc(n.placeholder ?? '')}"${invalidAttr(n)}>${n.error ? `<p class="text-error text-xs">${esc(n.error)}</p>` : ''}`,
   select:  (n) => `<select class="select w-full">${list(n.options).map((o) => `<option>${esc(o)}</option>`).join('')}</select>`,
   checkbox: (n) => `<label class="label"><input type="checkbox" class="checkbox"${n.on ? ' checked' : ''}><span>${esc(n.text ?? '')}</span></label>`,
   switch:  (n) => `<label class="label"><input type="checkbox" class="toggle"${n.on ? ' checked' : ''}><span>${esc(n.text ?? '')}</span></label>`,
@@ -297,6 +309,7 @@ const BS_ALERT = { neutral: 'alert-secondary', brand: 'alert-primary', success: 
  * submits: the cards are scenes, not applications). Deterministic counter:
  * the scenes render in one fixed order, so the ids are stable per document. */
 let bsCheck = 0
+let mnSeg = 0
 const bootstrap = {
   _id: 'Bootstrap',
   stack:   (n, k) => `<div class="d-flex flex-column gap-${Math.min(n.gap ?? 3, 5)}">${k}</div>`,
@@ -308,8 +321,10 @@ const bootstrap = {
   text:    (n, k) => A(n, k, 'p', 'mb-0'),
   muted:   (n, k) => A(n, k, 'p', 'mb-0 text-body-secondary small'),
   label:   (n, k) => A(n, k, 'label', 'form-label mb-1'),
-  button:  (n, k) => A(n, k, 'button', cls('btn', BS_BTN[n.tone ?? 'brand']), ' type="button"'),
-  input:   (n) => `<input class="form-control" value="${esc(n.value ?? '')}" placeholder="${esc(n.placeholder ?? '')}">`,
+  button:  (n, k) => A(n, k, 'button', cls('btn', BS_BTN[n.tone ?? 'brand']), ' type="button"' + disabledAttr(n)),
+  /* .is-invalid and the .invalid-feedback after it: their own sibling rule
+     shows the message, so it sits right behind the field */
+  input:   (n) => `<input${secretAttr(n)} class="form-control${n.error ? ' is-invalid' : ''}" value="${esc(n.value ?? '')}" placeholder="${esc(n.placeholder ?? '')}"${invalidAttr(n)}>${n.error ? `<div class="invalid-feedback">${esc(n.error)}</div>` : ''}`,
   select:  (n) => `<select class="form-select">${list(n.options).map((o) => `<option>${esc(o)}</option>`).join('')}</select>`,
   checkbox: (n) => { const id = `bs-check-${++bsCheck}`
     return `<div class="form-check"><input class="form-check-input" type="checkbox" id="${id}"${n.on ? ' checked' : ''}><label class="form-check-label" for="${id}">${esc(n.text ?? '')}</label></div>` },
@@ -445,11 +460,13 @@ const shadcn = {
   button:  (n, k) => {
     const variant = SC_BTN[n.tone ?? 'brand']
     return A(n, k, 'button', sCva('button', 'buttonVariants', { variant, size: 'default' }),
-      ` data-slot="button" data-variant="${variant}" data-size="default"`)
+      ` data-slot="button" data-variant="${variant}" data-size="default"` + disabledAttr(n))
   },
   iconrow: (n) => `<div class="flex flex-wrap gap-1">${list(n.items).map((i) =>
     `<button aria-label="${esc(i)}" data-slot="button" data-variant="ghost" data-size="icon" class="${sCva('button', 'buttonVariants', { variant: 'ghost', size: 'icon' })}">${ico(i)}</button>`).join('')}</div>`,
-  input:   (n) => `<input data-slot="input" class="${sSlot('input')}" value="${esc(n.value ?? '')}" placeholder="${esc(n.placeholder ?? '')}">`,
+  /* their input styles aria-invalid itself (border and ring in destructive);
+     the message is their FieldError */
+  input:   (n) => `<input${secretAttr(n)} data-slot="input" class="${sSlot('input')}" value="${esc(n.value ?? '')}" placeholder="${esc(n.placeholder ?? '')}"${invalidAttr(n)}>${n.error ? `<div role="alert" data-slot="field-error" class="${sSlot('field-error')}">${esc(n.error)}</div>` : ''}`,
   textarea: (n) => `<textarea rows="3" data-slot="textarea" class="${sSlot('textarea')}" placeholder="${esc(n.placeholder ?? '')}">${esc(n.value ?? '')}</textarea>`,
   /* their select is a Base UI trigger with a popup; a native select wearing the
      trigger's classes is the honest static stand-in, and the manifest says so */
@@ -608,9 +625,10 @@ const material = {
     const tag = MD_BTN[n.tone ?? 'brand']
     const err = n.tone === 'danger'
       ? ' style="--md-filled-button-container-color:var(--md-sys-color-error);--md-filled-button-label-text-color:var(--md-sys-color-on-error)"' : ''
-    return `<${tag}${err}>${n.text != null ? esc(n.text) : k}</${tag}>`
+    return `<${tag}${err}${disabledAttr(n)}>${n.text != null ? esc(n.text) : k}</${tag}>`
   },
-  input:   (n) => `<md-outlined-text-field style="width:100%" label="${esc(n.placeholder ?? '')}" value="${esc(n.value ?? '')}"></md-outlined-text-field>`,
+  /* their text field carries its own error state and error text */
+  input:   (n) => `<md-outlined-text-field${secretAttr(n)} style="width:100%" label="${esc(n.placeholder ?? '')}" value="${esc(n.value ?? '')}"${n.error ? ` error error-text="${esc(n.error)}"` : ''}></md-outlined-text-field>`,
   select:  (n) => `<md-outlined-select style="width:100%">${list(n.options).map((o, i) =>
     `<md-select-option${i === 0 ? ' selected' : ''} value="${esc(o)}"><div slot="headline">${esc(o)}</div></md-select-option>`).join('')}</md-outlined-select>`,
   checkbox: (n) => `<label class="md-typescale-body-medium" style="display:inline-flex;align-items:center;gap:8px"><md-checkbox${n.on ? ' checked' : ''} touch-target="wrapper"></md-checkbox>${esc(n.text ?? '')}</label>`,
@@ -766,8 +784,10 @@ const radix = {
   text:    (n, k) => A(n, k, 'p', 'rt-Text rt-r-size-2'),
   muted:   (n, k) => A(n, k, 'p', 'rt-Text rt-r-size-2', ' data-accent-color="gray"'),
   label:   (n, k) => A(n, k, 'label', 'rt-Text rt-r-size-2 rt-Strong'),
-  button:  (n, k) => A(n, k, 'button', `rt-reset rt-BaseButton rt-r-size-2 rt-variant-${RX_BTN[n.tone ?? 'brand']} rt-Button`, rxAccent(n.tone === 'danger' ? 'danger' : 'brand')),
-  input:   (n) => `<div class="rt-TextFieldRoot rt-r-size-2 rt-variant-surface"><input class="rt-reset rt-TextFieldInput" value="${esc(n.value ?? '')}" placeholder="${esc(n.placeholder ?? '')}"></div>`,
+  button:  (n, k) => A(n, k, 'button', `rt-reset rt-BaseButton rt-r-size-2 rt-variant-${RX_BTN[n.tone ?? 'brand']} rt-Button`, rxAccent(n.tone === 'danger' ? 'danger' : 'brand') + (n.disabled ? ' disabled data-disabled=""' : '')),
+  /* Radix Themes has no invalid state of its own: its docs re-tone the field
+     with color="red" and put the message in red Text, which is this */
+  input:   (n) => `<div class="rt-TextFieldRoot rt-r-size-2 rt-variant-surface"${n.error ? rxAccent('danger') : ''}><input${secretAttr(n)} class="rt-reset rt-TextFieldInput" value="${esc(n.value ?? '')}" placeholder="${esc(n.placeholder ?? '')}"${invalidAttr(n)}></div>${n.error ? `<p class="rt-Text rt-r-size-1"${rxAccent('danger')} style="color:var(--accent-a11)">${esc(n.error)}</p>` : ''}`,
   /* Their Select is a button and a panel too, and rt-SelectTrigger on a
      native one handed the list to the operating system. The class names and
      the nesting are read off their own component: trigger, inner, icon;
@@ -958,11 +978,13 @@ const mantine = {
      press classes their own stylesheet defines — ours had neither, so a Mantine
      button on this wall had no focus ring at all */
   button:  (n, k) => A(n, k, 'button', cls(MN_FOCUS, 'mantine-active', mc('Button'), mc('UnstyledButton')),
-    ` type="button" style="${MN_BTN_VARS}${MN_BTN[n.tone ?? 'brand']}"`),
+    ` type="button"${n.disabled ? ' disabled data-disabled="true"' : ''} style="${MN_BTN_VARS}${MN_BTN[n.tone ?? 'brand']}"`),
   /* wrapper OUTSIDE, input inside: data-variant on the wrapper is what sets
      --input-bd and --input-bg, and an input without it has `border: 1px solid`
      with no colour — an invisible field, which is what the first pass shipped. */
-  input:   (n) => `<div class="${mc('Input', 'wrapper')}" data-variant="default" data-size="sm" style="${MN_INPUT_VARS}"><input class="${cls(MN_FOCUS, mc('Input', 'input'))}" data-variant="default" value="${esc(n.value ?? '')}" placeholder="${esc(n.placeholder ?? '')}"></div>`,
+  /* data-error on the wrapper and the input, the message in their
+     InputWrapper error: what their TextInput renders with an error prop */
+  input:   (n) => `<div class="${mc('Input', 'wrapper')}" data-variant="default" data-size="sm"${n.error ? ' data-error="true"' : ''} style="${MN_INPUT_VARS}"><input${secretAttr(n)} class="${cls(MN_FOCUS, mc('Input', 'input'))}" data-variant="default"${n.error ? ' data-error="true"' : ''} value="${esc(n.value ?? '')}" placeholder="${esc(n.placeholder ?? '')}"${invalidAttr(n)}></div>${n.error ? `<p class="${mc('Input', 'error')}" style="--input-error-size:var(--mantine-font-size-sm)">${esc(n.error)}</p>` : ''}`,
   select:  (n) => `<div class="${mc('Input', 'wrapper')}" data-variant="default" data-size="sm" style="${MN_INPUT_VARS}"><select class="${cls(MN_FOCUS, mc('Input', 'input'))}" data-variant="default">${list(n.options).map((o) => `<option>${esc(o)}</option>`).join('')}</select></div>`,
   /* --checkbox-size lives on the ROOT and the input reads it, so an input on
      its own is a zero-sized box. Their nesting, not ours. */
@@ -1146,5 +1168,200 @@ const antd = {
     <span style="font-size:var(--ant-font-size-sm);color:var(--ant-color-text-secondary)">${esc(b.label)}</span></div>`).join('')}</div>
     <div style="display:flex;gap:16px">${list(n.legend).map((t, i) => `<span style="display:inline-flex;align-items:center;gap:6px;font-size:var(--ant-font-size-sm);color:var(--ant-color-text-secondary)"><span style="width:8px;height:8px;border-radius:50%;background:var(--ant-color-primary${i ? '-bg' : ''})"></span>${esc(t)}</span>`).join('')}</div></div>`,
 }
+
+/* ── the screens' newer parts (decision 211) ──────────────────────────────
+ * Sign in, On top and Loading and empty ask for eight parts the wall never
+ * had: a link, a pager, a segmented control, a dialog, a tooltip, a toast, a
+ * skeleton and a spinner. Each kit answers in its own component where it has
+ * one; where it has none, its own tokens on plain markup, and generate.mjs
+ * COMPONENT_GAPS says which. What floats is drawn in place, not in a top
+ * layer: a wall shows a dialog the way a screenshot of one does, its surface,
+ * its shadow and its corners, without a scrim over the rest of the page. */
+Object.assign(tailwind, {
+  link:    (n, k) => A(n, k, 'a', `text-sm font-medium text-brand underline-offset-4 hover:underline ${TW_RING}`, ' href="#"'),
+  pagination: (n) => {
+    const b = (label, on, aria) => `<a href="#"${on ? ' aria-current="page"' : ''}${aria ? ` aria-label="${aria}"` : ''} class="inline-flex size-9 items-center justify-center rounded-lg text-sm ${TW_RING} ${on ? 'bg-brand font-medium text-brand-foreground' : 'text-ink hover:bg-surface'}">${label}</a>`
+    return `<nav aria-label="Pages" class="flex items-center gap-1">${b(ico('chevron-left'), false, 'Previous page')}${pagesOf(n).map((i) => b(i, i === (n.on ?? 1))).join('')}${b(ico('chevron-right'), false, 'Next page')}</nav>`
+  },
+  segmented: (n) => `<div role="radiogroup" class="inline-flex w-fit rounded-lg border border-line bg-page p-1">${list(n.items).map((t, i) =>
+    `<button type="button" role="radio" aria-checked="${i === (n.on ?? 0)}" class="rounded-md px-3 py-1 text-sm ${TW_RING} ${i === (n.on ?? 0) ? 'bg-surface font-medium text-ink shadow-sm' : 'text-ink-muted hover:text-ink'}">${esc(t)}</button>`).join('')}</div>`,
+  tooltip: (n) => `<span class="inline-flex items-center gap-2"><span role="tooltip" class="rounded-md bg-ink px-2 py-1 text-xs text-page shadow-md">${esc(n.text)}</span><button aria-label="${esc(n.label ?? n.text)}" class="inline-flex size-9 items-center justify-center rounded-lg text-ink hover:bg-surface ${TW_RING}">${ico(n.icon)}</button></span>`,
+  dialog:  (n, k) => `<div role="dialog" aria-modal="true" class="flex w-full flex-col gap-2 rounded-xl border border-line bg-surface p-6 shadow-xl">
+    <h2 class="text-base font-semibold text-ink">${esc(n.title)}</h2><p class="text-sm text-ink-muted">${esc(n.text)}</p>
+    <div class="mt-4 flex justify-end gap-2">${k}</div></div>`,
+  toast:   (n) => `<div role="status" class="flex w-full items-center gap-3 rounded-lg border border-line bg-surface p-4 shadow-lg">
+    <div class="min-w-0 flex-1"><p class="text-sm font-medium text-ink">${esc(n.title)}</p><p class="text-sm text-ink-muted">${esc(n.text)}</p></div>${
+    n.action ? `<button class="inline-flex min-h-9 items-center rounded-lg px-3 text-sm font-medium text-brand hover:bg-page ${TW_RING}">${esc(n.action)}</button>` : ''}</div>`,
+  skeleton: (n) => `<div class="flex flex-col gap-4" aria-hidden="true">${skelRows(n).map(([a, b]) => `<div class="flex items-center gap-3">
+    <span class="size-8 shrink-0 animate-pulse rounded-full bg-line"></span>
+    <span class="flex flex-1 flex-col gap-2"><span class="h-3 animate-pulse rounded bg-line" style="width:${a}"></span><span class="h-3 animate-pulse rounded bg-line" style="width:${b}"></span></span></div>`).join('')}</div>`,
+  spinner: () => `<span role="status" aria-label="Loading" class="inline-block size-4 animate-spin rounded-full border-2 border-line border-t-brand"></span>`,
+})
+
+/* daisyUI: .link, .join for a pager (their docs build pagination from it),
+   .tabs-box as the segmented control, .tooltip-open, .modal-box, .alert as a
+   toast's body (their .toast is only the corner it sits in), .skeleton and
+   .loading. A .modal wrapper would lock the page: their root rule stops the
+   document scrolling whenever one is open. */
+Object.assign(daisyui, {
+  link:    (n, k) => A(n, k, 'a', 'link link-primary text-sm', ' href="#"'),
+  pagination: (n) => `<div class="join" role="navigation" aria-label="Pages"><button class="join-item btn btn-sm" aria-label="Previous page">«</button>${
+    pagesOf(n).map((i) => `<button class="join-item btn btn-sm${i === (n.on ?? 1) ? ' btn-active' : ''}"${i === (n.on ?? 1) ? ' aria-current="page"' : ''}>${i}</button>`).join('')}<button class="join-item btn btn-sm" aria-label="Next page">»</button></div>`,
+  segmented: (n) => `<div role="tablist" class="tabs tabs-box tabs-sm w-fit">${list(n.items).map((t, i) => `<a role="tab" class="tab${i === (n.on ?? 0) ? ' tab-active' : ''}">${esc(t)}</a>`).join('')}</div>`,
+  tooltip: (n) => `<div class="tooltip tooltip-open tooltip-left" data-tip="${esc(n.text)}"><button aria-label="${esc(n.label ?? n.text)}" class="btn btn-ghost btn-square btn-sm">${ico(n.icon)}</button></div>`,
+  /* .modal-box waits at opacity 0 for its .modal to open; in place it is
+     shown, at its full size, and nothing else is changed */
+  dialog:  (n, k) => `<div class="modal-box" role="dialog" aria-modal="true" style="opacity:1;scale:1;translate:none;width:100%;max-width:100%">
+    <h3 class="text-lg font-bold">${esc(n.title)}</h3><p class="py-4">${esc(n.text)}</p><div class="modal-action">${k}</div></div>`,
+  toast:   (n) => `<div role="status" class="alert shadow-lg"><div><h3 class="font-bold">${esc(n.title)}</h3><div class="text-xs">${esc(n.text)}</div></div>${
+    n.action ? `<button class="btn btn-sm btn-ghost">${esc(n.action)}</button>` : ''}</div>`,
+  skeleton: (n) => `<div class="flex flex-col gap-4" aria-hidden="true">${skelRows(n).map(([a, b]) => `<div class="flex items-center gap-3">
+    <div class="skeleton size-8 shrink-0 rounded-full"></div>
+    <div class="flex flex-1 flex-col gap-2"><div class="skeleton h-3" style="width:${a}"></div><div class="skeleton h-3" style="width:${b}"></div></div></div>`).join('')}</div>`,
+  spinner: () => `<span class="loading loading-spinner loading-sm text-primary" role="status" aria-label="Loading"></span>`,
+})
+
+/* Bootstrap ships every one of these: .pagination, .btn-check in a
+   .btn-group, the .tooltip Popper writes (shown, in flow), .modal-dialog with
+   .modal-content, .toast, .placeholder and .spinner-border. */
+Object.assign(bootstrap, {
+  link:    (n, k) => A(n, k, 'a', 'link-primary small', ' href="#"'),
+  pagination: (n) => `<nav aria-label="Pages"><ul class="pagination mb-0">
+    <li class="page-item"><a class="page-link" href="#" aria-label="Previous page"><span aria-hidden="true">&laquo;</span></a></li>${
+    pagesOf(n).map((i) => `<li class="page-item${i === (n.on ?? 1) ? ' active' : ''}"><a class="page-link" href="#"${i === (n.on ?? 1) ? ' aria-current="page"' : ''}>${i}</a></li>`).join('')}
+    <li class="page-item"><a class="page-link" href="#" aria-label="Next page"><span aria-hidden="true">&raquo;</span></a></li></ul></nav>`,
+  segmented: (n) => { const name = `bs-seg-${++bsCheck}`
+    return `<div class="btn-group" role="group">${list(n.items).map((t, i) => { const id = `bs-check-${++bsCheck}`
+      return `<input type="radio" class="btn-check" name="${name}" id="${id}" autocomplete="off"${i === (n.on ?? 0) ? ' checked' : ''}><label class="btn btn-outline-primary btn-sm" for="${id}">${esc(t)}</label>` }).join('')}</div>` },
+  tooltip: (n) => `<span class="d-inline-flex align-items-center gap-2"><span class="tooltip bs-tooltip-auto show" role="tooltip" data-popper-placement="left" style="position:relative">
+    <span class="tooltip-arrow" style="position:absolute;top:50%;transform:translateY(-50%)"></span><span class="tooltip-inner">${esc(n.text)}</span></span>
+    <button type="button" aria-label="${esc(n.label ?? n.text)}" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center">${ico(n.icon)}</button></span>`,
+  /* their padding, radius and colours are variables declared on .modal, so
+     the dialog sits in one: in flow, shown, the rest of its rules as they are */
+  dialog:  (n, k) => `<div class="modal" style="position:relative;display:block;inset:auto;z-index:auto;width:auto;height:auto;overflow:visible"><div class="modal-dialog m-0" style="max-width:none"><div class="modal-content" role="dialog" aria-modal="true">
+    <div class="modal-header"><h2 class="modal-title fs-5">${esc(n.title)}</h2><button type="button" class="btn-close" aria-label="Close"></button></div>
+    <div class="modal-body"><p class="mb-0">${esc(n.text)}</p></div><div class="modal-footer">${k}</div></div></div></div>`,
+  toast:   (n) => `<div class="toast show w-100" role="status" aria-live="polite">
+    <div class="toast-header"><strong class="me-auto">${esc(n.title)}</strong><button type="button" class="btn-close" aria-label="Close"></button></div>
+    <div class="toast-body d-flex align-items-center justify-content-between gap-2"><span>${esc(n.text)}</span>${n.action ? `<button type="button" class="btn btn-link btn-sm p-0">${esc(n.action)}</button>` : ''}</div></div>`,
+  skeleton: (n) => `<div class="d-flex flex-column gap-3" aria-hidden="true">${skelRows(n).map(([a, b]) => `<div class="d-flex align-items-center gap-3 placeholder-glow">
+    <span class="placeholder rounded-circle flex-shrink-0" style="width:2rem;height:2rem"></span>
+    <span class="flex-grow-1 d-flex flex-column gap-1"><span class="placeholder" style="width:${a}"></span><span class="placeholder" style="width:${b}"></span></span></div>`).join('')}</div>`,
+  spinner: () => `<div class="spinner-border spinner-border-sm text-primary" role="status"><span class="visually-hidden">Loading</span></div>`,
+})
+
+/* shadcn/ui: Pagination, ToggleGroup, Tooltip, Dialog, Skeleton and Spinner
+   from their registry. Their toast is Sonner, whose look is its own
+   stylesheet and a set of CSS variables, not classes: the wall writes it in
+   the tokens shadcn hands Sonner (popover, its foreground, border, radius). */
+Object.assign(shadcn, {
+  link:    (n, k) => A(n, k, 'a', sCva('button', 'buttonVariants', { variant: 'link', size: 'default' }), ' href="#" data-slot="button" data-variant="link" data-size="default"'),
+  pagination: (n) => {
+    const b = (label, on, aria) => `<li data-slot="pagination-item"><a href="#" data-slot="pagination-link" data-active="${on}"${on ? ' aria-current="page"' : ''}${aria ? ` aria-label="${aria}"` : ''} data-variant="${on ? 'outline' : 'ghost'}" data-size="icon" class="${sCva('button', 'buttonVariants', { variant: on ? 'outline' : 'ghost', size: 'icon' })}">${label}</a></li>`
+    return `<nav role="navigation" aria-label="pagination" data-slot="pagination" class="${sSlot('pagination')}" style="width:auto;margin:0"><ul data-slot="pagination-content" class="${sSlot('pagination-content')}">${
+      b(ico('chevron-left'), false, 'Previous page')}${pagesOf(n).map((i) => b(i, i === (n.on ?? 1))).join('')}${b(ico('chevron-right'), false, 'Next page')}</ul></nav>`
+  },
+  segmented: (n) => `<div role="group" data-slot="toggle-group" data-variant="outline" data-size="default" data-spacing="0" data-horizontal="" style="--gap:0" class="${sSlot('toggle-group')}">${list(n.items).map((t, i) => {
+    const on = i === (n.on ?? 0)
+    return `<button type="button" data-slot="toggle-group-item" data-variant="outline" data-size="default" data-spacing="0" aria-pressed="${on}"${on ? ' data-state="on" data-pressed=""' : ' data-state="off"'} class="${sCva('toggle', 'toggleVariants', { variant: 'outline', size: 'default' })} ${sSlot('toggle-group-item')}">${esc(t)}</button>` }).join('')}</div>`,
+  tooltip: (n) => `<span class="inline-flex items-center gap-2"><span role="tooltip" data-slot="tooltip-content" data-side="left" data-open="" class="${sSlot('tooltip-content')}" style="position:relative">${esc(n.text)}<span data-side="left" class="${SC.tooltip?.renders?.Arrow ?? ''}" style="position:absolute"></span></span>
+    <button aria-label="${esc(n.label ?? n.text)}" data-slot="button" data-variant="ghost" data-size="icon" class="${sCva('button', 'buttonVariants', { variant: 'ghost', size: 'icon' })}">${ico(n.icon)}</button></span>`,
+  /* their content is fixed and centred by translate; in place it is the same
+     card, so those four are undone inline and nothing else is */
+  dialog:  (n, k) => `<div role="dialog" aria-modal="true" data-slot="dialog-content" data-open="" class="${sSlot('dialog-content')}" style="position:relative;top:auto;left:auto;translate:none;max-width:100%;z-index:auto">
+    <div data-slot="dialog-header" class="${sSlot('dialog-header')}"><h2 data-slot="dialog-title" class="${sSlot('dialog-title')}">${esc(n.title)}</h2>
+    <p data-slot="dialog-description" class="${sSlot('dialog-description')}">${esc(n.text)}</p></div>
+    <div data-slot="dialog-footer" class="${sSlot('dialog-footer')}">${k}</div></div>`,
+  toast:   (n) => `<div role="status" class="bg-popover text-popover-foreground flex w-full items-center gap-3 rounded-lg border p-4 text-sm shadow-lg">
+    <div class="flex min-w-0 flex-1 flex-col gap-0.5"><p class="font-medium">${esc(n.title)}</p><p class="text-muted-foreground">${esc(n.text)}</p></div>${
+    n.action ? `<button data-slot="button" data-variant="outline" data-size="sm" class="${sCva('button', 'buttonVariants', { variant: 'outline', size: 'sm' })}">${esc(n.action)}</button>` : ''}</div>`,
+  skeleton: (n) => `<div class="flex flex-col gap-4" aria-hidden="true">${skelRows(n).map(([a, b]) => `<div class="flex items-center gap-3">
+    <div data-slot="skeleton" class="${sSlot('skeleton')} size-8 shrink-0 rounded-full"></div>
+    <div class="flex flex-1 flex-col gap-2"><div data-slot="skeleton" class="${sSlot('skeleton')} h-3" style="width:${a}"></div><div data-slot="skeleton" class="${sSlot('skeleton')} h-3" style="width:${b}"></div></div></div>`).join('')}</div>`,
+  spinner: () => `<span role="status" aria-label="Loading" class="inline-flex">${ico('loader-circle', 16, sSlot('spinner'))}</span>`,
+})
+
+/* Material: md-text-button with an href is their link, their segmented
+   button set, md-circular-progress. It ships no pager, tooltip, snackbar or
+   skeleton at all, and md-dialog opens in the top layer over the whole page;
+   those five are its own tokens on plain markup (COMPONENT_GAPS). */
+Object.assign(material, {
+  link:    (n, k) => `<md-text-button href="#">${n.text != null ? esc(n.text) : k}</md-text-button>`,
+  pagination: (n) => `<nav aria-label="Pages" style="display:flex;align-items:center;gap:4px"><md-icon-button aria-label="Previous page">${ico('chevron-left', 20)}</md-icon-button>${
+    pagesOf(n).map((i) => i === (n.on ?? 1) ? `<md-filled-tonal-icon-button aria-current="page">${i}</md-filled-tonal-icon-button>` : `<md-icon-button>${i}</md-icon-button>`).join('')}<md-icon-button aria-label="Next page">${ico('chevron-right', 20)}</md-icon-button></nav>`,
+  segmented: (n) => `<md-outlined-segmented-button-set>${list(n.items).map((t, i) => `<md-outlined-segmented-button label="${esc(t)}"${i === (n.on ?? 0) ? ' selected' : ''}></md-outlined-segmented-button>`).join('')}</md-outlined-segmented-button-set>`,
+  tooltip: (n) => `<span style="display:inline-flex;align-items:center;gap:8px"><span role="tooltip" class="md-typescale-body-small" style="padding:4px 8px;border-radius:var(--md-sys-shape-corner-extra-small);background:var(--md-sys-color-inverse-surface);color:var(--md-sys-color-inverse-on-surface)">${esc(n.text)}</span><md-icon-button aria-label="${esc(n.label ?? n.text)}">${ico(n.icon, 20)}</md-icon-button></span>`,
+  dialog:  (n, k) => `<div role="dialog" aria-modal="true" style="position:relative;display:flex;flex-direction:column;gap:16px;padding:24px;border-radius:var(--md-sys-shape-corner-extra-large);background:var(--md-sys-color-surface-container-high);color:var(--md-sys-color-on-surface)">
+    <md-elevation style="--md-elevation-level:3"></md-elevation><h2 class="md-typescale-headline-small" style="margin:0">${esc(n.title)}</h2>
+    <p class="md-typescale-body-medium" style="margin:0;color:var(--md-sys-color-on-surface-variant)">${esc(n.text)}</p>
+    <div style="display:flex;justify-content:flex-end;gap:8px">${k}</div></div>`,
+  toast:   (n) => `<div role="status" style="position:relative;display:flex;align-items:center;gap:8px;min-height:48px;padding:6px 8px 6px 16px;border-radius:var(--md-sys-shape-corner-extra-small);background:var(--md-sys-color-inverse-surface);color:var(--md-sys-color-inverse-on-surface)">
+    <md-elevation style="--md-elevation-level:3"></md-elevation><div style="flex:1;min-width:0"><div class="md-typescale-body-medium">${esc(n.title)}</div><div class="md-typescale-body-small" style="opacity:.8">${esc(n.text)}</div></div>${
+    n.action ? `<md-text-button style="--md-text-button-label-text-color:var(--md-sys-color-inverse-primary)">${esc(n.action)}</md-text-button>` : ''}</div>`,
+  skeleton: (n) => `<div style="display:flex;flex-direction:column;gap:16px" aria-hidden="true">${skelRows(n).map(([a, b]) => `<div style="display:flex;align-items:center;gap:12px">
+    <span style="width:32px;height:32px;flex:none;border-radius:var(--md-sys-shape-corner-full);background:var(--md-sys-color-surface-container-highest)"></span>
+    <span style="flex:1;display:flex;flex-direction:column;gap:8px"><span style="height:12px;width:${a};border-radius:var(--md-sys-shape-corner-extra-small);background:var(--md-sys-color-surface-container-highest)"></span><span style="height:12px;width:${b};border-radius:var(--md-sys-shape-corner-extra-small);background:var(--md-sys-color-surface-container-highest)"></span></span></div>`).join('')}</div>`,
+  spinner: () => `<md-circular-progress indeterminate aria-label="Loading" style="--md-circular-progress-size:24px"></md-circular-progress>`,
+})
+
+/* Radix Themes: rt-Link, SegmentedControl, the Tooltip content, the dialog
+   content and Skeleton and Spinner. It ships no pager and no toast: those two
+   are its own buttons and card on its own shadow scale (COMPONENT_GAPS). */
+Object.assign(radix, {
+  /* their Link writes data-accent-color="" when no colour is chosen: that
+     empty attribute is what gives it the theme's accent text */
+  link:    (n, k) => A(n, k, 'a', 'rt-Text rt-reset rt-Link rt-r-size-2 rt-underline-auto', ' href="#" data-accent-color=""' + rxAccent('brand')),
+  pagination: (n) => {
+    /* soft, not ghost: their ghost variant pulls itself in by a negative
+       margin to sit flush with text, which packed the numbers together */
+    const b = (label, on, aria) => `<button class="rt-reset rt-BaseButton rt-r-size-2 rt-variant-${on ? 'solid' : 'soft'} rt-IconButton"${on ? ' aria-current="page"' : ''}${aria ? ` aria-label="${aria}"` : ''}${rxAccent(on ? 'brand' : 'neutral')}>${label}</button>`
+    return `<nav aria-label="Pages" class="rt-Flex" style="display:flex;align-items:center;gap:var(--space-1)">${b(ico('chevron-left'), false, 'Previous page')}${pagesOf(n).map((i) => b(i, i === (n.on ?? 1))).join('')}${b(ico('chevron-right'), false, 'Next page')}</nav>`
+  },
+  segmented: (n) => `<div role="radiogroup" class="rt-SegmentedControlRoot rt-r-size-2 rt-variant-surface">${list(n.items).map((t, i) => {
+    const on = i === (n.on ?? 0)
+    return `<button type="button" role="radio" aria-checked="${on}" data-state="${on ? 'on' : 'off'}" class="rt-reset rt-SegmentedControlItem"><span class="rt-SegmentedControlItemSeparator"></span><span class="rt-SegmentedControlItemLabel"><span class="rt-SegmentedControlItemLabelActive">${esc(t)}</span><span class="rt-SegmentedControlItemLabelInactive" aria-hidden="true">${esc(t)}</span></span></button>` }).join('')}<div class="rt-SegmentedControlIndicator"></div></div>`,
+  tooltip: (n) => `<span class="rt-Flex" style="display:inline-flex;align-items:center;gap:var(--space-2)"><span role="tooltip" class="rt-TooltipContent" data-side="left" data-state="delayed-open"><span class="rt-Text rt-r-size-1 rt-TooltipText">${esc(n.text)}</span></span>
+    <button aria-label="${esc(n.label ?? n.text)}" class="rt-reset rt-BaseButton rt-r-size-2 rt-variant-ghost rt-IconButton"${rxAccent('neutral')}>${ico(n.icon)}</button></span>`,
+  dialog:  (n, k) => `<div role="dialog" aria-modal="true" class="rt-BaseDialogContent rt-r-size-3">
+    <h2 class="rt-Heading rt-r-size-5" style="margin-bottom:var(--space-3)">${esc(n.title)}</h2><p class="rt-Text rt-r-size-2" data-accent-color="gray">${esc(n.text)}</p>
+    <div class="rt-Flex" style="display:flex;justify-content:flex-end;gap:var(--space-3);margin-top:var(--space-4)">${k}</div></div>`,
+  toast:   (n) => `<div role="status" class="rt-reset rt-BaseCard rt-Card rt-r-size-2 rt-variant-surface" style="box-shadow:var(--shadow-5)"><div class="rt-Flex" style="display:flex;align-items:center;gap:var(--space-3)">
+    <div style="flex:1;min-width:0"><p class="rt-Text rt-r-size-2 rt-Strong">${esc(n.title)}</p><p class="rt-Text rt-r-size-2" data-accent-color="gray">${esc(n.text)}</p></div>${
+    n.action ? `<button class="rt-reset rt-BaseButton rt-r-size-1 rt-variant-soft rt-Button"${rxAccent('brand')}>${esc(n.action)}</button>` : ''}</div></div>`,
+  skeleton: (n) => `<div class="rt-Flex" style="display:flex;flex-direction:column;gap:var(--space-4)" aria-hidden="true">${skelRows(n).map(([a, b]) => `<div class="rt-Flex" style="display:flex;align-items:center;gap:var(--space-3)">
+    <span class="rt-Skeleton" inert style="width:32px;height:32px;flex:none"></span>
+    <span style="flex:1;display:flex;flex-direction:column;gap:var(--space-2)"><span class="rt-Skeleton" inert style="display:block;height:12px;width:${a}"></span><span class="rt-Skeleton" inert style="display:block;height:12px;width:${b}"></span></span></div>`).join('')}</div>`,
+  spinner: () => `<span class="rt-Spinner rt-r-size-2" role="status" aria-label="Loading">${'<span class="rt-SpinnerLeaf"></span>'.repeat(8)}</span>`,
+})
+
+/* Mantine: Anchor, Pagination, SegmentedControl (its no-JS look: the active
+   label paints itself until their script measures an indicator), Tooltip,
+   the Modal content, Notification, Skeleton and the oval Loader. */
+Object.assign(mantine, {
+  link:    (n, k) => A(n, k, 'a', cls(MN_FOCUS, mc('Text'), mc('Anchor')), ' href="#" data-underline="hover" style="--text-fz:var(--mantine-font-size-sm);--text-lh:var(--mantine-line-height-sm)"'),
+  pagination: (n) => {
+    const b = (label, on, aria) => `<button type="button" class="${cls(MN_FOCUS, mc('Pagination', 'control'), mc('UnstyledButton'))}"${on ? ' data-active="true" aria-current="page"' : ''}${aria ? ` aria-label="${aria}"` : ' data-with-padding="true"'}>${label}</button>`
+    return `<div class="${cls(mc('Pagination'), mc('Group'))}" role="navigation" aria-label="Pages" style="--pagination-control-size:var(--pagination-control-size-sm);--pagination-control-fz:var(--mantine-font-size-sm);--pagination-control-radius:var(--mantine-radius-default);--group-gap:calc(0.5rem * var(--mantine-scale))">${
+      b(ico('chevron-left'), false, 'Previous page')}${pagesOf(n).map((i) => b(i, i === (n.on ?? 1))).join('')}${b(ico('chevron-right'), false, 'Next page')}</div>`
+  },
+  segmented: (n) => { const name = `mn-seg-${++mnSeg}`
+    return `<div class="${mc('SegmentedControl')}" role="radiogroup" style="--sc-radius:var(--mantine-radius-default);--sc-font-size:var(--mantine-font-size-sm);--sc-padding:var(--sc-padding-sm);--sc-shadow:var(--mantine-shadow-xs)">${list(n.items).map((t, i) => {
+      const on = i === (n.on ?? 0), id = `${name}-${i}`
+      return `<div class="${mc('SegmentedControl', 'control')}"${on ? ' data-active="true"' : ''}><input type="radio" class="${mc('SegmentedControl', 'input')}" name="${name}" id="${id}" value="${esc(t)}"${on ? ' checked' : ''}><label class="${mc('SegmentedControl', 'label')}" for="${id}"${on ? ' data-active="true"' : ''}><span class="${mc('SegmentedControl', 'innerLabel')}">${esc(t)}</span></label></div>` }).join('')}</div>` },
+  tooltip: (n) => `<span class="${mc('Group')}" style="--group-gap:var(--mantine-spacing-xs);display:inline-flex"><span role="tooltip" class="${mc('Tooltip', 'tooltip')}" style="--tooltip-radius:var(--mantine-radius-default);position:relative;display:inline-block">${esc(n.text)}</span>
+    <button type="button" aria-label="${esc(n.label ?? n.text)}" class="${cls(MN_FOCUS, 'mantine-active', mc('ActionIcon'), mc('UnstyledButton'))}" data-variant="subtle" style="--ai-size:var(--ai-size-md);--ai-radius:var(--mantine-radius-default);--ai-bg:transparent;--ai-hover:var(--mantine-color-default-hover);--ai-color:var(--mantine-color-text)">${ico(n.icon)}</button></span>`,
+  dialog:  (n, k) => `<section role="dialog" aria-modal="true" class="${cls(mc('Paper'), mc('ModalBase', 'content'), mc('Modal', 'content'))}" style="--paper-radius:var(--mantine-radius-default);--paper-shadow:var(--mantine-shadow-xl);--modal-size:100%;width:100%">
+    <header class="${cls(mc('ModalBase', 'header'), mc('Modal', 'header'))}"><h2 class="${mc('ModalBase', 'title')}">${esc(n.title)}</h2>
+    <button type="button" aria-label="Close" class="${cls(MN_FOCUS, mc('CloseButton'), mc('CloseButton', 'root--subtle'), mc('UnstyledButton'), mc('ModalBase', 'close'))}" style="--cb-size:var(--cb-size-md);--cb-radius:var(--mantine-radius-default)">${ico('x')}</button></header>
+    <div class="${mc('ModalBase', 'body')}"><p class="${mc('Text')}" style="--text-color:var(--mantine-color-dimmed);margin:0 0 var(--mantine-spacing-md)">${esc(n.text)}</p>
+    <div class="${mc('Group')}" style="--group-gap:var(--mantine-spacing-sm);--group-justify:flex-end">${k}</div></div></section>`,
+  toast:   (n) => `<div role="status" class="${mc('Notification')}" data-with-border="true" style="--notification-radius:var(--mantine-radius-default);--notification-color:var(--mantine-primary-color-filled)">
+    <div class="${mc('Notification', 'body')}"><div class="${mc('Notification', 'title')}">${esc(n.title)}</div><div class="${mc('Notification', 'description')}">${esc(n.text)}</div></div>${
+    n.action ? `<button type="button" class="${cls(MN_FOCUS, 'mantine-active', mc('Button'), mc('UnstyledButton'))}" style="--button-height:var(--button-height-xs);--button-padding-x:var(--button-padding-x-xs);--button-fz:var(--mantine-font-size-xs);--button-radius:var(--mantine-radius-md);--button-bg:transparent;--button-color:var(--mantine-primary-color-filled);--button-hover:var(--mantine-primary-color-light-hover)">${esc(n.action)}</button>` : ''}</div>`,
+  skeleton: (n) => `<div class="${mc('Stack')}" style="--stack-gap:var(--mantine-spacing-md)" aria-hidden="true">${skelRows(n).map(([a, b]) => `<div class="${mc('Group')}" style="--group-gap:var(--mantine-spacing-sm);--group-wrap:nowrap">
+    <div class="${mc('Skeleton')}" data-visible="true" data-animate="true" style="--skeleton-height:2rem;--skeleton-width:2rem;--skeleton-radius:1000rem;flex:none"></div>
+    <div class="${mc('Stack')}" style="--stack-gap:var(--mantine-spacing-xs);flex:1"><div class="${mc('Skeleton')}" data-visible="true" data-animate="true" style="--skeleton-height:0.75rem;--skeleton-width:${a}"></div><div class="${mc('Skeleton')}" data-visible="true" data-animate="true" style="--skeleton-height:0.75rem;--skeleton-width:${b}"></div></div></div>`).join('')}</div>`,
+  spinner: () => `<span class="${cls(mc('Loader'), mc('Loader', 'ovalLoader'))}" role="status" aria-label="Loading" style="--loader-size:var(--loader-size-sm);--loader-color:var(--mantine-primary-color-filled)"></span>`,
+})
 
 export const WALL = { tailwind, daisyui, bootstrap, shadcn, material, radix, mantine, antd }

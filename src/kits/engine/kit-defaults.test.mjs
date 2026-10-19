@@ -22,6 +22,7 @@ const DIFFERENT_ON_PURPOSE = {
   // their own components, starts: indigo-600, gray-900 on white.
   'tailwind.brand': 'own variable', 'tailwind.page': 'own variable', 'tailwind.ink': 'own variable',
   'tailwind.inkMuted': 'own variable', 'tailwind.line': 'own variable',
+  'tailwind.success': 'own variable', 'tailwind.warning': 'own variable', 'tailwind.danger': 'own variable',
   // Tailwind Plus rounds its controls with rounded-md; the kit's controls are
   // rounded-lg, so --radius-lg carries that corner.
   'tailwind.radius': 'the Tailwind Plus corner',
