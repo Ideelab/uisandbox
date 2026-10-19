@@ -2548,3 +2548,36 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     The knob names the panel uses moved from ExportDialog into carry.ts
     (KNOB_LABEL), so the export's "Settings" list, the door and the note
     name a knob the same way.
+
+194. Look: another kit's own start values on what the stage shows.
+
+    The brief's Look dropdown. A look is a kit's start card, the values its
+    package ships out of the box as the engine's kit-defaults.mjs reads
+    them, never typed: brand, background, the status colours, the body font
+    and the corner radius. scripts/kit-looks.mjs writes the eight into
+    src/kits/looks.json (2 KB, where the kit data is 4 MB), and a test fails
+    when that file is behind the kits.
+
+    A look moves only what a knob can carry, through the knobs
+    (kits/looks.ts applyLook), so undo, Reset, Share and Export treat it as
+    any knob. The font is the first family in the kit's stack the font
+    picker can load (Material's "Roboto Flex"), or left alone. The corners
+    become a radius multiplier: the look's radius over the stage's own (its
+    kit's start card on a kit, the build's most-used radius on yours). The
+    select shows the look while the knobs stand where it put them, "Custom"
+    once something was turned on top, "As it is" at the baseline.
+
+    Measured in the frame, before and after:
+    - Bootstrap on the shadcn kit: the primary button rgb(23,23,23) →
+      rgb(13,110,253); the system stack stays. Corners: the base 10px →
+      6px, and shadcn's button, which is that radius minus 2px, lands on
+      4.8px, not Bootstrap's own 6px. A look scales the base the kit
+      derives from; what a kit derives from it follows its own rule.
+    - Material 3 on the Bootstrap kit: .btn-primary → rgb(103,80,164),
+      corners 6px → 12px, the font "Roboto Flex", and loaded (document.fonts).
+    - Ant Design on the Material kit, inside md-filled-button's shadow root:
+      rgb(103,80,164) → rgb(22,119,255), Roboto Flex → system-ui; the button
+      stays a pill, as Material's full-corner shape is by design.
+
+    On a phone Look is left out of the top bar (Engine stays): presets are a
+    desk-sized pleasure, and the bar is full at 390px.

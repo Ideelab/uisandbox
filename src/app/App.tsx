@@ -30,7 +30,9 @@ import { Door } from './Intake'
 import { About } from './About'
 import { Stage, type StageTab } from './Stage'
 import { ExportDialog } from './ExportDialog'
-import { EngineSelect, SchemeSwitch, ShareButton } from './EditorBar'
+import { EngineSelect, LookSelect, SchemeSwitch, ShareButton } from './EditorBar'
+import { applyLook, looks } from '../kits/looks'
+import { toPx } from '../sandbox/mapping'
 import { encode, readHash } from '../state/hash'
 import { carryOver, differingKeys, knobLabel, withKeys } from '../state/carry'
 import { genPatch, genPatchedFiles } from '../export/genSheet'
@@ -464,6 +466,27 @@ function Editor() {
     if (loaded && !loaded.kit && !confirm(`Switch to ${DOOR.find((d) => d.id === id)?.name ?? id}? Your app was only in this tab: switching closes it, and you can bring it again from the Your app tab.`)) return
     void loadFromUrl(`/kits/${id}.zip`)
   }
+  // Look: the corners are measured against the stage's own radius, its kit's
+  // start card on a kit, the build's most-used radius on yours.
+  const [lookApplied, setLookApplied] = useState<{ id: string; cfg: Config } | null>(null)
+  const lookBasePx = (() => {
+    if (!loaded) return null
+    const own = loaded.kit ? looks.find((l) => l.id === loaded.kit!.id)?.values.radius : undefined
+    if (own) return toPx(own)?.px ?? null
+    const top = [...loaded.project.table.ofKind('radius')].map((e) => ({ px: toPx(e.value)?.px ?? 0, n: e.count })).filter((x) => x.px > 0 && x.px < 100).sort((a, b) => b.n - a.n)[0]
+    return top?.px ?? null
+  })()
+  const pickLook = (id: string) => {
+    const look = looks.find((l) => l.id === id)
+    if (!look || !loaded) return
+    const next = applyLook(cfg, look, lookBasePx)
+    dispatch({ type: 'REPLACE', cfg: next })
+    setLookApplied({ id, cfg: next })
+  }
+  useEffect(() => { setLookApplied(null) }, [loaded?.project.id])
+  // The look while the knobs stand where it put them; "As it is" at the
+  // baseline; "Custom" once something was turned on top of a look.
+  const lookNow = !loaded || encode(cfg) === encode(loaded.report.baseline.cfg) ? null : lookApplied && encode(lookApplied.cfg) === encode(cfg) ? lookApplied.id : lookApplied ? '' : null
   const hasScheme = !!loaded && (loaded.project.scheme.media || loaded.project.scheme.hooks.length > 0)
   const turnedOnKit = loaded?.kit ? differingKeys(loaded.report.baseline.cfg, cfg) : []
   const carryNote = turnedOnKit.length ? `What you turned on ${loaded!.kit!.name} comes with it: ${turnedOnKit.map(knobLabel).join(', ')}. Everything else starts as your code has it.` : undefined
@@ -477,6 +500,7 @@ function Editor() {
           <a className="btn btn--ghost btn--sm app__how" href="/about" title="How it works"><BookOpen size={14} /><span className="ebar__txt"> How it works</span></a>
           {!loaded && <><McpButton /><StarButton /></>}
           {loaded && <>
+            <LookSelect current={lookNow} onPick={pickLook} />
             <EngineSelect kitId={loaded.kit?.id} ownApp={!loaded.kit} detected={coverage ? coverage.kit : undefined} onPick={pickKit} />
             {hasScheme && <SchemeSwitch value={cfg.sb.dark ?? 'light'} onChange={(v) => dispatch({ type: 'SET', patch: { sb: { ...cfg.sb, dark: v } } })} />}
             <ShareButton url={shareUrl} />

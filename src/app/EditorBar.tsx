@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Check, Link2, Moon, Sun } from 'lucide-react'
 import DOOR from '../kits/door.json'
 import type { KitId } from '../kits/engine/detect.mjs'
+import { looks as LOOKS } from '../kits/looks'
 
 const KITS = DOOR.filter((k) => k.renders)
 const kitName = (id: string) => DOOR.find((k) => k.id === id)?.name ?? id
@@ -63,5 +64,19 @@ export function ShareButton({ url }: { url: string | null }) {
       </button>
       {said && <span className="ebar__pop" role="status">{said}</span>}
     </span>
+  )
+}
+
+/** Look: another kit's own start values on what the stage shows (kits/looks.ts).
+ *  Shows the look while the knobs still stand where it put them. */
+export function LookSelect({ current, onPick }: { current: string | null; onPick: (id: string) => void }) {
+  return (
+    <label className="ebar__engine ebar__look" title="Another kit's own start values on what the stage shows: its brand, background, status colours, body font and corners. Undo, Reset and Export treat it like any knob.">
+      <span className="ebar__label">Look</span>
+      <select value={current ?? ''} onChange={(e) => { if (e.target.value) onPick(e.target.value) }} aria-label="Look: another kit's start values">
+        <option value="">{current ? 'Custom' : 'As it is'}</option>
+        {LOOKS.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+      </select>
+    </label>
   )
 }
