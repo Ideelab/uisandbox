@@ -2,5 +2,14 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://uisandbox.org/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
   <url><loc>https://uisandbox.org/about</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://uisandbox.org/kits/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://uisandbox.org/kits/tailwind/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://uisandbox.org/kits/daisyui/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://uisandbox.org/kits/shadcn/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://uisandbox.org/kits/bootstrap/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://uisandbox.org/kits/material/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://uisandbox.org/kits/radix/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://uisandbox.org/kits/mantine/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://uisandbox.org/kits/antd/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://uisandbox.org/llms.txt</loc><changefreq>monthly</changefreq></url>
 </urlset>

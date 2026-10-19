@@ -1,6 +1,8 @@
 import { defineConfig, type Plugin } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import { handleRepo } from './worker/repo.mjs'
+import { existsSync, readFileSync, statSync } from 'node:fs'
+import { join } from 'node:path'
 
 /* Dev-only scratch store for the hold-out comparison (scripts/census.js): the
  * census of a LIVE site is POSTed here from its own tab, the sandbox tab GETs
@@ -49,6 +51,25 @@ function repoRoute(): Plugin {
   }
 }
 
+/* Static pages in public/ (the kit pages, /kits/<id>/) served the way
+ * Cloudflare's assets serve them: a directory URL answers with its
+ * index.html. Vite answers a directory with the app instead. */
+function staticPages(): Plugin {
+  return {
+    name: 'static-pages',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const path = (req.url ?? '/').split('?')[0]!
+        if (!path.endsWith('/') || path === '/') return next()
+        const file = join(server.config.publicDir, decodeURIComponent(path), 'index.html')
+        if (!file.startsWith(server.config.publicDir) || !existsSync(file) || !statSync(file).isFile()) return next()
+        res.setHeader('content-type', 'text/html; charset=utf-8')
+        res.end(readFileSync(file))
+      })
+    },
+  }
+}
+
 /* 5190 by default: the hold-out and export sweeps point `--base` at it, and
  * the app registers a service worker, which is scoped to an origin — so the
  * port is part of the address, not an implementation detail.
@@ -62,7 +83,7 @@ const STRICT = !process.env.PORT
 export default defineConfig({
   server: { port: PORT, strictPort: STRICT },
   preview: { port: PORT, strictPort: STRICT },
-  plugins: [react(), censusStore(), repoRoute()],
+  plugins: [react(), censusStore(), repoRoute(), staticPages()],
   test: {
     projects: [
       {

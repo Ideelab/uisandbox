@@ -5,6 +5,7 @@
  * and the handful of --k-* the panel needs (row heights, spacing, radius) are
  * set ONCE from the default kit in main.tsx and never move. */
 
+/* @site:start — scripts/kit-pages.mjs copies this block into the static pages' site.css: one source for the tokens. */
 *, *::before, *::after { box-sizing: border-box; }
 html, body, #root { height: 100%; margin: 0; }
 /* Visual overflow (the corona's blur, animated glows) must never become
@@ -67,6 +68,7 @@ button { background: none; border: 0; padding: 0; cursor: pointer; }
     --app-scrim:     rgba(0, 0, 0, 0.6);
   }
 }
+/* @site:end */
 
 /* === The few kit recipes the panel composes (card · btn · menu · input) === */
 .card {

@@ -1,0 +1,46 @@
+/* The site around the editor: the footer in columns (/about, the kit pages)
+ * and the static kit pages. Imported by the app; scripts/kit-pages.mjs writes
+ * it, with the tokens from chrome.css, into public/site.css for the pages. */
+
+.sitefoot { background: #18191d; color: #a3a3ad; font-size: 13px; line-height: 1.5; margin-top: 48px; }
+.sitefoot a { color: #d6d6de; text-decoration: none; }
+.sitefoot a:hover { color: #ffffff; text-decoration: underline; text-underline-offset: 2px; }
+.sitefoot__inner { max-width: 1080px; margin: 0 auto; padding: 40px 24px 28px; display: grid; grid-template-columns: 1.4fr repeat(3, 1fr); gap: 32px; }
+.sitefoot__brand p { margin: 10px 0 0; max-width: 30ch; }
+.sitefoot__mark { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; color: #ececf1 !important; font-size: 14px; }
+.sitefoot__col h2 { margin: 0 0 10px; font-size: 12px; font-weight: 600; color: #ececf1; letter-spacing: 0; }
+.sitefoot__col ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.sitefoot__base { border-top: 1px solid #2b2b34; max-width: 1080px; margin: 0 auto; padding: 14px 24px 18px; font-size: 12px; }
+@media (max-width: 760px) { .sitefoot__inner { grid-template-columns: 1fr 1fr; } .sitefoot__brand { grid-column: 1 / -1; } }
+
+/* A kit page: one column, the story in plain prose, the facts read from the kit. */
+.kp { min-height: 100%; display: flex; flex-direction: column; }
+.kp__top { height: 46px; display: flex; align-items: center; gap: 16px; padding: 0 22px; border-bottom: 1px solid var(--app-border); background: var(--app-bg); font-size: 13px; }
+.kp__top a { color: var(--app-fg); text-decoration: none; }
+.kp__brand { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14px; }
+.kp__top nav { margin-left: auto; display: flex; gap: 16px; color: var(--app-fg-muted); }
+.kp__top nav a { color: var(--app-fg-muted); }
+.kp__top nav a:hover { color: var(--app-fg); }
+.kp main { flex: 1; width: 100%; max-width: 860px; margin: 0 auto; padding: 48px 24px 0; font-size: 15px; line-height: 1.6; }
+.kp main h1 { font-size: clamp(30px, 5vw, 44px); line-height: 1.08; letter-spacing: -0.03em; margin: 0 0 14px; }
+.kp main h2 { font-size: 19px; letter-spacing: -0.01em; margin: 40px 0 10px; }
+.kp main p { margin: 0 0 14px; color: var(--app-fg); }
+.kp main .kp__lead { font-size: 17px; color: var(--app-fg-muted); max-width: 62ch; }
+.kp__ctas { display: flex; flex-wrap: wrap; gap: 10px; margin: 22px 0 28px; }
+.kp__btn { display: inline-flex; align-items: center; height: 38px; padding: 0 16px; border-radius: 9px; font-weight: 600; font-size: 14px; text-decoration: none; border: 1px solid var(--app-border); color: var(--app-fg); background: var(--app-surface); }
+.kp__btn--primary { background: var(--app-fg); color: var(--app-bg); border-color: var(--app-fg); }
+.kp main figure { margin: 0 0 8px; }
+.kp main figure img { width: 100%; height: auto; display: block; border: 1px solid var(--app-border); border-radius: 12px; box-shadow: var(--app-shadow-md); }
+.kp main figcaption { font-size: 12.5px; color: var(--app-fg-muted); margin-top: 8px; }
+.kp__facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 20px; margin: 0; }
+.kp__facts dt { color: var(--app-fg-muted); }
+.kp__facts dd { margin: 0; }
+.kp__swatch { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 6px; border: 1px solid var(--app-border); }
+.kp__files { margin: 0; padding-left: 18px; }
+.kp__files li { margin: 4px 0; }
+.kp main code { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.88em; background: var(--app-surface-2); border: 1px solid var(--app-border); border-radius: 5px; padding: 0 4px; }
+.kp__kits { list-style: none; padding: 0; margin: 20px 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+.kp__kits a { display: block; padding: 16px; border: 1px solid var(--app-border); border-radius: 12px; background: var(--app-surface); color: var(--app-fg); text-decoration: none; }
+.kp__kits a:hover { border-color: var(--app-fg-muted); }
+.kp__kits b { display: block; font-size: 15px; margin-bottom: 4px; }
+.kp__kits span { color: var(--app-fg-muted); font-size: 13px; }

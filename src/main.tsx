@@ -5,6 +5,7 @@ import { buildTokens } from './tokens/buildTokens'
 import { DEFAULT_CONFIG } from './tokens/defaults'
 import './styles/chrome.css'
 import './styles/panel.css'
+import './styles/site.css'
 
 /* The panel composes a few --k-* tokens (row heights, spacing, radius). They
  * are set ONCE from the default kit and never follow the knobs: the knobs are

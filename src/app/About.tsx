@@ -13,7 +13,7 @@ import { Mark } from './Mark'
 import { InstallLine } from './InstallLine'
 import { McpButton } from './McpButton'
 import { StarButton } from './StarButton'
-import { Footer } from './Footer'
+import { SiteFooter } from './SiteFooter'
 import { Landing, PrivacyCard } from './Intake'
 
 export function About() {
@@ -55,8 +55,8 @@ export function About() {
           </section>
           {showPrivacy && <PrivacyCard onClose={() => setShowPrivacy(false)} />}
           <Landing />
-          <Footer />
         </div>
+        <SiteFooter />
       </div>
     </div>
   )

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ant Design theme editor · UISandbox</title>
+<meta name="description" content="A Ant Design theme editor on Ant Design's own components: turn its brand, type and corners live, then try it on your own app, and export a design system and a SKILL.md in Ant Design's own names. Free, open source, in your browser.">
+<link rel="canonical" href="https://uisandbox.org/kits/antd/">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<meta name="color-scheme" content="light dark">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="UISandbox">
+<meta property="og:url" content="https://uisandbox.org/kits/antd/">
+<meta property="og:title" content="Ant Design theme editor · UISandbox">
+<meta property="og:description" content="A Ant Design theme editor on Ant Design's own components: turn its brand, type and corners live, then try it on your own app, and export a design system and a SKILL.md in Ant Design's own names. Free, open source, in your browser.">
+<meta property="og:image" content="https://uisandbox.org/kits/antd.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/site.css">
+</head>
+<body>
+<div class="kp">
+<header class="kp__top"><a class="kp__brand" href="/"><img src="/favicon.svg" width="16" height="16" alt=""> UISandbox</a><nav><a href="/kits/">Kits</a><a href="/about">How it works</a><a href="https://github.com/Ideelab/uisandbox">Source</a></nav></header>
+<main>
+<h1>Ant Design theme editor</h1>
+<p class="kp__lead">React components with the styles generated at runtime: no stylesheet to import, a theme object instead. UISandbox builds Ant Design 6.6.1 from its own package and opens it in the editor: six screens in Ant Design's own components and its own defaults. Turn the brand, the type, the spacing and the corners, and every component follows. Nothing to install, nothing uploaded.</p>
+<div class="kp__ctas"><a class="kp__btn kp__btn--primary" href="/?load=%2Fkits%2Fantd.zip">Open Ant Design in the editor</a><a class="kp__btn" href="/?load=%2Fkits%2Fantd.zip&amp;tab=app">Try it on your own app</a></div>
+<figure><img src="/kits/antd.jpg" width="1280" height="800" alt="Ant Design in the UISandbox editor: the knobs on the left, Ant Design's own components on the right" loading="lazy"><figcaption>Ant Design as it ships, in the editor. A real screenshot.</figcaption></figure>
+<h2>What is read from Ant Design</h2>
+<dl class="kp__facts"><dt>Version</dt><dd>6.6.1</dd><dt>Licence</dt><dd>MIT</dd><dt>Package</dt><dd><a href="https://www.npmjs.com/package/antd">antd</a></dd><dt>Runs in</dt><dd>React</dd><dt>Variables</dt><dd>838 in its light mode, and its own dark mode, read from its package</dd><dt>Brand as it ships</dt><dd><span class="kp__swatch" style="background:#1677ff"></span><code>#1677ff</code></dd><dt>Body type</dt><dd>the system stack</dd><dt>Corners</dt><dd><code>6px</code></dd></dl>
+<h2>What you take with you</h2>
+<p>Export writes Ant Design's design system in Ant Design's own names, starting from what you see:</p>
+<ul class="kp__files"><li><code>antd.theme.ts</code>: the theme object Ant Design reads, since it has no stylesheet to edit</li><li><code>theme.css</code>: the variables, in Ant Design's own names, as the knobs left them</li><li><code>install.md</code>: where each file goes, step by step</li><li><code>MANIFEST.md</code>: what could not be done, said rather than substituted</li><li><code>DESIGN.md</code>: the design system for people and agents: colours, type, spacing, what each is for</li><li><code>.claude/skills/design-system/SKILL.md</code>: for Claude Code, Cursor or Codex: build the next screen in Ant Design's own classes</li><li><code>tokens.json</code>: W3C design tokens, which Tokens Studio and Figma variables import</li></ul>
+<h2>On your own app</h2>
+<p>If your app runs on Ant Design, the sandbox recognises it from the rendered page and writes the design system in Ant Design's names from your app's own values. What you turned on the kit comes with you. The quickest way in is the one where nothing leaves your machine: run <code>npx uisandbox-mcp open</code> in your project, or ask your agent to "open this app in UISandbox". <a href="/about">How it works</a>.</p>
+</main>
+<footer class="sitefoot" aria-label="About UISandbox">
+<div class="sitefoot__inner">
+<div class="sitefoot__brand"><a href="/" class="sitefoot__mark"><img src="/favicon.svg" width="18" height="18" alt=""> UISandbox</a><p>Play with your app's design, right in the browser. Your files never leave it.</p></div>
+<nav class="sitefoot__col" aria-label="Product"><h2>Product</h2><ul><li><a href="/">The editor</a></li><li><a href="/about">How it works</a></li><li><a href="/about#agents">Run it on your machine</a></li><li><a href="https://www.npmjs.com/package/uisandbox-mcp" target="_blank" rel="noopener">MCP server</a></li><li><a href="/llms.txt">llms.txt</a></li></ul></nav>
+<nav class="sitefoot__col" aria-label="Kits"><h2>Kits</h2><ul><li><a href="/kits/tailwind/">Tailwind CSS</a></li><li><a href="/kits/daisyui/">daisyUI</a></li><li><a href="/kits/shadcn/">shadcn/ui</a></li><li><a href="/kits/bootstrap/">Bootstrap</a></li><li><a href="/kits/material/">Material 3</a></li><li><a href="/kits/radix/">Radix Themes</a></li><li><a href="/kits/mantine/">Mantine</a></li><li><a href="/kits/antd/">Ant Design</a></li><li><a href="/kits/">All kits</a></li></ul></nav>
+<nav class="sitefoot__col" aria-label="Open source"><h2>Open source</h2><ul><li><a href="https://github.com/Ideelab/uisandbox" target="_blank" rel="noopener">Source</a></li><li><a href="https://github.com/Ideelab/uisandbox/blob/main/notes/decisions.md" target="_blank" rel="noopener">Decisions</a></li><li><a href="https://github.com/Ideelab/uisandbox/discussions" target="_blank" rel="noopener">Discussions</a></li><li><a href="https://github.com/Ideelab/uisandbox/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Contributing</a></li><li><a href="https://github.com/Ideelab/uisandbox/blob/main/notes/security.md" target="_blank" rel="noopener">Privacy and security</a></li></ul></nav>
+</div>
+<div class="sitefoot__base">Made by <a href="https://github.com/AlexanderKaan" target="_blank" rel="noopener author">Alexander Kaan</a> at <a href="https://ideelab.nl/" target="_blank" rel="noopener">Ideelab</a> · © 2026 Ideelab · <a href="https://github.com/Ideelab/uisandbox/blob/main/LICENSE" target="_blank" rel="noopener license">MIT</a></div>
+</footer>
+</div>
+</body>
+</html>

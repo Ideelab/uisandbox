@@ -2721,3 +2721,35 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     moved, a 46-line patch. From the CLI the terminal printed the same and
     the page said so. The MCP smoke test passes on the rebuilt bundle.
     Version 0.5.0 (a new tool); npm and the registry are Alexander's.
+
+199. A footer in columns, and a page per kit.
+
+    Alexander: the footer was a copyright bar carrying too much, "with ♥"
+    reads as precious, and there should be pages people find. So:
+
+    - The editor keeps one slim line (maker, year, licence, Kits, Source,
+      Privacy and security): a tall footer there takes height the canvas
+      needs. /about and the kit pages have the footer in columns: Product,
+      Kits, Open source, and the maker line under it. Both read their links
+      from one file, src/site/links.json; the heart is gone everywhere.
+    - /kits/<id>/ for the eight kits that render, and /kits/ listing them:
+      static HTML, so a search engine or a language model reads them
+      without running the app. Every fact is read, not typed: the kit's own
+      description, version, licence and package (kits/<id>.json), the
+      number of variables in its light mode and whether it has a dark mode,
+      its start values (looks.json), and the files its export ships, from
+      the engine's own generate() (a file the page cannot describe is an
+      error). Each page has a real screenshot of the kit in the editor
+      (scripts/kit-shots.mjs), a button that opens it, and one that opens
+      it on the Your app tab. The kits' descriptions use em-dashes; the
+      pages turn them into colons, and a test holds that none get through.
+    - scripts/kit-pages.mjs writes them, and public/site.css from
+      chrome.css's @site block (the tokens) and src/styles/site.css, so
+      the pages and the app share one stylesheet source. kitPages.test.ts
+      fails when a page is behind its data. The dev server now serves a
+      directory's index.html from public/ the way Cloudflare's assets do.
+    - The sitemap lists /kits/ and the eight; llms.txt names them.
+
+    Checked at 1280 light and dark and at 390: no horizontal overflow; the
+    footer's headings first inherited the page's h2 and its sentence was
+    dark on dark, so the page styles are scoped to <main> now.

@@ -1,0 +1,20 @@
+{
+ "columns": [
+  { "title": "Product", "links": [
+   { "label": "The editor", "href": "/" },
+   { "label": "How it works", "href": "/about" },
+   { "label": "Run it on your machine", "href": "/about#agents" },
+   { "label": "MCP server", "href": "https://www.npmjs.com/package/uisandbox-mcp" },
+   { "label": "llms.txt", "href": "/llms.txt" }
+  ] },
+  { "title": "Kits", "links": "kits" },
+  { "title": "Open source", "links": [
+   { "label": "Source", "href": "https://github.com/Ideelab/uisandbox" },
+   { "label": "Decisions", "href": "https://github.com/Ideelab/uisandbox/blob/main/notes/decisions.md" },
+   { "label": "Discussions", "href": "https://github.com/Ideelab/uisandbox/discussions" },
+   { "label": "Contributing", "href": "https://github.com/Ideelab/uisandbox/blob/main/CONTRIBUTING.md" },
+   { "label": "Privacy and security", "href": "https://github.com/Ideelab/uisandbox/blob/main/notes/security.md" }
+  ] }
+ ],
+ "maker": { "name": "Alexander Kaan", "href": "https://github.com/AlexanderKaan", "org": "Ideelab", "orgHref": "https://ideelab.nl/", "licence": "MIT", "licenceHref": "https://github.com/Ideelab/uisandbox/blob/main/LICENSE" }
+}
