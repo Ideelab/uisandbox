@@ -6,7 +6,7 @@ export function Footer() {
   const m = LINKS.maker
   return (
     <footer className="foot" aria-label="About UISandbox">
-      <span>Made by <a href={m.href} target="_blank" rel="noopener author">{m.name}</a> at <a href={m.orgHref} target="_blank" rel="noopener">{m.org}</a> · © {new Date().getFullYear()} · <a href={m.licenceHref} target="_blank" rel="noopener license">{m.licence}</a></span>
+      <span><b className="foot__name">UISandbox Design System Generator</b> · Made by <a href={m.href} target="_blank" rel="noopener author">{m.name}</a> at <a href={m.orgHref} target="_blank" rel="noopener">{m.org}</a> · © {new Date().getFullYear()} · <a href={m.licenceHref} target="_blank" rel="noopener license">{m.licence}</a></span>
       <span className="foot__sep" aria-hidden>·</span>
       <nav className="foot__links" aria-label="UISandbox links">
         <a href="/kits/">Kits</a>

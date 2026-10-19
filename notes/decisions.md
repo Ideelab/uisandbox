@@ -2753,3 +2753,20 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     Checked at 1280 light and dark and at 390: no horizontal overflow; the
     footer's headings first inherited the page's h2 and its sentence was
     dark on dark, so the page styles are scoped to <main> now.
+
+200. The top bar says less, and each word means something.
+
+    Alexander's read of the bar: the kit's name beside the mark doubled the
+    Engine menu; "Look" and "Engine" were unclear; Light / Dark, Share and
+    "Read" did not belong up there. Now the bar is the mark with "Design
+    System Generator", How it works, Preset, Kit and Export:
+    - "Engine" is **Kit** (the UI kit on the canvas) and "Look" is
+      **Preset** (another kit's start values, "Bootstrap look"), words
+      people know from tweakcn and shadcn.
+    - Light / Dark sits with the canvas widths: it is a way of looking at
+      the canvas, like Fit / 1280 / 820 / 390.
+    - Share is **Copy link** in the Export dialog, beside the downloads.
+    - "Read" is **What we read**, a chip in the honesty line under the
+      canvas beside the reach meter and Check 1:1, where the merge brief
+      put it.
+    - "UISandbox Design System Generator" names the tool in both footers.

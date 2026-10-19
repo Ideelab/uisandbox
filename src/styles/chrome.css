@@ -705,3 +705,5 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
 .way__fold--open .way__chev { transform: rotate(90deg); }
 .way__body { margin-top: 12px; }
 .intake__error--top { margin: 0 0 16px; text-align: left; }
+.chip--on { border-color: var(--app-fg); color: var(--app-fg); }
+.foot__name { color: #ececf1; font-weight: 600; }

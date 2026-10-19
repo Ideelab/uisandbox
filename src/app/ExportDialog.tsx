@@ -21,6 +21,7 @@ import { roleValues } from '../kits/values'
 import type { RoleValues } from '../kits/engine/generate.mjs'
 import { kitExport, kitPackage } from '../kits/kitExport'
 import { knobLabel } from '../state/carry'
+import { ShareButton } from './EditorBar'
 import { pinToBuild, lightDeclarations } from '../kits/pin'
 import type { KitId } from '../kits/engine/detect.mjs'
 import { genReadme } from '../export/genReadme'
@@ -36,6 +37,8 @@ interface ExportDialogProps {
   /** A build made from a kit through the kit door (its display name), not
    *  somebody's code: the copy says "the kit", not "your code". */
   kitDoorName?: string
+  /** A link that reopens this build with these knobs, or null when it has no address (Share). */
+  shareUrl?: string | null
   /** Their original files — the patched export writes the values into these. */
   files: Map<string, ServedFile>
   fontCss: string
@@ -141,7 +144,7 @@ const KIT_NAME: Record<KitId, string> = {
   openprops: 'Open Props', radix: 'Radix Themes', shadcn: 'shadcn/ui', tailwind: 'Tailwind',
 }
 
-export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName, files, fontCss, notes, painted, anchors, kit, kitValues, readPageVars, onClose }: ExportDialogProps) {
+export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName, shareUrl, files, fontCss, notes, painted, anchors, kit, kitValues, readPageVars, onClose }: ExportDialogProps) {
   const [patched, setPatched] = useState<Array<{ path: string; text: string }> | null>(null)
   useEffect(() => { let on = true; void genPatchedFiles(files, table, vars, fontCss).then((p) => { if (on) setPatched(p) }); return () => { on = false } }, [files, table, vars, fontCss])
   const movedCount = useMemo(() => { const id = table.identityVars(); return Object.keys(vars).filter((k) => vars[k] !== id[k]).length }, [table, vars])
@@ -478,6 +481,7 @@ export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName,
             <h2>Export: exactly what is in the sandbox</h2>
           )}
           <span className="stage__spacer" style={{ flex: 1 }} />
+          <ShareButton url={shareUrl ?? null} />
           {kitDoorName
             ? <button type="button" className="btn btn--primary btn--sm" onClick={downloadKit} disabled={!kitFiles} title={kitFiles ? 'theme.css, DESIGN.md, SKILL.md, tokens.json, install.md and MANIFEST.md' : 'Writing the design system…'}><Download size={13} strokeWidth={2} /> Design system + Skill (.zip)</button>
             : <button type="button" className="btn btn--secondary btn--sm" onClick={downloadAll}><Download size={13} strokeWidth={2} /> Everything (.zip)</button>}

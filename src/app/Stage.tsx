@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type RefObject } from 'react'
-import { ExternalLink, Plus, RefreshCw, ShieldCheck, Star } from 'lucide-react'
+import { ExternalLink, Info, Plus, RefreshCw, ShieldCheck, Star } from 'lucide-react'
 import { ScreenPicker } from './ScreenPicker'
 import type { SandboxProject, Screen } from '../sandbox/project'
 import { identitySid, rawSid, sandboxUrl } from '../sandbox/host'
@@ -34,6 +34,12 @@ interface StageProps {
   kitName?: string
   /** The ways in, shown on the "Your app" tab while a kit is on the stage. */
   door?: React.ReactNode
+  /** Canvas controls that sit with the widths (Light / Dark). */
+  barExtra?: React.ReactNode
+  /** The "What we read" card: shown or not, and its toggle in the foot. */
+  onToggleNotes?: () => void
+  notesOpen?: boolean
+  notesLabel?: string
 }
 
 export type StageTab = 'components' | 'screens' | 'app'
@@ -66,7 +72,7 @@ function reportUrl(project: SandboxProject, detail: string): string {
   return `https://github.com/Ideelab/uisandbox/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}&labels=build-report`
 }
 
-export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, changedCount, warning, warningTitle, coverage, notes, tab = 'app', onTab, kitName, door }: StageProps) {
+export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, changedCount, warning, warningTitle, coverage, notes, tab = 'app', onTab, kitName, door, barExtra, onToggleNotes, notesOpen, notesLabel }: StageProps) {
   const [showCov, setShowCov] = useState(false)
   const [width, setWidth] = useState<string>('fit')
   const [verify, setVerify] = useState<VerifyResult | { busy: true } | null>(null)
@@ -140,6 +146,7 @@ export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, ch
             <button key={x.id} className={`seg__opt ${x.id === width ? 'seg__opt--on' : ''}`} onClick={() => setWidth(x.id)}>{x.label}</button>
           ))}
         </div>
+        {barExtra}
         <span className="stage__spacer" style={{ flex: 1 }} />
         <button type="button" className="btn btn--ghost btn--sm" onClick={() => { const f = frameRef.current; if (f) f.src = src }} title="Reload the screen">
           <RefreshCw size={13} strokeWidth={2} /> Reload
@@ -235,6 +242,11 @@ export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, ch
           </button>
         )}
         {changedCount > 0 ? <span className="chip chip--warn"><span className="chip__dot" />{changedCount} value{changedCount === 1 ? '' : 's'} moved</span> : <span className="chip chip--ok"><span className="chip__dot" />identity: nothing turned</span>}
+        {onToggleNotes && (
+          <button type="button" className={`chip ${notesOpen ? 'chip--on' : ''}`} onClick={onToggleNotes} aria-pressed={notesOpen} title={notesLabel}>
+            <Info size={12} strokeWidth={2} /> What we read
+          </button>
+        )}
         <button type="button" className="chip" onClick={runVerify} title="Measure: compare the untouched page with the tokenised page, element by element">
           <ShieldCheck size={12} strokeWidth={2} /> {verify && !('busy' in verify) ? (verify.ok ? '1:1 verified' : verify.refusal ? '1:1 unmeasured' : '1:1 differs') : 'Check 1:1'}
         </button>

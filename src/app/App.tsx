@@ -1,6 +1,6 @@
 import DOOR from '../kits/door.json'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Download, Info, PanelLeftOpen, X, BookOpen } from 'lucide-react'
+import { Download, PanelLeftOpen, X, BookOpen } from 'lucide-react'
 import { SandboxPanel } from '../panel/SandboxPanel'
 import type { Config } from '../tokens/types'
 import { useConfig } from '../state/useConfig'
@@ -29,7 +29,7 @@ import { Door, LoadStages } from './Intake'
 import { About } from './About'
 import { Stage, type StageTab } from './Stage'
 import { ExportDialog } from './ExportDialog'
-import { EngineSelect, LookSelect, SchemeSwitch, SendButton, ShareButton } from './EditorBar'
+import { EngineSelect, LookSelect, SchemeSwitch, SendButton } from './EditorBar'
 import { applyLook, looks } from '../kits/looks'
 import { toPx } from '../sandbox/mapping'
 import { encode, readHash } from '../state/hash'
@@ -515,7 +515,7 @@ function Editor() {
   return (
     <div className="app">
       <header className="app__topbar">
-        <a className="app__brand" href="/" title={loaded && !loaded.kit ? 'Close your app and start over' : 'UISandbox'} onClick={(e) => { if (loaded) { e.preventDefault(); startOver() } }}><span className="app__brand-mark"><Mark size={16} /></span><span className="app__brand-name">UISandbox</span> <small>{loaded ? (loaded.kit ? loaded.kit.name : loaded.project.name) : 'Interface Design Playground'}</small></a>
+        <a className="app__brand" href="/" title={loaded && !loaded.kit ? 'Close your app and start over' : 'UISandbox'} onClick={(e) => { if (loaded) { e.preventDefault(); startOver() } }}><span className="app__brand-mark"><Mark size={16} /></span><span className="app__brand-name">UISandbox</span> <small>Design System Generator</small></a>
         <span className="app__spacer" />
         <div className="app__group">
           <a className="btn btn--ghost btn--sm app__how" href="/about" title="How it works"><BookOpen size={14} /><span className="ebar__txt"> How it works</span></a>
@@ -523,9 +523,6 @@ function Editor() {
           {loaded && <>
             <LookSelect current={lookNow} onPick={pickLook} />
             <EngineSelect kitId={loaded.kit?.id} ownApp={!loaded.kit} detected={coverage ? coverage.kit : undefined} onPick={pickKit} />
-            {hasScheme && <SchemeSwitch value={cfg.sb.dark ?? 'light'} onChange={(v) => dispatch({ type: 'SET', patch: { sb: { ...cfg.sb, dark: v } } })} />}
-            <ShareButton url={shareUrl} />
-            <button type="button" className="btn btn--ghost btn--sm" onClick={() => setShowNotes((v) => !v)} title={loaded.kit ? 'What we read from the kit' : 'What we read from your code'}><Info size={14} /><span className="ebar__txt"> Read</span></button>
             <button type="button" className={`btn ${sendTo ? 'btn--secondary' : 'btn--primary'} btn--sm`} onClick={() => setShowExport(true)}><Download size={14} /> Export</button>
             {sendTo && !loaded.kit && <SendButton to={sendTo} onSend={sendBack} />}
             {!loaded.kit && <button type="button" className="btn btn--ghost btn--sm" onClick={closeProject} title="Close your app and go back to the kit"><X size={14} /> Close</button>}
@@ -587,6 +584,10 @@ function Editor() {
               onTab={setTab}
               kitName={loaded.kit?.name}
               door={makeDoor()}
+              barExtra={hasScheme ? <SchemeSwitch value={cfg.sb.dark ?? 'light'} onChange={(v) => dispatch({ type: 'SET', patch: { sb: { ...cfg.sb, dark: v } } })} /> : null}
+              onToggleNotes={() => setShowNotes((v) => !v)}
+              notesOpen={showNotes}
+              notesLabel={loaded.kit ? `What UISandbox read from ${loaded.kit.name}: its files, its brand, its fonts, its values` : 'What UISandbox read from your code: the files, the brand, the fonts, the values'}
               notes={showNotes ? (
               <div className="card popcard" role="dialog" aria-label="What was read">
                 <h3>{loaded.kit ? `What we read from ${loaded.kit.name}` : 'What we read from your code'}</h3>
@@ -620,7 +621,7 @@ function Editor() {
       </div>
       {(loaded || !error) && <Footer />}
       {showExport && loaded && (
-        <ExportDialog cfg={cfg} base={loaded.report.baseline.cfg} table={loaded.project.table} vars={vars} projectName={loaded.project.name} kitDoorName={loaded.kit?.name} files={loaded.project.raw} fontCss={fontCss} notes={loaded.report.notes} painted={coverage?.painted} anchors={coverage?.anchors} kit={coverage ? coverage.kit : undefined} kitValues={coverage?.kitValues} readPageVars={readPageVars} onClose={() => setShowExport(false)} />
+        <ExportDialog cfg={cfg} base={loaded.report.baseline.cfg} table={loaded.project.table} vars={vars} projectName={loaded.project.name} kitDoorName={loaded.kit?.name} shareUrl={shareUrl} files={loaded.project.raw} fontCss={fontCss} notes={loaded.report.notes} painted={coverage?.painted} anchors={coverage?.anchors} kit={coverage ? coverage.kit : undefined} kitValues={coverage?.kitValues} readPageVars={readPageVars} onClose={() => setShowExport(false)} />
       )}
     </div>
   )

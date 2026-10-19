@@ -100,7 +100,7 @@ function footer() {
   return `</main>
 <footer class="sitefoot" aria-label="About UISandbox">
 <div class="sitefoot__inner">
-<div class="sitefoot__brand"><a href="/" class="sitefoot__mark"><img src="/favicon.svg" width="18" height="18" alt=""> UISandbox</a><p>Play with your app's design, right in the browser. Your files never leave it.</p></div>
+<div class="sitefoot__brand"><a href="/" class="sitefoot__mark"><img src="/favicon.svg" width="18" height="18" alt=""> UISandbox Design System Generator</a><p>Play with your app's design, right in the browser. Your files never leave it.</p></div>
 ${cols}
 </div>
 <div class="sitefoot__base">Made by <a href="${m.href}" target="_blank" rel="noopener author">${esc(m.name)}</a> at <a href="${m.orgHref}" target="_blank" rel="noopener">${esc(m.org)}</a> · © ${new Date().getFullYear()} ${esc(m.org)} · <a href="${m.licenceHref}" target="_blank" rel="noopener license">${esc(m.licence)}</a></div>

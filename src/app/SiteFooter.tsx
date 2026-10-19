@@ -21,7 +21,7 @@ export function SiteFooter() {
     <footer className="sitefoot" aria-label="About UISandbox">
       <div className="sitefoot__inner">
         <div className="sitefoot__brand">
-          <a href="/" className="sitefoot__mark"><Mark size={18} /> UISandbox</a>
+          <a href="/" className="sitefoot__mark"><Mark size={18} /> UISandbox Design System Generator</a>
           <p>Play with your app's design, right in the browser. Your files never leave it.</p>
         </div>
         {siteColumns().map((c) => (

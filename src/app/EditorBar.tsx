@@ -23,9 +23,9 @@ export function EngineSelect({ kitId, ownApp, detected, onPick }: {
 }) {
   const own = ownApp ? (detected ? `Your app · runs on ${kitName(detected)}` : detected === null ? 'Your app · none of the nine' : 'Your app') : ''
   return (
-    <label className="ebar__engine" title="Which kit the stage shows. Your own app stays what it is: switching loads a kit in its place.">
-      <span className="ebar__label">Engine</span>
-      <select value={ownApp ? '' : kitId ?? ''} onChange={(e) => { if (e.target.value) onPick(e.target.value) }} aria-label="Engine: the kit on the stage">
+    <label className="ebar__engine" title="The UI kit on the canvas, built from its own package. Your own app stays what it is: picking a kit loads it in its place.">
+      <span className="ebar__label">Kit</span>
+      <select value={ownApp ? '' : kitId ?? ''} onChange={(e) => { if (e.target.value) onPick(e.target.value) }} aria-label="Kit: the UI kit on the canvas">
         {ownApp && <option value="">{own}</option>}
         {KITS.map((k) => <option key={k.id} value={k.id}>{k.name}</option>)}
       </select>
@@ -60,7 +60,7 @@ export function ShareButton({ url }: { url: string | null }) {
   return (
     <span className="ebar__share">
       <button type="button" className="btn btn--ghost btn--sm" onClick={() => void share()} title="Copy a link to this build with these knobs">
-        {said && url && said.startsWith('Link copied') ? <Check size={14} /> : <Link2 size={14} />}<span className="ebar__txt"> Share</span>
+        {said && url && said.startsWith('Link copied') ? <Check size={14} /> : <Link2 size={14} />} Copy link
       </button>
       {said && <span className="ebar__pop" role="status">{said}</span>}
     </span>
@@ -71,11 +71,11 @@ export function ShareButton({ url }: { url: string | null }) {
  *  Shows the look while the knobs still stand where it put them. */
 export function LookSelect({ current, onPick }: { current: string | null; onPick: (id: string) => void }) {
   return (
-    <label className="ebar__engine ebar__look" title="Another kit's own start values on what the stage shows: its brand, background, status colours, body font and corners. Undo, Reset and Export treat it like any knob.">
-      <span className="ebar__label">Look</span>
-      <select value={current ?? ''} onChange={(e) => { if (e.target.value) onPick(e.target.value) }} aria-label="Look: another kit's start values">
-        <option value="">{current ? 'Custom' : 'As it is'}</option>
-        {LOOKS.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+    <label className="ebar__engine ebar__look" title="A preset: another kit's own start values (brand, background, status colours, body font, corners) on what the canvas shows. Undo, Reset and Export treat it like any knob.">
+      <span className="ebar__label">Preset</span>
+      <select value={current ?? ''} onChange={(e) => { if (e.target.value) onPick(e.target.value) }} aria-label="Preset: another kit's start values">
+        <option value="">{current ? 'Custom' : 'None'}</option>
+        {LOOKS.map((l) => <option key={l.id} value={l.id}>{l.name} look</option>)}
       </select>
     </label>
   )
