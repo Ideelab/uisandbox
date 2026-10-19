@@ -82,17 +82,22 @@ Not from the source, and free to change:
   `37ed9bc`. It is built from `orphans.mjs` over the compiled kit sheets, which
   arrive with 2b; until then this is the list, and 2b's gate must reproduce it.
 
-## While uicockpit.com is still live
+## One source, from 2026-10-19
 
-It serves its own copy, so for a while there are two. Any change to an engine
-file here or there must be carried to the other until the cutover (phase 4),
-after which `Ideelab/uicockpit` is the redirect and this is the only copy.
-`cmp` against the source is the drift check.
+This is the only copy that changes. `Ideelab/uicockpit` `dsg/` is frozen at
+`37ed9bc`: uicockpit.com serves that frozen copy until the cutover (phase 4)
+turns it into a redirect, and no engine change is carried back to it
+(decision 188). Two copies kept byte-identical by hand is a mirror, and every
+change carried to a site about to become a 301 is work thrown away.
 
-Carried since the move, the same change in both copies:
+So the drift check reads the other way round now: `cmp` against `37ed9bc`
+lists exactly the files changed HERE since the move, and each must be in this
+table with its decision.
 
-| uicockpit | file | what |
+| file | what | decision |
 |---|---|---|
-| `8ddeb0b` (branch `radix-separator-gray`, not yet on main) | `wall-bindings.mjs` | Radix divider gets `data-accent-color="gray"` (decision 187) |
+| `wall-bindings.mjs` | Radix divider gets `data-accent-color="gray"` | 187 |
 
-The drift check is now against `8ddeb0b`: 45 shared files, 0 differ.
+The byte-for-byte rule above still holds for what it was for: the tests were
+not edited on the way across. A test changed from here on is changed here,
+with a reason in the decisions, like any other file of this repo.

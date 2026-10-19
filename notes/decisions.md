@@ -2373,3 +2373,21 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     pointer left on it by the flyout. radixKit.test.ts holds the separators
     gray and fails on #185's zip. Gates: vitest 446, node 145 + 117, kit gates
     26/26 · 101 · 18, hold-outs on the kit fixtures 9 of 9 ok.
+
+188. One copy of the engine: UISandbox's. UIcockpit is frozen at 37ed9bc.
+
+    Until now an engine change had to be carried to both copies, byte for
+    byte (SOURCE.md). The first one that came up, the Radix divider (#187),
+    was committed in uicockpit on a branch and never reached its main.
+    Carrying it further means keeping a mirror of a site that becomes a 301
+    at the cutover, which is work thrown away and a second place for a
+    change to go missing.
+
+    So, Alexander's call delegated and taken: src/kits/engine/ is the only
+    source from here. Ideelab/uicockpit dsg/ stays at 37ed9bc, uicockpit.com
+    serves that until phase 4, and nothing is carried back. The unpushed
+    branch radix-separator-gray (8ddeb0b) in the uicockpit checkout is
+    deleted and that checkout is back on main at 37ed9bc; the same change is
+    here as 01e8380. SOURCE.md now lists every engine file that differs from
+    37ed9bc with its decision, so `cmp` against the frozen copy stays a
+    check rather than a chore.
