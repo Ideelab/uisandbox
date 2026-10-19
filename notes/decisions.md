@@ -2878,3 +2878,39 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
       colour and dimension objects our own exporter writes, and its
       DESIGN.md has no components section and does not say it left one
       out (AdminLTE). Two token formats in one product: on the list.
+
+204. Live mode on Next.js, and the dev server as the truth.
+
+    Measured on a fresh Next.js 15 app (App Router, webpack, its own HMR),
+    `npx uisandbox-mcp open http://localhost:5340`: it renders, 33 values
+    from 12 KB of CSS, 1:1 with 68 elements and 0 differences. Two things
+    broke and are fixed:
+
+    - Hot reload did not arrive. Next swaps a <link> for the SAME URL with a
+      new ?v=, and the sandbox, which matches files by path, answered from
+      the snapshot. In live mode the dev server is now the truth and the
+      snapshot only the start: every file is fetched fresh, and a page
+      navigation fetches today's HTML through the same rewrite a read build
+      gets (rewriteHtml for the sandbox, every byte but <link integrity>
+      for the control), its new literals defined with their own value in
+      the same answer. After: globals.css edited while open, the canvas
+      background follows (#ffffff → #fef3c7), 1:1 still 0 differences.
+    - The first version of that looped: the frame's URL carries our own
+      ?__sb=, it went along to /__dev/, the worker read it as a sandbox
+      request and asked the page again, /__dev/__dev/__dev/… The worker now
+      never touches /__dev/, and ?__sb= is stripped before the dev server
+      sees a query.
+
+    Radius → None leaves Next's 128px buttons as they are: a pill radius is
+    skipped by the tokeniser on purpose (skipPill), so round stays round.
+
+    The two Open Props findings of the baseline (201) are not the knobs:
+    the fixture is the Open Props docsite's SOURCE, whose size and border
+    variables come in through `@import "open-props"`, which needs its
+    build; at runtime --size-3 and --border-size-1 are empty, in the
+    control too (1:1 is ok). The sheet holds 1 space and 2 border widths;
+    the 277 and 95 "on screen" are the browser's own paddings and borders,
+    which knob-render counts on purpose (its population only errs high).
+
+    Not measured yet in live mode: Nuxt, SvelteKit, Astro, Angular, and a
+    dev server behind a sub-path or its own login.

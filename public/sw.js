@@ -109,6 +109,14 @@ function absolutise(css, base) {
     .replace(/@import\s+(['"])([^'"]+)\1/gi, (m, q, ref) => `@import ${q}${fix(ref)}${q}`)
 }
 
+/** A query for the dev server: theirs, without our own ?__sb= marker. */
+function devSearch(search) {
+  const q = new URLSearchParams(search)
+  q.delete('__sb')
+  const s = q.toString()
+  return s ? `?${s}` : ''
+}
+
 /** A cross-origin stylesheet, fetched here and rewritten by the page. */
 async function externalCss(event, url) {
   const target = url.searchParams.get('u')
@@ -138,6 +146,10 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url)
   if (url.origin !== self.location.origin) return
   if (url.pathname === '/__ext/') { event.respondWith(externalCss(event, url)); return }
+  // Live mode's route to the dev server is the network's, never a sandbox's:
+  // answered here, a fetch carrying the frame's ?__sb= came back to the page
+  // and asked for /__dev/__dev/… without end (measured on Next.js).
+  if (url.pathname.startsWith('/__dev/')) return
   const explicit = splitSandboxUrl(url.pathname)
 
   event.respondWith((async () => {
@@ -163,7 +175,7 @@ self.addEventListener('fetch', (event) => {
       const req = event.request
       const init = { method: req.method, headers: req.headers, redirect: 'manual' }
       if (!/^(GET|HEAD)$/i.test(req.method)) { init.body = await req.clone().arrayBuffer() }
-      return fetch(`/__dev/${path}${url.search}`, init)
+      return fetch(`/__dev/${path}${devSearch(url.search)}`, init)
     }
     if (!answer) {
       if (!/\.[a-z0-9]+$/i.test(path) && event.request.mode === 'navigate') {

@@ -10,7 +10,7 @@
  *   <id>-raw   the untouched site: the CONTROL `verify.ts` measures against
  */
 import { injectGuard, injectVars, loadOutsideRoot, type SandboxProject } from './project'
-import { rewriteCss } from './rewrite'
+import { rewriteCss, rewriteHtml, stripLinkIntegrity } from './rewrite'
 import { cssValue, defineNewVars, varName } from './table'
 
 interface Owned {
@@ -130,10 +130,36 @@ function rewriteLateCss(o: Owned, css: string, file: string): string {
   return lead + head + out.slice(lead.length)
 }
 
+/** A query for the dev server: theirs, without our own ?__sb= marker. */
+const devSearch = (search: string) => { const q = new URLSearchParams(search); q.delete('__sb'); const s = q.toString(); return s ? `?${s}` : '' }
+
+/** Live mode, a page: the dev server's HTML today, through the same rewrite a
+ *  page gets when a build is read (rewriteHtml for the sandbox, every byte but
+ *  <link integrity> for the control), then the variables or the guard. */
+async function pageFromDevServer(o: Owned, path: string, search: string, sid: string): Promise<{ type: string; body: ArrayBuffer } | null> {
+  const route = path.replace(/(^|\/)index\.html?$/i, '$1')
+  let res: Response
+  try { res = await fetch(`/__dev/${route}${devSearch(search)}`, { cache: 'no-store', headers: { accept: 'text/html' } }) } catch { return null }
+  if (!res.ok || !/text\/html/i.test(res.headers.get('content-type') ?? '')) return null
+  const html = await res.text()
+  let out: string
+  if (o.variant === 'raw') out = injectGuard(stripLinkIntegrity(html))
+  else {
+    const before = o.project.table.entries.length
+    const rewritten = rewriteHtml(html, o.project.table, `dev: /${route}`)
+    // Literals new in today's page hold their own value until the app maps
+    // them, so nothing is undefined while it does.
+    const fresh = Object.fromEntries(o.project.table.entries.slice(before).map((x) => [varName(x.id), cssValue(x.value)]))
+    out = injectVars(rewritten, { ...fresh, ...o.vars() }, sid)
+    if (o.project.table.entries.length !== before) for (const fn of growListeners) fn(o.project)
+  }
+  return { type: 'text/html; charset=utf-8', body: new TextEncoder().encode(out).buffer as ArrayBuffer }
+}
+
 /** Live mode: the dev server's answer for a file the archive does not hold. */
 async function fromDevServer(o: Owned, path: string, search: string): Promise<{ type: string; body: ArrayBuffer } | null> {
   let res: Response
-  try { res = await fetch(`/__dev/${path}${search}`, { cache: 'no-store' }) } catch { return null }
+  try { res = await fetch(`/__dev/${path}${devSearch(search)}`, { cache: 'no-store' }) } catch { return null }
   if (!res.ok) return null
   const type = res.headers.get('content-type') || 'application/octet-stream'
   if (o.variant === 'rewritten' && /text\/css/i.test(type)) {
@@ -190,12 +216,15 @@ async function onMessage(e: MessageEvent) {
   const path = decodeURIComponent(data.path ?? '')
   // Live: anything but a read goes to the dev server untouched (an API call).
   if (o.live && !/^(GET|HEAD)$/i.test(data.method ?? 'GET')) { port.postMessage({ passthrough: true }); return }
-  let f = resolveFile(files, path)
-  if (!f && o.live) {
-    const got = await fromDevServer(o, path, data.search ?? '')
-    if (got) { port.postMessage({ found: true, type: got.type, body: got.body }, [got.body]); return }
-    port.postMessage({ found: false, owner: true }); return
+  // Live: the dev server is the truth, the snapshot only the start. A page
+  // reload or a hot-reloaded stylesheet (Next swaps a <link> for the same URL
+  // with a new ?v=) must get today's file, not the one read at open.
+  if (o.live) {
+    const fresh = data.navigate && /\.html?$/i.test(path) ? await pageFromDevServer(o, path, data.search ?? '', data.sid) : await fromDevServer(o, path, data.search ?? '')
+    if (fresh) { port.postMessage({ found: true, type: fresh.type, body: fresh.body }, [fresh.body]); return }
   }
+  let f = resolveFile(files, path)
+  if (!f && o.live) { port.postMessage({ found: false, owner: true }); return }
   if (!f) {
     // Above the root? A page under `examples/` asking for `/build/x.js` means
     // the archive path `build/x.js` (or `<root>/../build/x.js`, the same thing).
