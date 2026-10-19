@@ -162,6 +162,18 @@
   transition: opacity 0.14s ease;
 }
 .fmsec--link:hover::after { opacity: 0.55; }
+/* Fine-tune: the fold under the essential knobs. A section label that opens. */
+.fmsec--fold {
+  appearance: none; -webkit-appearance: none; background: none; border: 0; font-family: inherit;
+  width: 100%; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 6px;
+  margin-top: 6px; padding-top: 10px; padding-bottom: 6px; border-top: 1px solid var(--app-border);
+  transition: color 0.14s ease;
+}
+.panel .fmsec--fold { padding-left: 12px; }
+.fmsec--fold:hover { color: var(--app-fg-muted); }
+.fmsec__chev { transition: transform var(--app-dur, .18s) var(--app-ease, ease); }
+.fmsec__chev--open { transform: rotate(90deg); }
+.fmsec__count { margin-left: auto; padding-right: 8px; font-weight: 500; text-transform: none; letter-spacing: 0; }
 /* A control row: label (left) + current value (right) + chevron. */
 .fmrow { position: relative; }
 .fmrow--open { z-index: 50; }

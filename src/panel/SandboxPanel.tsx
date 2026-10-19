@@ -62,6 +62,7 @@ const FAMILY_ROWS: Array<{ fam: Family; key: keyof Dials; label: string }> = [
 export function SandboxPanel({ cfg, tokens, base, families, scheme, codeFonts = [], hasGradients = false, varNow, dispatch, onCollapse, onRandomize, onReset, history, radiiOnScreen, kitName }: Props) {
   const asIs = kitName ? 'as the kit ships it' : 'as in your code'
   const [openKey, setOpenKey] = useState<string | null>(null)
+  const [fineOpen, setFineOpen] = useState(false)
   const [anchor, setAnchor] = useState<{ top: number; left: number } | null>(null)
   const popRef = useRef<HTMLDivElement>(null)
   const set = (patch: Partial<Config>) => dispatch({ type: 'SET', patch })
@@ -168,6 +169,10 @@ export function SandboxPanel({ cfg, tokens, base, families, scheme, codeFonts = 
         <>
           {status.map((f) => famPicker(f, false))}
           <p className="sbp__hint">Every colour of a status family in your CSS moves with its picker; the dots show each family's most-used member.</p>
+          {/* The other colour families (card tints, categories, chart series)
+              have no picker of their own. They used to get a row that looked
+              like a knob and turned nothing; what is true about them is here. */}
+          {!!families?.palette?.length && <p className="sbp__hint">{families.palette.length} other colour famil{families.palette.length === 1 ? 'y' : 'ies'} (tints, categories, chart series) {kitName ? 'stay as the kit ships them.' : 'are left alone here; Hue, Saturation and Contrast move them.'}</p>}
         </>
       ),
     })
@@ -191,23 +196,6 @@ export function SandboxPanel({ cfg, tokens, base, families, scheme, codeFonts = 
           </label>
           <p className="sbp__hint">Your page paints {canvasHex} behind everything; surfaces and cards near that lightness move with it, so their step above the page stays.</p>
           {cfg.sb.cBackground && <button type="button" className="btn btn--ghost btn--sm sbp__reset" onClick={() => setDial('cBackground', undefined)}>Back to your code ({canvasHex})</button>}
-        </>
-      ),
-    })
-  }
-  // The palette: chromatic clusters that are neither brand nor a proven status
-  // role (pastel card tints, categories, chart series). No picker of their own —
-  // they follow Hue / Saturation / Contrast — but the dots show they were seen
-  // and NOT taken for status.
-  if (families?.palette?.length) {
-    const pal = families.palette.slice(0, 8).map((c, i) => { const id = families.paletteId?.[i]; return (id !== undefined ? varNow?.(id) : undefined) ?? formatCssColor({ ...c, a: 1 }) })
-    rows.push({
-      key: 'palette', label: 'Palette', changed: false,
-      value: <span className="fmrow__dots">{pal.map((hex, i) => <span key={i} className="fmrow__dot" style={{ background: hex }} title={hex} />)}</span>,
-      body: () => (
-        <>
-          <p className="sbp__hint">{families.palette!.length} colour famil{families.palette!.length === 1 ? 'y' : 'ies'} in your CSS that are neither the brand nor a status role: pastel tints on cards, categories, chart series. They are not touched by the Status pickers; Hue, Saturation and Contrast move them.</p>
-          <div className="fmrow__dots" style={{ gap: 6, padding: '4px 10px 8px' }}>{pal.map((hex, i) => <span key={i} className="fmrow__dot" style={{ background: hex, width: 14, height: 14 }} title={hex} />)}</div>
         </>
       ),
     })
@@ -281,6 +269,44 @@ export function SandboxPanel({ cfg, tokens, base, families, scheme, codeFonts = 
   // ── Shape ──
   DIALS.filter((d) => d.section === 'Shape').forEach((spec, i) => rows.push(dialRow(spec, i === 0 ? 'Shape' : undefined)))
 
+  // What most people turn first, on top and in this order (the same few
+  // shadcn's own Create leads with: theme, base colour, fonts, radius, plus
+  // the page and the density). The rest is Fine-tune, folded: nineteen rows
+  // of equal weight read as nineteen equal decisions.
+  const ESSENTIAL = ['brand', 'background', 'dark', 'neutral', 'fontDisplay', 'fontBody', 'radius', 'space']
+  const GROUP: Record<string, 'Colour' | 'Type' | 'Shape'> = { type: 'Type', lineHeight: 'Type', tracking: 'Type', weight: 'Type', borderWidth: 'Shape', shadow: 'Shape', motion: 'Shape' }
+  const essential = ESSENTIAL.map((k) => rows.find((r) => r.key === k)).filter((r): r is Row => !!r).map((r) => ({ ...r, sec: undefined }))
+  const rest = rows.filter((r) => !ESSENTIAL.includes(r.key)).map((r) => ({ ...r, grp: GROUP[r.key] ?? 'Colour' }))
+  const fine = (['Colour', 'Type', 'Shape'] as const).flatMap((g) => rest.filter((r) => r.grp === g).map((r, i) => ({ ...r, sec: i === 0 ? g : undefined })))
+  const fineChanged = fine.filter((r) => r.changed).length
+  // A Fine-tune knob that gets turned from elsewhere (Shuffle, a shared link,
+  // a preset) opens the fold, so a change is never hidden; closing it again
+  // is the user's call.
+  const anyFine = fineChanged > 0
+  useEffect(() => { if (anyFine) setFineOpen(true) }, [anyFine])
+  const renderRow = (r: Row) => (
+    <Fragment key={r.key}>
+      {r.sec && <div className="menu__label fmsec">{r.sec}</div>}
+      <div className={`fmrow ${openKey === r.key ? 'fmrow--open' : ''}`}>
+        <button type="button" className="menu__item fmrow__head sbp__head" onClick={(e) => toggle(r.key, (e.currentTarget as HTMLElement).closest('.fmrow'))} aria-expanded={openKey === r.key}>
+          <span className={`sbp__state ${r.changed ? 'sbp__state--changed' : ''}`} title={r.changed ? 'changed' : asIs} />
+          <span className="fmrow__label">{r.label}</span>
+          <span className="menu__value fmrow__val" title={String(r.value)}>
+            {r.dot && <span className="fmrow__dot fmrow__dot--viz">{r.dot}</span>}
+            <span className="fmrow__val-text">{r.value}</span>
+          </span>
+          <ChevronRight size={14} strokeWidth={2} className="fmrow__chev" />
+        </button>
+        {openKey === r.key && createPortal(
+          <div ref={popRef} className={`menu fmrow__pop ${r.wide ? 'fmrow__pop--font' : ''}`} role="menu" style={anchor ? { position: 'fixed', top: anchor.top, left: anchor.left } : undefined}>
+            {r.body()}
+          </div>,
+          document.body,
+        )}
+      </div>
+    </Fragment>
+  )
+
   return (
     <aside className="panel">
       <div className="card fmenu">
@@ -289,28 +315,15 @@ export function SandboxPanel({ cfg, tokens, base, families, scheme, codeFonts = 
           <button type="button" className="btn btn--ghost btn--icon fmenu__collapse" onClick={onCollapse} aria-label="Collapse" title="Collapse for a full-width preview"><PanelLeftClose size={15} strokeWidth={1.75} /></button>
         </div>
         <div className="fmenu__rows">
-          {rows.map((r) => (
-            <Fragment key={r.key}>
-              {r.sec && <div className="menu__label fmsec">{r.sec}</div>}
-              <div className={`fmrow ${openKey === r.key ? 'fmrow--open' : ''}`}>
-                <button type="button" className="menu__item fmrow__head sbp__head" onClick={(e) => toggle(r.key, (e.currentTarget as HTMLElement).closest('.fmrow'))} aria-expanded={openKey === r.key}>
-                  <span className={`sbp__state ${r.changed ? 'sbp__state--changed' : ''}`} title={r.changed ? 'changed' : asIs} />
-                  <span className="fmrow__label">{r.label}</span>
-                  <span className="menu__value fmrow__val" title={String(r.value)}>
-                    {r.dot && <span className="fmrow__dot fmrow__dot--viz">{r.dot}</span>}
-                    <span className="fmrow__val-text">{r.value}</span>
-                  </span>
-                  <ChevronRight size={14} strokeWidth={2} className="fmrow__chev" />
-                </button>
-                {openKey === r.key && createPortal(
-                  <div ref={popRef} className={`menu fmrow__pop ${r.wide ? 'fmrow__pop--font' : ''}`} role="menu" style={anchor ? { position: 'fixed', top: anchor.top, left: anchor.left } : undefined}>
-                    {r.body()}
-                  </div>,
-                  document.body,
-                )}
-              </div>
-            </Fragment>
-          ))}
+          {essential.map(renderRow)}
+          {fine.length > 0 && (
+            <button type="button" className="menu__label fmsec fmsec--fold" onClick={() => setFineOpen((v) => !v)} aria-expanded={fineOpen}>
+              <ChevronRight size={12} strokeWidth={2.25} className={`fmsec__chev ${fineOpen ? 'fmsec__chev--open' : ''}`} />
+              Fine-tune
+              <span className="fmsec__count">{fineChanged ? `${fineChanged} changed` : fine.length}</span>
+            </button>
+          )}
+          {fineOpen && fine.map(renderRow)}
         </div>
       </div>
       <div className="panel__foot">
