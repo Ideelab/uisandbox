@@ -574,10 +574,48 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
 /* Phones with a project open: the knobs panel overlays the stage full-width
    instead of squeezing it into a sliver (it opens on demand there), and the
    footer yields the room (it lives in the intake's scroll flow instead). */
-@media (max-width: 700px) {
+/* The knobs' opener: a small icon beside the stage on a wide screen, the
+   "Knobs" bar at the foot of a phone (below). */
+.app__knobs-open { position: absolute; left: 8px; top: 8px; z-index: 41; }
+.app__knobs-label { display: none; }
+
+/* Phones and narrow tablets (merge phase 3): the stage on top, the knobs in a
+   bottom sheet. Closed, the sheet is one bar that says "Knobs"; open, it takes
+   the lower part of the screen and scrolls on its own, so the screen it turns
+   stays in view above it. The footer yields the room (it is on /about). */
+@media (max-width: 820px) {
   .app > .foot { display: none; }
   .app__body { position: relative; }
-  .app__body .panel { position: absolute; inset: 0; width: 100%; z-index: 55; background: var(--app-bg); }
+  .app__body:not(:has(.panel)) .stage { padding-left: 12px; }
+  .stage { padding: 10px 12px 64px; }
+  .app__knobs-open { position: fixed; left: 12px; right: 12px; top: auto; bottom: 12px; width: auto; height: 44px; z-index: 60; justify-content: center; gap: 8px; border: 1px solid var(--app-border); border-radius: 12px; background: var(--app-surface); box-shadow: var(--app-shadow-sm); font-weight: 600; color: var(--app-fg); }
+  .app__knobs-label { display: inline; }
+  .app__body .panel { position: fixed; left: 0; right: 0; bottom: 0; top: auto; width: 100%; height: min(62dvh, 560px); z-index: 60; padding: 10px 10px 12px; background: var(--app-bg); border-top: 1px solid var(--app-border); border-radius: 16px 16px 0 0; box-shadow: 0 -12px 32px rgba(0, 0, 0, .16); }
+  .app__intro-where { display: none; }
+  .app__body .panel > .fmenu { width: 100%; }
+}
+@media (max-width: 600px) {
+  .stage__bar .seg, .stage__bar a[href][target="_blank"] { display: none; }
+}
+
+/* The top bar narrows by losing words, never controls: labels go first, the
+   icons and their titles stay. */
+.app__topbar { min-width: 0; }
+@media (max-width: 1180px) { .ebar__txt { display: none; } }
+@media (max-width: 820px) {
+  .app__brand small, .ebar__label { display: none; }
+  .ebar__engine { padding-left: 6px; }
+  .ebar__engine select { max-width: 140px; }
+}
+/* A phone: "How it works" is the intro's link and /about's own address; Light /
+   Dark is the Dark mode knob in the sheet. Neither control is lost. */
+.app__intro-how { display: none; }
+@media (max-width: 560px) { .app__group .app__how, .app__group .ebar__scheme { display: none; } .app__intro-how { display: inline; } }
+@media (max-width: 420px) {
+  .app__brand-name { display: none; }
+  .app__group { gap: 4px; }
+  .ebar__engine select { max-width: 104px; }
+  .app__group .btn--primary { padding-left: 9px; padding-right: 9px; }
 }
 
 /* === Topbar: two groups — the tool's own (MCP, Star) and, with a project, the work (undo, Read, Export, Close) === */

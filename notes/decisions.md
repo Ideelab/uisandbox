@@ -2484,3 +2484,29 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     button's zip holds the seven files above; Escape closes the dialog. On
     the SB Admin sample: the six cards and "Everything (.zip)", as before.
     Gates: vitest 446, node 145 + 117, kit gates 101 + 18.
+
+192. Merge phase 3, step 4: the phone.
+
+    Below 820px the stage is on top and the knobs are a bottom sheet:
+    closed, one full-width bar that says "Knobs"; open, the lower 62% of
+    the screen (at most 560px), scrolling on its own, so the screen being
+    turned stays in view above it. The footer yields the room there (it is
+    on /about). Below 600px the width buttons and Open go: a phone has one
+    width.
+
+    The top bar narrows by losing words, never controls: below 1180px the
+    labels of How it works, Share and Read go and their icons and titles
+    stay; below 820px the project name and the "Engine" label; below 560px
+    How it works moves into the intro line and Light / Dark is left to the
+    Dark mode knob in the sheet; below 420px the mark stands for the name.
+    Measured: the top bar's scroll width equals the viewport at 360, 390,
+    768, 1024 and 1280 (it was 812 in 661 and 551 in 390).
+
+    Paid for once more, as the merge brief warned: `.seg { display:
+    inline-flex }` loads after the media rule and beat `display: none`; the
+    rule now carries the group's class.
+
+    Seen and left: the kits' own components sheet is wider than a phone
+    (the button row of shadcn's runs off a 360px frame). That is the kit
+    build's layout (scenes.mjs), not the editor's, and it scrolls inside its
+    frame. A follow-up, with the kit builds.

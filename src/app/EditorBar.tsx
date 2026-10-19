@@ -59,7 +59,7 @@ export function ShareButton({ url }: { url: string | null }) {
   return (
     <span className="ebar__share">
       <button type="button" className="btn btn--ghost btn--sm" onClick={() => void share()} title="Copy a link to this build with these knobs">
-        {said && url && said.startsWith('Link copied') ? <Check size={14} /> : <Link2 size={14} />} Share
+        {said && url && said.startsWith('Link copied') ? <Check size={14} /> : <Link2 size={14} />}<span className="ebar__txt"> Share</span>
       </button>
       {said && <span className="ebar__pop" role="status">{said}</span>}
     </span>

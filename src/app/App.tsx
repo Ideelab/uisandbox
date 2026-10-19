@@ -68,7 +68,7 @@ function Editor() {
   const setBusy = (p: Progress | null) => setBusyRaw(p ? { ...p, fromUrl: fromUrlRef.current } : null)
   const [error, setError] = useState<string | null>(null)
   // On a phone the stage needs the full width first; the knobs open on demand.
-  const [panelOpen, setPanelOpen] = useState(() => typeof window === 'undefined' || window.innerWidth > 700)
+  const [panelOpen, setPanelOpen] = useState(() => typeof window === 'undefined' || window.innerWidth > 820)
   const [showExport, setShowExport] = useState(false)
   const [showNotes, setShowNotes] = useState(false)
   // The stage's tabs. On a kit: its components sheet, its screens, and the
@@ -445,16 +445,16 @@ function Editor() {
   return (
     <div className="app">
       <header className="app__topbar">
-        <a className="app__brand" href="/" title={loaded && !loaded.kit ? 'Close your app and start over' : 'UISandbox'} onClick={(e) => { if (loaded && !loaded.kit) { e.preventDefault(); closeProject() } }}><span className="app__brand-mark"><Mark size={16} /></span>UISandbox <small>{loaded ? (loaded.kit ? loaded.kit.name : loaded.project.name) : 'Interface Design Playground'}</small></a>
+        <a className="app__brand" href="/" title={loaded && !loaded.kit ? 'Close your app and start over' : 'UISandbox'} onClick={(e) => { if (loaded && !loaded.kit) { e.preventDefault(); closeProject() } }}><span className="app__brand-mark"><Mark size={16} /></span><span className="app__brand-name">UISandbox</span> <small>{loaded ? (loaded.kit ? loaded.kit.name : loaded.project.name) : 'Interface Design Playground'}</small></a>
         <span className="app__spacer" />
         <div className="app__group">
-          <a className="btn btn--ghost btn--sm" href="/about"><BookOpen size={14} /> How it works</a>
+          <a className="btn btn--ghost btn--sm app__how" href="/about" title="How it works"><BookOpen size={14} /><span className="ebar__txt"> How it works</span></a>
           {!loaded && <><McpButton /><StarButton /></>}
           {loaded && <>
             <EngineSelect kitId={loaded.kit?.id} ownApp={!loaded.kit} detected={coverage ? coverage.kit : undefined} onPick={pickKit} />
             {hasScheme && <SchemeSwitch value={cfg.sb.dark ?? 'light'} onChange={(v) => dispatch({ type: 'SET', patch: { sb: { ...cfg.sb, dark: v } } })} />}
             <ShareButton url={shareUrl} />
-            <button type="button" className="btn btn--ghost btn--sm" onClick={() => setShowNotes((v) => !v)} title={loaded.kit ? 'What we read from the kit' : 'What we read from your code'}><Info size={14} /> Read</button>
+            <button type="button" className="btn btn--ghost btn--sm" onClick={() => setShowNotes((v) => !v)} title={loaded.kit ? 'What we read from the kit' : 'What we read from your code'}><Info size={14} /><span className="ebar__txt"> Read</span></button>
             <button type="button" className="btn btn--primary btn--sm" onClick={() => setShowExport(true)}><Download size={14} /> Export</button>
             {!loaded.kit && <button type="button" className="btn btn--ghost btn--sm" onClick={closeProject} title="Close your app and go back to the kit"><X size={14} /> Close</button>}
           </>}
@@ -465,14 +465,15 @@ function Editor() {
       {loaded?.kit && (
         <div className="app__intro">
           <h1>Play with your app's design, right in the browser.</h1>
-          <span>This is {loaded.kit.name} as it ships. Turn a knob on the left, then <button type="button" className="app__intro-link" onClick={() => setTab('app')}>try it on your own app</button>.</span>
+          <span>This is {loaded.kit.name} as it ships. Turn a knob<span className="app__intro-where"> on the left</span>, then <button type="button" className="app__intro-link" onClick={() => setTab('app')}>try it on your own app</button>.</span>
+          <a className="app__intro-link app__intro-how" href="/about">How it works</a>
         </div>
       )}
       <div className="app__body">
         {loaded && (
           <>
             {!panelOpen && (
-              <button type="button" className="btn btn--ghost btn--icon" style={{ position: 'absolute', left: 8, top: 56, zIndex: 41 }} onClick={() => setPanelOpen(true)} title="Show the knobs"><PanelLeftOpen size={16} /></button>
+              <button type="button" className="btn btn--ghost btn--icon app__knobs-open" onClick={() => setPanelOpen(true)} title="Show the knobs"><PanelLeftOpen size={16} /><span className="app__knobs-label">Knobs</span></button>
             )}
             {panelOpen && (
               <SandboxPanel
