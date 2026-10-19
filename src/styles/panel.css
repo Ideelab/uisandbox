@@ -174,6 +174,12 @@
 .fmsec__chev { transition: transform var(--app-dur, .18s) var(--app-ease, ease); }
 .fmsec__chev--open { transform: rotate(90deg); }
 .fmsec__count { margin-left: auto; padding-right: 8px; font-weight: 500; text-transform: none; letter-spacing: 0; }
+/* Quick stops under Radius and Spacing: the dial's own snaps, one click each,
+   aligned with the row's label; the flyout's slider keeps everything between. */
+.fmquick { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 10px 8px 31px; }
+.fmquick__stop { appearance: none; font: inherit; font-size: 11px; line-height: 1.2; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--app-border); background: none; color: var(--app-fg-muted); cursor: pointer; transition: background var(--app-dur) var(--app-ease), color var(--app-dur) var(--app-ease); }
+.fmquick__stop:hover { background: var(--app-hover); color: var(--app-fg); }
+.fmquick__stop--on { background: var(--app-fg); color: var(--app-bg); border-color: var(--app-fg); }
 /* A control row: label (left) + current value (right) + chevron. */
 .fmrow { position: relative; }
 .fmrow--open { z-index: 50; }

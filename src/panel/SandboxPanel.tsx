@@ -98,7 +98,7 @@ export function SandboxPanel({ cfg, tokens, base, families, scheme, codeFonts = 
   const themeOf = (hex: string) => THEMES.find((t) => t.hex.toLowerCase() === hex.toLowerCase())
 
   /* Rows: label · value · state · flyout content */
-  interface Row { key: string; sec?: string; label: string; value: React.ReactNode; changed: boolean; dot?: React.ReactNode; body: () => React.ReactNode; wide?: boolean }
+  interface Row { key: string; sec?: string; label: string; value: React.ReactNode; changed: boolean; dot?: React.ReactNode; body: () => React.ReactNode; wide?: boolean; quick?: React.ReactNode }
   const rows: Row[] = []
 
   // ── Colour ──
@@ -200,11 +200,25 @@ export function SandboxPanel({ cfg, tokens, base, families, scheme, codeFonts = 
       ),
     })
   }
+  // The stops a few dials show at rest, one click each, the way shadcn's
+  // Create names its radii; the slider in the flyout keeps everything between.
+  // The words are the dial's own snap names, so a stop and its snap agree.
+  const QUICK: Partial<Record<keyof Dials, number[]>> = { radius: [0, 0.5, 1, 1.5], space: [0.75, 1, 1.25] }
   const dialRow = (spec: DialSpec, sec?: string): Row => {
     const v = (cfg.sb[spec.key] ?? DEFAULT_DIALS[spec.key]) as number
     const bv = (base.sb[spec.key] ?? DEFAULT_DIALS[spec.key]) as number
+    const stops = QUICK[spec.key]?.map((at) => spec.snaps.find((x) => x.at === at)).filter((x): x is NonNullable<typeof x> => !!x)
+    const quick = stops?.length ? (
+      <div className="fmquick" role="group" aria-label={`${spec.label} stops`}>
+        {stops.map((x) => {
+          const on = Math.abs(v - x.at) <= spec.step * 1.01
+          const word = x.label === 'as is' ? 'As is' : x.label
+          return <button key={x.at} type="button" className={`fmquick__stop ${on ? 'fmquick__stop--on' : ''}`} aria-pressed={on} title={x.label === 'as is' ? asIs : `${spec.label}: ${x.label} (${fmtDial(spec, x.at)})`} onClick={() => setDial(spec.key, x.at)}>{word}</button>
+        })}
+      </div>
+    ) : undefined
     return {
-      key: spec.key, sec, label: spec.label, changed: v !== bv, value: fmtDial(spec, v),
+      key: spec.key, sec, label: spec.label, changed: v !== bv, value: fmtDial(spec, v), quick,
       body: () => (
         <div className="sbp__dial">
           {spec.key === 'radius' && radiiOnScreen !== undefined && radiiOnScreen <= 3 && (
@@ -297,6 +311,7 @@ export function SandboxPanel({ cfg, tokens, base, families, scheme, codeFonts = 
           </span>
           <ChevronRight size={14} strokeWidth={2} className="fmrow__chev" />
         </button>
+        {r.quick}
         {openKey === r.key && createPortal(
           <div ref={popRef} className={`menu fmrow__pop ${r.wide ? 'fmrow__pop--font' : ''}`} role="menu" style={anchor ? { position: 'fixed', top: anchor.top, left: anchor.left } : undefined}>
             {r.body()}

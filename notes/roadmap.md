@@ -147,6 +147,12 @@ traffic page and the registry counts, never from a script on the page.
 
 ## Open, not yet scheduled
 
+- **A "Feel" knob, to spar about first** (Alexander, 2026-10-20): one pick
+  that sets Spacing, Radius, Elevation and Border width together (Compact,
+  Default, Soft, Sharp), the way shadcn's Create offers Style. Alexander
+  built it in UIcockpit more than once and took it out again: it fits a
+  house that offers one style in several variants, as shadcn does, more
+  than somebody tuning their own app. Talk it through before building.
 - **Check 1:1 cannot see a font that never arrived** (decision 181): a
   computed font-family names the face asked for, not whether it loaded.
   A check on `document.fonts` status in both frames would close it.
