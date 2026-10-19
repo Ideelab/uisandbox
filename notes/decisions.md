@@ -2957,3 +2957,81 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     - kit-antd timed out twice, both times while something else loaded the
       same server (probes, a first run straight after a deploy), and is ok
       on every run alone. Watched, not chased.
+
+207. The kits against the kits: each kit's own docs page beside our canvas.
+
+    Every gate so far asked whether a kit build is alive and whether every
+    class on it is the kit's own. None asked whether it looks like the kit.
+    So the same four components (primary and secondary button, text field,
+    card) were measured on each kit's official docs page and on our canvas
+    (the kit build in the editor's frame): fill, text colour, border, corner,
+    font, size, weight, height, padding, shadow. A difference only counts
+    once traced to its source; the docs sites dress themselves (Material's
+    in gold and Google Sans, Ant Design's in AlibabaSans, a lime demo on
+    Mantine's) and those are theirs, not the kit's.
+
+    Radix: 4 of 4 identical. Three real defects, all ours:
+
+    - The strip set a body font of its own. `#strip{font-family:...}`
+      (scenes.mjs) was meant for Ant Design, the one kit that sets no global
+      body font, but everything on the wall inherits from #strip before it
+      reaches <body>, so Bootstrap's and Mantine's own body font never
+      arrived. Control: set --bs-body-font-family to Georgia and the button
+      stayed ui-sans-serif. Now the fallback sits on :where(html), where any
+      kit rule on html or body wins: the same control turns Bootstrap's and
+      Mantine's button to Georgia. Counted per text element, old build
+      against new: Tailwind, daisyUI, shadcn, Ant Design and Material
+      unchanged; Bootstrap (58), Mantine (55) and Radix (12 captions) move
+      to their own font. Ant Design's captions keep the fallback, not Times.
+    - daisyUI's corners were half of daisyUI's: 2px fields and 4px boxes
+      where daisyUI ships 4px and 8px. kit-defaults read the radius from
+      --radius-field and the build wrote it into --radius-box, which the
+      field follows at half.
+    - Ant Design's text was a shade lighter than Ant Design's: its ink was
+      read from colorText (88% black, flattened to #1f1f1f) and written
+      into colorTextBase, from which their algorithm takes 88% again
+      (rgba(31,31,31,0.88)); its muted ink was read from the tertiary text
+      and written into the secondary (#8c8c8c where theirs is 65% black).
+
+    One meter moved with it: Radix's type reach went from 15% to 0%. The
+    15% were our 12 captions in the strip's font, which the Body font knob
+    did reach. Turned to Georgia through the editor, it reaches 12 of 81
+    text elements on the old Radix build and 1 of 81 on the new: Radix's own
+    text (its --default-font-family) never followed the knob, and the meter
+    now says so instead of counting our captions. Bootstrap 61/79, Mantine
+    59/77 and Ant Design 62/83 follow it as before. Why the knob misses
+    Radix's family is open.
+
+    Both are the same mistake, so the rule is now a test:
+    kit-defaults.test.mjs holds that every default is read from the variable
+    the build writes it into, with the exceptions named and why (Tailwind's
+    own role names and the Tailwind Plus corner, Bootstrap's link colour,
+    Material's derived roles, Ant Design's two white backgrounds). Control:
+    with the old mapping it fails on exactly those three. After the rebuild
+    the sweep shows 0 differences on font, corner and text colour for
+    Bootstrap, daisyUI, Mantine and Ant Design. The daisyUI preset now says
+    8px corners. Ant Design's secondary text is #595959, theirs rgba(0,0,0,
+    0.65): the same on white, a flattened copy on grey.
+
+    Open, for Alexander:
+
+    - Material renders in SF Pro, not Roboto. Its typeface is "Roboto Flex,
+      Roboto, Noto Sans, system-ui" (from @material/web's own labs sheet)
+      and no font is loaded, so the browser paints .SF NS (asked through
+      CDP). Material's own setup loads Roboto from Google Fonts. Bundling
+      Roboto (OFL) in the kit zip would make it Material without a request
+      leaving the tab.
+    - shadcn/ui has moved on. shadcn 4.22.1's `init --defaults` takes the
+      preset base-nova, and ui.shadcn.com renders it: buttons and fields
+      32px high with 10px corners and no shadow, cards without a border,
+      a black primary. Our kit is built from r/styles/new-york-v4: 36px,
+      8px corners, shadow-xs. Still installable and faithful to itself,
+      but not what someone starting today gets.
+
+    The source scan's budget (performance, parked): reading at most 8M
+    characters of source cut Bootswatch's derive from 103.7 s to 8.3 s and
+    antd's site from 25.2 s to 3.1 s, but 2 of the 23 builds over 8M got a
+    different baseline (element-plus: colour theme rose for cobalt;
+    Bootswatch: indigo for rose and a different scale). A faster wrong
+    start is not a fix, so it is not the default, and the unused option was
+    taken back out.

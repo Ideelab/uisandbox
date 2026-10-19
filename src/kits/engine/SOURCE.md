@@ -102,6 +102,9 @@ table with its decision.
 | `generate.mjs` | tokens.json in the W3C shapes (sRGB colour objects, {value, unit} lengths, fontFamily lists); what has no shape is named | 205 |
 | `generate.test.mjs` | holds those shapes | 205 |
 | `scenes.mjs` | on glass a column takes the board's width, so a kit's own responsive rules fold it | 206 |
+| `scenes.mjs` | the fallback font on :where(html), not #strip: a kit's own body font reaches its wall | 207 |
+| `kit-defaults.mjs` | each default read from the variable the build writes it into (daisyUI radius, Ant Design ink and muted ink); TABLE exported | 207 |
+| `kit-defaults.test.mjs` | new: holds that rule, with the exceptions named | 207 |
 
 The byte-for-byte rule above still holds for what it was for: the tests were
 not edited on the way across. A test changed from here on is changed here,
