@@ -183,7 +183,8 @@ export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, ch
             if (!away) onLoaded()
           }}
         />
-        {!showVerify && notes}
+        {/* The door is its own card; nothing lies on top of it. */}
+        {!showVerify && !atDoor && notes}
         <div className="stage__low">
         {showCov && coverage && (
           <div className="card popcard popcard--low verify" role="dialog" aria-label="Reach">
