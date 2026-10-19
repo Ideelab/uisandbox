@@ -7,23 +7,37 @@ interface ScreenPickerProps {
   current: Screen
   onPick: (s: Screen) => void
   onPin: () => void
+  /** The page the frame is on now, when it is NOT one of `screens` (you
+   *  clicked through to it inside the app); null when it is in the list. */
+  pinnable?: () => string | null
+  /** A kit's screens: shown by the names their pages carry, not by path. */
+  named?: boolean
 }
 
 /**
  * The screen picker — one shape for 3 screens and for 300.
  *
  * A tab strip stops working around a dozen; a searchable, folder-grouped list
- * never does. Type to filter, arrows + Enter to choose, `[` / `]` anywhere on
- * the page for previous / next. Each entry says where it came from (a file in
- * the build, a link found on a page, pinned by hand) so a route that only an
- * SPA knows about is not mistaken for a page in the archive.
+ * never does. Arrows + Enter to choose, `[` / `]` anywhere on the page for
+ * previous / next. Each entry says where it came from (a file in the build, a
+ * link found on a page, added by hand) so a route that only an SPA knows about
+ * is not mistaken for a page in the archive.
+ *
+ * Quiet by default (Alexander could not read "overview/ 2/5" or "Pin current
+ * route"): the button says the screen's name and nothing else, the search
+ * appears only for a list too long to scan, the shortcuts live in the
+ * tooltip, and "add this page" appears only when the frame is on a page the
+ * list does not have, saying which one.
  */
-export function ScreenPicker({ screens, current, onPick, onPin }: ScreenPickerProps) {
+export function ScreenPicker({ screens, current, onPick, onPin, pinnable, named }: ScreenPickerProps) {
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState('')
   const [hi, setHi] = useState(0)
+  const [pinPath, setPinPath] = useState<string | null>(null)
+  const searchable = screens.length > 8
   const rootRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const listRef = useRef<HTMLDivElement>(null)
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase()
@@ -43,7 +57,7 @@ export function ScreenPicker({ screens, current, onPick, onPin }: ScreenPickerPr
   }, [filtered])
   const flat = useMemo(() => groups.flatMap(([, list]) => list), [groups])
 
-  useEffect(() => { if (open) { setQ(''); setHi(Math.max(0, flat.findIndex((s) => s.path === current.path))); setTimeout(() => inputRef.current?.focus(), 0) } }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (open) { setQ(''); setPinPath(pinnable?.() ?? null); setHi(Math.max(0, flat.findIndex((s) => s.path === current.path))); setTimeout(() => (inputRef.current ?? listRef.current)?.focus(), 0) } }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { setHi(0) }, [q])
   useEffect(() => {
     if (!open) return
@@ -66,19 +80,28 @@ export function ScreenPicker({ screens, current, onPick, onPin }: ScreenPickerPr
   }, [screens, current, onPick])
 
   const choose = (s: Screen) => { onPick(s); setOpen(false) }
-  const tag = (s: Screen) => (s.source === 'link' ? 'route' : s.source === 'pinned' ? 'pinned' : null)
+  const tag = (s: Screen) => (s.source === 'link' ? 'link' : s.source === 'pinned' ? 'added' : null)
   const idx = screens.findIndex((s) => s.path === current.path)
+  /** What a person calls the screen: a kit's own name for it ("An overview"),
+   *  else the page's path, the root as Home. */
+  const nameOf = (s: Screen) => (named && s.title ? s.title.split(' · ')[0]! : s.label === '/' ? 'Home' : s.label.replace(/^\//, ''))
+  const leafOf = (s: Screen) => (named && s.title ? nameOf(s) : s.label.split('/').filter(Boolean).pop() ?? 'Home')
+  const keys = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); setHi((h) => Math.min(flat.length - 1, h + 1)) }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setHi((h) => Math.max(0, h - 1)) }
+    else if (e.key === 'Enter') { e.preventDefault(); const s = flat[hi]; if (s) choose(s) }
+    else if (e.key === 'Escape') setOpen(false)
+  }
 
   return (
     <div className="spick" ref={rootRef}>
-      <button type="button" className="spick__btn" onClick={() => setOpen((v) => !v)} aria-haspopup="listbox" aria-expanded={open} title={`${current.path} · ${idx + 1} of ${screens.length} screens · [ ] to step`}>
-        <span className="spick__cur">{current.label}</span>
-        <span className="spick__n">{idx + 1}/{screens.length}</span>
+      <button type="button" className="spick__btn" onClick={() => setOpen((v) => !v)} aria-haspopup="listbox" aria-expanded={open} title={`Screen ${idx + 1} of ${screens.length}${named ? '' : ` (${current.path})`}. [ and ] step through them.`}>
+        <span className="spick__cur">{nameOf(current)}</span>
         <ChevronDown size={13} strokeWidth={2} />
       </button>
       {open && (
         <div className="menu menu--pop spick__menu" role="listbox">
-          <div className="spick__search">
+          {searchable && <div className="spick__search">
             <Search size={13} strokeWidth={2} />
             <input
               ref={inputRef}
@@ -86,25 +109,20 @@ export function ScreenPicker({ screens, current, onPick, onPin }: ScreenPickerPr
               value={q}
               placeholder={`Search ${screens.length} screens…`}
               onChange={(e) => setQ(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'ArrowDown') { e.preventDefault(); setHi((h) => Math.min(flat.length - 1, h + 1)) }
-                else if (e.key === 'ArrowUp') { e.preventDefault(); setHi((h) => Math.max(0, h - 1)) }
-                else if (e.key === 'Enter') { const s = flat[hi]; if (s) choose(s) }
-                else if (e.key === 'Escape') setOpen(false)
-              }}
+              onKeyDown={keys}
             />
-          </div>
-          <div className="spick__list">
+          </div>}
+          <div className="spick__list" ref={listRef} tabIndex={-1} onKeyDown={searchable ? undefined : keys}>
             {groups.map(([g, list]) => (
               <div key={g}>
-                {g && <div className="menu__label">/{g}</div>}
+                {g && !named && <div className="menu__label">/{g}</div>}
                 {list.map((s) => {
                   const i = flat.indexOf(s)
                   return (
                     <button key={s.path} type="button" role="option" aria-selected={s.path === current.path}
                       className={`menu__item spick__item ${s.path === current.path ? 'menu__item--on' : ''} ${i === hi ? 'spick__item--hi' : ''}`}
                       onMouseEnter={() => setHi(i)} onClick={() => choose(s)} title={s.path}>
-                      <span className="spick__leaf">{s.label.split('/').filter(Boolean).pop() ?? '/'}</span>
+                      <span className="spick__leaf">{leafOf(s)}</span>
                       {tag(s) && <span className="spick__tag">{tag(s)}</span>}
                     </button>
                   )
@@ -113,10 +131,11 @@ export function ScreenPicker({ screens, current, onPick, onPin }: ScreenPickerPr
             ))}
             {!flat.length && <div className="spick__empty">No screen matches “{q}”.</div>}
           </div>
-          <div className="spick__foot">
-            <button type="button" className="btn btn--ghost btn--sm" onClick={() => { onPin(); setOpen(false) }} title="Add the route the frame is on now"><Pin size={12} strokeWidth={2} /> Pin current route</button>
-            <span className="spick__hint"><kbd>[</kbd> <kbd>]</kbd> step · <kbd>↵</kbd> open</span>
-          </div>
+          {pinPath && (
+            <div className="spick__foot">
+              <button type="button" className="btn btn--ghost btn--sm" onClick={() => { onPin(); setOpen(false) }} title="You clicked through to a page this list does not have yet"><Pin size={12} strokeWidth={2} /> Add {pinPath === '/' ? 'Home' : pinPath} to the list</button>
+            </div>
+          )}
         </div>
       )}
     </div>

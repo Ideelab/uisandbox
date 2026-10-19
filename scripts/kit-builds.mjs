@@ -174,7 +174,7 @@ const page = (id, screen, values) => `<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${screen.title ?? screen.id} · ${kits[id].name}</title>
+<title>${screen.label ?? screen.id} · ${kits[id].name}</title>
 <style>@layer us-fallback; /* named first, so it is the weakest layer: the wall's fallback letter loses to every rule of the kit (scenes.mjs) */</style>
 <link rel="stylesheet" href="kit.css">${KIT_FONTS[id] ? `
 <link rel="stylesheet" href="font.css">` : ''}${id === 'material' ? `

@@ -312,16 +312,25 @@ function Editor() {
     cur.project.screens = [...cur.project.screens, ...found]
     setLoaded({ ...cur })
   }, [])
+  // The page the frame is on now, when the screen list does not have it yet
+  // (somebody clicked through inside their app): what "Add … to the list" adds.
+  const unlistedRoute = useCallback((): string | null => {
+    const cur = loadedRef.current
+    let path: string
+    try { path = frameRef.current?.contentWindow?.location.pathname ?? '' } catch { return null }
+    if (!cur || !path) return null
+    path = path.replace(/^\/__sb\/[^/]+\//, '/').replace(/\/+$/, '') || '/'
+    if (cur.project.base && path.startsWith('/' + cur.project.base)) path = path.slice(cur.project.base.length + 1) || '/'
+    const asFile = path.replace(/^\//, '')
+    return cur.project.screens.some((s) => s.label === path || s.path === asFile || s.path === asFile + '.html' || s.path === (asFile ? asFile + '/' : '') + 'index.html') ? null : path
+  }, [])
   const pinCurrent = useCallback(() => {
     const cur = loadedRef.current
-    const win = frameRef.current?.contentWindow
-    if (!cur || !win) return
-    let path = win.location.pathname.replace(/^\/__sb\/[^/]+\//, '/').replace(/\/+$/, '') || '/'
-    if (cur.project.base && path.startsWith('/' + cur.project.base)) path = path.slice(cur.project.base.length + 1) || '/'
-    if (cur.project.screens.some((s) => s.label === path)) return
+    const path = unlistedRoute()
+    if (!cur || !path) return
     cur.project.screens = [...cur.project.screens, { path: path.replace(/^\//, ''), label: path, source: 'pinned' }]
     setLoaded({ ...cur })
-  }, [])
+  }, [unlistedRoute])
   const [thin, setThin] = useState<string | null>(null)
   // A Flutter web build renders to a canvas: the sandbox shows it 1:1, the knobs find no CSS.
   const flutterWeb = !!loaded && loaded.project.archive.entries.some((e) => /(^|\/)(main\.dart\.js|flutter_bootstrap\.js)$/.test(e.path)) && loaded.project.table.entries.length < 40
@@ -683,6 +692,7 @@ function Editor() {
               frameRef={frameRef}
               onLoaded={onFrameLoaded}
               onPin={pinCurrent}
+              pinnable={unlistedRoute}
               changedCount={changedCount}
               warningTitle={!thin && !missingFiles.length && flutterWeb ? 'A Flutter web build' : undefined}
               warning={thin ?? (missingFiles.length ? `${missingFiles.length === 1 ? 'A file' : `${missingFiles.length} files`} this page asked for ${missingFiles.length === 1 ? 'is' : 'are'} not in the archive: ${missingFiles.slice(0, 3).join(', ')}${missingFiles.length > 3 ? '…' : ''}. ${loaded.captured ? 'The page was taken along as it rendered; these it asks for here, and the capture did not see.' : 'That usually means source, not the built output: parts of the page cannot run here.'}` : flutterWeb ? `Flutter paints this app into a <canvas>: there is almost no CSS for the knobs to move (${loaded.project.table.entries.length} values found). The 1:1 check and the reach meter still tell the truth about it; a design pass on a Flutter app belongs in its ThemeData.` : null)}

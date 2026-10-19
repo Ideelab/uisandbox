@@ -34,6 +34,8 @@ export interface Screen {
   label: string
   /** How it was found: an HTML file, a link on a rendered page, or pinned by hand. */
   source?: 'file' | 'link' | 'pinned'
+  /** The page's own <title>, when it is an HTML file: a kit names its screens there. */
+  title?: string
 }
 
 export interface SandboxProject {
@@ -164,6 +166,7 @@ export async function buildProject(archive: Archive, opts: { root?: string; onPr
   const under = archive.entries.filter((e) => e.path.startsWith(prefix) && !/(^|\/)(node_modules|\.git)\//.test(e.path))
 
   const raw = new Map<string, ServedFile>()
+  const titles = new Map<string, string>()
   const rewritten = new Map<string, ServedFile>()
   const redirects = new Set<string>()
   const underPaths = new Set(under.map((e) => e.path.slice(prefix.length)))
@@ -200,6 +203,8 @@ export async function buildProject(archive: Archive, opts: { root?: string; onPr
       // A page whose only job is to send you elsewhere is not a screen.
       if (/<meta[^>]+http-equiv=["']?refresh["']?[^>]*>/i.test(html) && html.length < 4000) redirects.add(rel)
       voteBase(html, underPaths, baseVotes)
+      const t = html.match(/<title[^>]*>([^<]{1,120})<\/title>/i)?.[1]?.trim()
+      if (t) titles.set(rel, t.replace(/&amp;/g, '&').replace(/&#39;|&apos;/g, "'").replace(/&quot;/g, '"'))
       // Inlined <style> counts as stylesheet too (Astro, Next inline critical CSS).
       for (const m of html.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/gi)) { cssBytes += m[1]!.length; detectScheme(m[1]!, scheme) }
       // The control keeps every byte except <link integrity> — see stripLinkIntegrity.
@@ -219,7 +224,7 @@ export async function buildProject(archive: Archive, opts: { root?: string; onPr
     // before v1/es/…), so the first screen is a home, not the deepest a-page.
     .sort((a, b) => sortKey(a).localeCompare(sortKey(b)))
     .map((p) => ({ path: p, label: '/' + p.replace(/(^|\/)index\.html?$/i, '').replace(/\.html?$/i, ''), source: 'file' as const }))
-    .map((s) => ({ ...s, label: s.label === '/' ? '/' : s.label.replace(/\/$/, '') || '/' }))
+    .map((s) => ({ ...s, label: s.label === '/' ? '/' : s.label.replace(/\/$/, '') || '/', ...(titles.get(s.path) ? { title: titles.get(s.path) } : {}) }))
 
   const platform = detectPlatform(paths, screens.length > 0 || anyPage, heads)
   // The deploy prefix: the one most root-absolute asset URLs agree on.

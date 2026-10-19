@@ -15,6 +15,7 @@ interface StageProps {
   onLoaded: () => void
   /** Add the frame's current route to the screens. */
   onPin: () => void
+  pinnable?: () => string | null
   changedCount: number
   /** A doubt about the render worth saying out loud (a shell, not the app). */
   warning?: string | null
@@ -72,7 +73,7 @@ function reportUrl(project: SandboxProject, detail: string): string {
   return `https://github.com/Ideelab/uisandbox/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}&labels=build-report`
 }
 
-export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, changedCount, warning, warningTitle, coverage, notes, tab = 'app', onTab, kitName, door, barExtra, onToggleNotes, notesOpen, notesLabel }: StageProps) {
+export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, pinnable, changedCount, warning, warningTitle, coverage, notes, tab = 'app', onTab, kitName, door, barExtra, onToggleNotes, notesOpen, notesLabel }: StageProps) {
   const [showCov, setShowCov] = useState(false)
   const [width, setWidth] = useState<string>('fit')
   const [verify, setVerify] = useState<VerifyResult | { busy: true } | null>(null)
@@ -141,7 +142,7 @@ export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, ch
             <button type="button" role="tab" aria-selected={tab === 'app'} className={`stage__tab stage__tab--app ${tab === 'app' ? 'stage__tab--on' : ''}`} onClick={() => pickTab('app')}><Plus size={13} strokeWidth={2} /> Your app</button>
           </div>
         )}
-        {(!kitName || tab === 'screens') && <ScreenPicker screens={others} current={screen} onPick={onScreen} onPin={onPin} />}
+        {(!kitName || tab === 'screens') && <ScreenPicker screens={others} current={screen} onPick={onScreen} onPin={onPin} pinnable={pinnable} named={!!kitName} />}
         {!atDoor && <>
         <div className="seg" role="group" aria-label="Viewport width">
           {WIDTHS.map((x) => (
