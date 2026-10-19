@@ -167,7 +167,9 @@ button { background: none; border: 0; padding: 0; cursor: pointer; }
 .stage__frame--w { background: var(--app-surface-2); }
 .stage__frame--w .stage__iframe { box-shadow: 0 0 0 1px var(--app-border); }
 .stage__hint { color: var(--app-fg-muted); font-size: 12px; }
-.stage__foot { display: flex; align-items: center; gap: 12px; margin-top: 8px; font-size: 12px; color: var(--app-fg-muted); flex-wrap: wrap; }
+/* As tall as the knobs' foot (Shuffle, Reset) and as far below its card, so
+   the knobs card and the canvas end on one line. */
+.stage__foot { display: flex; align-items: center; gap: 12px; margin-top: 10px; min-height: 38px; font-size: 12px; color: var(--app-fg-muted); flex-wrap: wrap; }
 .stage__foot b { color: var(--app-fg); font-weight: 600; }
 .stage__foot .stage__spacer { flex: 1; }
 .stage__star { text-decoration: none; color: var(--app-fg-muted); }
