@@ -633,6 +633,9 @@ export const section = (md, heading) => {
 }
 
 /** What you have, where it came from, and — the part nobody else prints — what could not be done. */
+/* The kits that compile through Tailwind (build-css.mjs builds them so). */
+const TW_COMPILED = new Set(['tailwind', 'daisyui', 'shadcn'])
+
 function manifest(routed, kits, values, opts = {}) {
   const rows = routed.map((r) => {
     const k = kits[r.kit]
@@ -674,7 +677,7 @@ function manifest(routed, kits, values, opts = {}) {
 |---|---|---|---|---|---|
 ${rows.join('\n')}
 
-## What you set
+## The values
 
 ${ROLES.filter((r) => values[r.id] != null).map((r) => `- \`${r.id}\`: ${values[r.id]}  *(${r.what})*`).join('\n')}
 
@@ -707,6 +710,12 @@ ${(() => {
 ${(() => {
   const on = new Set(routed.map((r) => r.kit))
   const rows = (opts.unread ?? []).filter((u) => on.has(u.kit))
+  /* Tailwind, daisyUI and shadcn compile through Tailwind: the measurement of
+     what a kit's own sheet reads cannot tell the theme's declarations apart
+     from the kit's reads there, so an empty list is not a proof for them, and
+     a flat "Nothing" would claim one (decision 191). */
+  const compiled = [...on].filter((k) => TW_COMPILED.has(k)).map((k) => kits[k]?.name ?? k)
+  if (!rows.length && compiled.length) return `None found, and for ${compiled.join(' and ')} that is not a proof: ${compiled.length === 1 ? 'it compiles' : 'they compile'} through Tailwind, where the measurement cannot tell this theme's own declarations apart from the kit's reads. A variable here is read when your markup uses a utility that reads it.`
   if (!rows.length) return 'Nothing. Every variable this theme writes is read by the kit it belongs to, or by your code.'
   return `Counted in each kit's own stylesheet, and in its component code where its
 components are code rather than classes. These are written because the kit

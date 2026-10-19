@@ -413,7 +413,7 @@ export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName,
     // With a kit this is the whole package the merge brief calls "Design system
     // + Skill"; without one it says in a line why no skill comes with it, so
     // nobody goes looking for the file that was never going to be there.
-    { title: 'Hand it to your agent',
+    { title: kitFiles ? 'Design system + Skill' : 'Hand it to your agent',
       sub: kitFiles
         ? `DESIGN.md and a SKILL.md in ${KIT_NAME[kit!]}'s own classes, so Claude Code, Cursor or Codex builds in this look`
         : kit && kitError
@@ -437,10 +437,20 @@ export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName,
     { title: 'Native apps', sub: 'Swift constants, an asset catalog, Android resources', icon: <Smartphone size={15} strokeWidth={1.75} />, ids: ['ios-swift', 'ios-assets', 'android-xml', 'android-kt'],
       uses: [[M.swift, 'SwiftUI'], [M.android, 'Android']] },
   ]
+  // On a kit there are no files of yours to patch and no sheet of yours to
+  // read: what we tokenised is our own build of the kit. Its export is the
+  // design system and the skill, then the other forms (merge phase 3).
+  const OWN_FILES_ONLY = new Set(['Patch your own files', 'The raw sheet'])
+  const dests = kitDoorName ? DESTS.filter((d) => !OWN_FILES_ONLY.has(d.title)) : DESTS
   const [active, setActive] = useState('overview')
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
   const [copied, setCopied] = useState(false)
   const item = items.find((i) => i.id === active)
-  const dest = item ? DESTS.find((d) => d.ids.includes(item.id)) : undefined
+  const dest = item ? dests.find((d) => d.ids.includes(item.id)) : undefined
   const text = useMemo(() => item ? item.make() : '', [item])
 
   const download = (name: string, blob: Blob) => {
@@ -449,6 +459,11 @@ export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName,
     a.download = name
     a.click()
     setTimeout(() => URL.revokeObjectURL(a.href), 2000)
+  }
+  // The design system and the skill, as one zip: what a kit is exported as.
+  const downloadKit = () => {
+    if (!kitFiles) return
+    download(`${(kitDoorName ?? projectName).replace(/[^\w.-]+/g, '-').replace(/^-|-$/g, '')}-design-system.zip`, zipSync(Object.entries(kitFiles).map(([name, text]) => ({ name, text }))))
   }
   const downloadAll = () => {
     const out = items.filter((i) => i.id !== 'files').map((i) => ({ name: i.file, data: i.make() }))
@@ -475,7 +490,9 @@ export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName,
             <h2>Export: exactly what is in the sandbox</h2>
           )}
           <span className="stage__spacer" style={{ flex: 1 }} />
-          <button type="button" className="btn btn--secondary btn--sm" onClick={downloadAll}><Download size={13} strokeWidth={2} /> Everything (.zip)</button>
+          {kitDoorName
+            ? <button type="button" className="btn btn--primary btn--sm" onClick={downloadKit} disabled={!kitFiles} title={kitFiles ? 'theme.css, DESIGN.md, SKILL.md, tokens.json, install.md and MANIFEST.md' : 'Writing the design system…'}><Download size={13} strokeWidth={2} /> Design system + Skill (.zip)</button>
+            : <button type="button" className="btn btn--secondary btn--sm" onClick={downloadAll}><Download size={13} strokeWidth={2} /> Everything (.zip)</button>}
           <button type="button" className="btn btn--ghost btn--icon" onClick={onClose} aria-label="Close"><X size={15} /></button>
         </div>
         {item ? (
@@ -507,13 +524,13 @@ export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName,
           <div className="exp__overview">
             <div className="exp__stats">
               <div className="exp__stat"><b>{movedCount}</b><span>of {table.entries.length} values moved</span></div>
-              <div className="exp__stat"><b>{patched?.length ?? 0}</b><span>file{(patched?.length ?? 0) === 1 ? '' : 's'} changed</span></div>
+              {!kitDoorName && <div className="exp__stat"><b>{patched?.length ?? 0}</b><span>file{(patched?.length ?? 0) === 1 ? '' : 's'} changed</span></div>}
               <div className="exp__stat"><b>{turned.length}</b><span>knob{turned.length === 1 ? '' : 's'} turned</span></div>
             </div>
             <div className="exp__dest">
               <h3 className="exp__sec">How do you want to apply it?</h3>
               <div className="exp__destgrid">
-                {DESTS.map((d) => (
+                {dests.map((d) => (
                   <button key={d.title} type="button" className="exp__card" onClick={() => { setActive(d.ids[0]!); setCopied(false) }}>
                     <span className="exp__ico">{d.icon}</span>
                     <span className="exp__text">

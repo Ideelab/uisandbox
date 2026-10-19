@@ -2456,3 +2456,31 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     Look (the kits' start cards as presets on another kit's components)
     follows separately: it rests on converting each kit's radius into the
     radius dial's multiplier, and that wants its own measurement.
+
+191. Merge phase 3, step 3: a kit exports a design system, and the manifest
+     says only what was measured.
+
+    - The export on a kit leads with Design system + Skill, and the button in
+      the dialog's head downloads exactly that zip (theme.css, DESIGN.md,
+      SKILL.md under .claude/skills/<slug>/, tokens.json, install.md,
+      MANIFEST.md, and the kit's own extras such as components.json).
+      "Patch your own files", "The raw sheet" and the "files changed" count
+      are gone on a kit: what was tokenised is our build, not anybody's
+      files. On a build of yours nothing changed; where a kit is detected
+      the first card is called Design system + Skill there too.
+    - The Export dialog closes on Escape (open since 178).
+    - MANIFEST.md (generate.mjs, ours alone since 188): "What you set"
+      became "The values", true whether they were chosen or read off a
+      build. Under "Variables in here that nothing reads", Tailwind, daisyUI
+      and shadcn no longer get a flat "Nothing": the measurement cannot tell
+      the theme's own declarations apart from the kit's reads for a kit that
+      compiles through Tailwind, so an empty list there is "none found, and
+      that is not a proof" (open since 179c). generate.test.mjs holds both
+      cases; the kit-export gate expects the new line for exactly those
+      three and "Nothing" for the rest.
+
+    Measured in a browser: on the shadcn kit the cards are Design system +
+    Skill, Tailwind or shadcn, A fresh token system, Native apps; the head
+    button's zip holds the seven files above; Escape closes the dialog. On
+    the SB Admin sample: the six cards and "Everything (.zip)", as before.
+    Gates: vitest 446, node 145 + 117, kit gates 101 + 18.

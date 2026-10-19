@@ -97,6 +97,8 @@ table with its decision.
 | file | what | decision |
 |---|---|---|
 | `wall-bindings.mjs` | Radix divider gets `data-accent-color="gray"` | 187 |
+| `generate.mjs` | MANIFEST.md: "The values" for "What you set"; no flat "Nothing" under "nothing reads" for the kits that compile through Tailwind | 191 |
+| `generate.test.mjs` | holds both, on Bootstrap and on Tailwind | 191 |
 
 The byte-for-byte rule above still holds for what it was for: the tests were
 not edited on the way across. A test changed from here on is changed here,

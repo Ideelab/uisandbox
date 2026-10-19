@@ -173,9 +173,15 @@ test('the download says which of its own variables nothing reads', () => {
 
   /* and a stack none of it applies to says so, rather than carrying an empty
      heading that reads like a hole */
-  const other = generate(VALUES, ['tailwind'], kits, { unread: measured })['MANIFEST.md']
-  assert.match(section(other, '## Variables in here that nothing reads').length ? 'x' : 'Nothing', /Nothing/)
+  const bs = { bootstrap: JSON.parse(readFileSync('kits/bootstrap.json', 'utf8')) }
+  const other = generate(VALUES, ['bootstrap'], bs, { unread: measured })['MANIFEST.md']
   assert.match(other, /Every variable this theme writes is read/)
+
+  /* but for a kit that compiles through Tailwind an empty list is not a proof,
+     and the manifest must not claim one (decision 191) */
+  const tw = generate(VALUES, ['tailwind'], kits, { unread: measured })['MANIFEST.md']
+  assert.doesNotMatch(tw, /Every variable this theme writes is read/)
+  assert.match(tw, /None found, and for Tailwind CSS that is not a proof/)
 })
 
 test('the contrast audit names the line for the job that makes it a requirement', () => {

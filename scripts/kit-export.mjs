@@ -185,8 +185,12 @@ for (const [f, kit] of BUILDS) {
       const manifest = readFileSync(join(x, 'MANIFEST.md'), 'utf8')
       const rows = UNREAD.filter((u) => u.kit === kit)
       const saysNothing = /^Nothing\. Every variable this theme writes is read/m.test(manifest)
-      check(f, `MANIFEST.md agrees with the unread measurement (${rows.length} row${rows.length === 1 ? '' : 's'})`,
-        rows.length ? !saysNothing && rows.every((r) => manifest.includes(r.names[0])) : saysNothing)
+      // A kit that compiles through Tailwind gets no "Nothing": the measurement
+      // cannot establish it there, and the manifest says so (decision 191).
+      const saysUnproven = /^None found, and for .* that is not a proof/m.test(manifest)
+      const compiled = ['tailwind', 'daisyui', 'shadcn'].includes(kit)
+      check(f, `MANIFEST.md agrees with the unread measurement (${rows.length} row${rows.length === 1 ? '' : 's'}${compiled ? ', compiled through Tailwind' : ''})`,
+        rows.length ? !saysNothing && rows.every((r) => manifest.includes(r.names[0])) : compiled ? saysUnproven && !saysNothing : saysNothing)
       check(f, 'tokens.json parses', (() => { try { JSON.parse(readFileSync(join(x, 'tokens.json'), 'utf8')); return true } catch { return false } })())
 
       const untouched = await agreesWithScreen(page, theme)
