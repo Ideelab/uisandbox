@@ -1,14 +1,13 @@
 # Roadmap — from a tool that works to a tool people find
 
-State on 2026-10-19: UIcockpit has merged into UISandbox (phases 1 and 2 of
-`MERGE-INTO-UISANDBOX.md` in Ideelab/uicockpit). A dropped build exports a
-design system and a skill in its kit's own names; nine kits open as builds
-through the kit door; a running app connects through one script line
-(`live.js`). The engine lives in `src/kits/engine/` and this is its only copy
-(decision 188). Live on uisandbox.org since 2026-10-19 (Worker version
-`d5a5c5fd`): the nine kit fixtures, AdminLTE and meshsight are `ok` against
-the live URL. Full hold-out gate locally: 173 fixtures, ok 153–154, the rest
-refusals and four known flakes, timeout/error 0.
+State on 2026-10-19, evening: merge phases 1 to 3 are done and live. The
+homepage IS the editor: `/` opens on the shadcn/ui kit, the Your app tab
+leads with `npx uisandbox-mcp open` (the sandbox from 127.0.0.1, nothing
+reaches this site), and the story lives on /about. Live on uisandbox.org as
+Worker version `2aeb544f`; `uisandbox-mcp` 0.4.0 on npm and in the MCP
+registry carries the same editor. The engine lives in `src/kits/engine/`, its
+only copy (decision 188). Full hold-out gate after phase 3: 173 fixtures, ok
+153, four known flakes, one timeout under load that is ok 3 of 3 alone (195).
 
 Principles that hold across every step: nothing leaves the tab (no server
 state, no upload); the copy never claims more than the meter shows, and
@@ -38,46 +37,32 @@ server-side zone analytics); one source, no mirror; every step ends with
   frames without focus; a grey brand (shadcn/ui) is a brand; a kit reads as a
   kit, not as "your code"; Radix's danger is red and its greys stay grey;
   one copy of the engine.
+- **Merge phase 3 — one screen** (2026-10-19, decisions 189–197): `/` is the
+  editor on shadcn/ui, with tabs Components · Screens · Your app; the story on
+  /about. Top bar: Look (another kit's start values), Engine, Light / Dark,
+  Share (a link with the knobs, 0 differences in a fresh browser), Read,
+  Export. A kit exports Design system + Skill first. What you turn on a kit
+  comes along to your own app (0 differences against turning it by hand, on
+  three builds). The phone has the knobs in a bottom sheet. The copy follows
+  the flow. No flash of the old landing page while the first screen loads.
+  The door leads with the local route; the MCP package ships the new editor.
 
 ## Next, in this order
 
-### 1. Merge phase 3 — one screen, and the homepage is the app
+### 1. Left over from phase 3
 
-The brief's layout (tweakcn's skeleton, our rows), and the decision taken on
-2026-10-19: a visitor lands IN the editor, on a kit, with nothing to upload.
-
-- **Land on shadcn/ui.** `/` opens the editor on the shadcn kit build
-  (measured cold: screen 0.8 s, knobs 1.7 s). One line on top says what this
-  is: the kit as it ships; turn a knob; then bring your own app.
-- **Top bar:** mark · *Look* (the kit start cards as presets) · *Engine* (the
-  nine, preselected when the bridge or detection recognises the app) ·
-  Light / Dark · undo / redo · Share · Export · How it works.
-- **Left:** the row list, as now. ×1 = "as the kit ships it" on a kit, "as in
-  your code" on a build (done in 184).
-- **Stage tabs:** Screens · Components · **Your app**. Empty, Your app is the
-  door: your build (zip, folder, repo), your running app (the script line),
-  your agent (npx, MCP, /uisandbox). The foot keeps one honesty line: reach,
-  fidelity, Check 1:1, what we read.
-- **Export:** Design system + Skill first. On a kit, "Patch your own files"
-  goes (there are no files of yours); Swift / Android and tokens.json (the
-  Figma route) stay.
-- **The marketing copy moves to `/about`**: how it works, Isn't this just
-  Inspect, how to check it yourself, the privacy note, who made this. `/`
-  keeps a static intro with the h1 in `index.html` for search engines and
-  for HN readers without JS. `llms.txt` points at both.
-- **Phone:** stage on top, rows in a bottom sheet below 820 px.
-- **Measure before promising:** does what you turned on the kit carry over to
-  your own app when you load it? Brand, radius and fonts map by role and
-  probably do; hue and spacing scales may not. The page says only what the
-  measurement shows.
-- **Folded in, from the open list:** the Export dialog closes on Escape;
-  MANIFEST.md's "What you set" wording; MANIFEST.md says a flat "Nothing" for
-  the three Tailwind-compiled kits where `orphans.mjs` says it cannot
-  establish that.
-- Done when: a first visit turns a knob within two seconds without reading a
-  paragraph; the three ways in work from the Your app tab; the export on a
-  kit and on a build both lead with Design system + Skill; the gates are
-  green and the hold-outs hold against the deployed URL.
+- **The kits' own sheets on a phone.** The components sheet of the kit builds
+  is wider than a 360px frame (shadcn's button row runs off it). That is the
+  kit build's layout (scenes.mjs), not the editor's; it scrolls inside its
+  frame (192).
+- **A running dev server, with knobs.** The script line reads a running app's
+  kit and writes its design system, but turns no knob: the app is on another
+  origin. `npx uisandbox-mcp open` turns knobs, but on a build, not on
+  `localhost:3000` (197). Proxying the dev server through the local sandbox's
+  own origin would give both; dev servers with hot reload and websockets make
+  it uncertain, so it is a measurement first, not a promise.
+- **/about as the launch page**, if the launch wants one: a short pitch, the
+  clip, the two buttons, then the story. Only on Alexander's call.
 
 ### 2. Merge phase 4 — the cutover
 
@@ -104,8 +89,8 @@ waits. What does not change can start now: Stage 0 below.
   `wong2/awesome-mcp-servers` with the one-liner from `brand/marketing/copy.md`.
 - **Search Console + Bing:** domain property `uisandbox.org` via a DNS TXT in
   Cloudflare, submit `sitemap.xml`; Bing imports from GSC in one click.
-- **Assets** to redo after phase 3: the montage GIF and the stage stills show
-  the old screen.
+- **Assets** to redo now that phase 3 is live: the montage GIF, the stage
+  stills and the /about clip show the old screen.
 
 **Stage 1 — Show HN, the soft launch (the star source):** developers star,
 fork and drop their own builds; each odd build becomes a fixture. Title and
@@ -123,7 +108,8 @@ day.
 **Always-on, after both:** one knob per X post (a 6-second clip from
 `scripts/og/montage.mjs`); one answer each, with the GIF, where designers
 already ask "how do I try a colour on my live site"; releases per MCP
-version stay automatic; the hold-out counter in the README stays current.
+version stay automatic (the GitHub release; npm and the registry are
+Alexander's, and how they want it now is in decision 197); the hold-out counter in the README stays current.
 Where people came from is read from Cloudflare's zone analytics, GitHub's
 traffic page and the registry counts, never from a script on the page.
 
