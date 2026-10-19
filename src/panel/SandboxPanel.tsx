@@ -30,6 +30,10 @@ interface Props {
   onCollapse: () => void
   onRandomize: () => void
   onReset: () => void
+  /** A build made from a kit through the kit door, not somebody's code: the
+   *  centre of every knob is "as the kit ships it", and the dials that only
+   *  exist to move somebody's CSS (hue, saturation, contrast) are not shown. */
+  kitName?: string
   /** Knob history — undo/redo live with the knobs, not in the top bar. */
   history?: { undo: () => void; redo: () => void; canUndo: boolean; canRedo: boolean }
   /** Painted radii on the current screen (the reach meter's count): 0 means the
@@ -55,7 +59,8 @@ const FAMILY_ROWS: Array<{ fam: Family; key: keyof Dials; label: string }> = [
  *
  * At rest a row shows a quiet dot — "as in your code"; once turned, "changed".
  */
-export function SandboxPanel({ cfg, tokens, base, families, scheme, codeFonts = [], hasGradients = false, varNow, dispatch, onCollapse, onRandomize, onReset, history, radiiOnScreen }: Props) {
+export function SandboxPanel({ cfg, tokens, base, families, scheme, codeFonts = [], hasGradients = false, varNow, dispatch, onCollapse, onRandomize, onReset, history, radiiOnScreen, kitName }: Props) {
+  const asIs = kitName ? 'as the kit ships it' : 'as in your code'
   const [openKey, setOpenKey] = useState<string | null>(null)
   const [anchor, setAnchor] = useState<{ top: number; left: number } | null>(null)
   const popRef = useRef<HTMLDivElement>(null)
@@ -223,7 +228,7 @@ export function SandboxPanel({ cfg, tokens, base, families, scheme, codeFonts = 
           </div>
           <div className="sbp__snaps">
             {spec.snaps.map((s) => (
-              <button key={s.at} type="button" className={`sbp__snap ${nearestSnap(spec, v)?.at === s.at ? 'sbp__snap--on' : ''}`} onClick={() => setDial(spec.key, s.at)}>{s.label === 'as is' ? 'as in your code' : s.label}</button>
+              <button key={s.at} type="button" className={`sbp__snap ${nearestSnap(spec, v)?.at === s.at ? 'sbp__snap--on' : ''}`} onClick={() => setDial(spec.key, s.at)}>{s.label === 'as is' ? asIs : s.label}</button>
             ))}
           </div>
           <div className="sbp__dial-foot"><span>{fmtDial(spec, v)}</span>{v !== bv && <button type="button" className="btn btn--ghost btn--sm" onClick={() => setDial(spec.key, bv)}>Reset</button>}</div>
@@ -231,7 +236,10 @@ export function SandboxPanel({ cfg, tokens, base, families, scheme, codeFonts = 
       ),
     }
   }
-  for (const spec of DIALS.filter((d) => d.section === 'Colour' && (d.key !== 'gradAngle' || hasGradients))) rows.push(dialRow(spec))
+  // On a kit, Hue / Saturation / Contrast have no CSS of somebody's to move
+  // (MERGE-INTO-UISANDBOX.md); shown anyway when a shared link turned one.
+  const ownBuildOnly = (key: string) => (key === 'hue' || key === 'sat' || key === 'contrast') && !!kitName && (cfg.sb[key] ?? DEFAULT_DIALS[key]) === (base.sb[key] ?? DEFAULT_DIALS[key])
+  for (const spec of DIALS.filter((d) => d.section === 'Colour' && (d.key !== 'gradAngle' || hasGradients) && !ownBuildOnly(d.key))) rows.push(dialRow(spec))
   if (scheme && (scheme.media || scheme.hooks.length)) {
     const cur = cfg.sb.dark
     rows.push({
@@ -277,7 +285,7 @@ export function SandboxPanel({ cfg, tokens, base, families, scheme, codeFonts = 
     <aside className="panel">
       <div className="card fmenu">
         <div className="fmenu__bar">
-          <span className="fmenu__bar-title">Your app · knobs</span>
+          <span className="fmenu__bar-title">{kitName ? `${kitName} · knobs` : 'Your app · knobs'}</span>
           <button type="button" className="btn btn--ghost btn--icon fmenu__collapse" onClick={onCollapse} aria-label="Collapse" title="Collapse for a full-width preview"><PanelLeftClose size={15} strokeWidth={1.75} /></button>
         </div>
         <div className="fmenu__rows">
@@ -286,7 +294,7 @@ export function SandboxPanel({ cfg, tokens, base, families, scheme, codeFonts = 
               {r.sec && <div className="menu__label fmsec">{r.sec}</div>}
               <div className={`fmrow ${openKey === r.key ? 'fmrow--open' : ''}`}>
                 <button type="button" className="menu__item fmrow__head sbp__head" onClick={(e) => toggle(r.key, (e.currentTarget as HTMLElement).closest('.fmrow'))} aria-expanded={openKey === r.key}>
-                  <span className={`sbp__state ${r.changed ? 'sbp__state--changed' : ''}`} title={r.changed ? 'changed' : 'as in your code'} />
+                  <span className={`sbp__state ${r.changed ? 'sbp__state--changed' : ''}`} title={r.changed ? 'changed' : asIs} />
                   <span className="fmrow__label">{r.label}</span>
                   <span className="menu__value fmrow__val" title={String(r.value)}>
                     {r.dot && <span className="fmrow__dot fmrow__dot--viz">{r.dot}</span>}

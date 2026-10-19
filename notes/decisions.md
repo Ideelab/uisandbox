@@ -2213,3 +2213,58 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     the direction flipping between runs) differs 1 in 4 runs WITHOUT the blur
     as well, and was already "differs" in full-gate.log; anime-docs has
     alternated ok/differs across the earlier gates (merge, triplet, s16b).
+
+183. A grey can be the brand: shadcn/ui's is #171717.
+
+    On the shadcn kit the Brand knob read "Vivid Red", and turning it moved
+    the Remove button. The kit's `--primary` is #171717, and its primary
+    button is black. brandDeclared skipped every grey (C < 0.05), so the
+    brand-named colour that won was `.dark { --sidebar-primary }`, a blue
+    painted nowhere on the light screen; the paint scan then took the only
+    chromatic fill it saw, the destructive red. On the screen this would
+    land every visitor on, the first thing the panel said was wrong.
+
+    A hue window cannot find a grey brand (a grey has no hue to be near), so
+    a grey is now admitted by NAME (mapping.ts greyBrandEntry): every site
+    of that literal names the brand, none was dropped at the site cap, and
+    "primary" means the brand, not a role (`--text-primary`, `--bg-primary`
+    stay out). A grey that is also somebody's text stays a neutral: turning
+    Brand must not recolour body copy.
+
+    Measured, statically on all 159 zips (fixtures and kits), declared brand
+    and brand-family size before and after: only the two shadcn builds
+    change (#1447e6 → #171717). The first version also changed s16-coloris
+    to its `--text-primary: #0f172a`; that is what the role rule is for. In
+    the browser on the eight kits, a brand pick moves the primary button on
+    shadcn (Publish to the pick; Remove stays red), Bootstrap, Mantine and
+    Ant Design. baseline.test.ts holds shadcn, coloris and the body-text
+    grey; the two shadcn cases fail on the old code.
+
+    Seen and left, both Radix, both older than this: the kit build's Remove
+    button is drawn in the accent, not in red, before any knob is turned
+    (a wall-bindings question); and Radix's blue-tinted grey scale sits in
+    the brand's hue window, so a brand pick moves 73 elements, its greys
+    with it.
+
+184. A kit is not your code: the panel, the notes and the export say so.
+
+    A build from the kit door is ours, made from the kit's own package. The
+    panel still said "Your app · knobs", every centre read "as in your
+    code", Hue / Saturation / Contrast were offered (they exist to move
+    somebody's CSS; MERGE-INTO-UISANDBOX.md drops them in kit mode), and the
+    notes and the export dialog spoke of "your code".
+
+    App now knows a kit-door load: a zip fetched from /kits/<id>.zip on this
+    origin, and nothing else. A zip somebody names shadcn.zip and drops is
+    still their code. With it: "shadcn/ui · knobs", "as the kit ships it"
+    on every centre and state dot, Hue / Saturation / Contrast hidden unless
+    a shared link turned one (a hidden turned knob would be worse), "What we
+    read from shadcn/ui", and the export's "from the kit", "shadcn/ui as it
+    ships" and a DESIGN.md overview that says the values start from the kit.
+    One note became neutral for both cases ("rules inserted by JS").
+
+    Checked in the browser on the shadcn kit and, as the control, on the
+    Bootstrap docs sample, which reads exactly as before. Gates: vitest 439,
+    node 145 + 117, kit gates 101 + 18, hold-outs on the nine kit fixtures
+    ok. Left for phase 3: the export dialog still offers "Patch your own
+    files" on a kit, where Design system + Skill belongs first.

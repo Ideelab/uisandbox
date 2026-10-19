@@ -32,6 +32,9 @@ interface ExportDialogProps {
   table: SubstitutionTable
   vars: Record<string, string>
   projectName: string
+  /** A build made from a kit through the kit door (its display name), not
+   *  somebody's code: the copy says "the kit", not "your code". */
+  kitDoorName?: string
   /** Their original files — the patched export writes the values into these. */
   files: Map<string, ServedFile>
   fontCss: string
@@ -137,7 +140,7 @@ const KIT_NAME: Record<KitId, string> = {
   openprops: 'Open Props', radix: 'Radix Themes', shadcn: 'shadcn/ui', tailwind: 'Tailwind',
 }
 
-export function ExportDialog({ cfg, base, table, vars, projectName, files, fontCss, notes, painted, anchors, kit, kitValues, readPageVars, onClose }: ExportDialogProps) {
+export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName, files, fontCss, notes, painted, anchors, kit, kitValues, readPageVars, onClose }: ExportDialogProps) {
   const [patched, setPatched] = useState<Array<{ path: string; text: string }> | null>(null)
   useEffect(() => { let on = true; void genPatchedFiles(files, table, vars, fontCss).then((p) => { if (on) setPatched(p) }); return () => { on = false } }, [files, table, vars, fontCss])
   const movedCount = useMemo(() => { const id = table.identityVars(); return Object.keys(vars).filter((k) => vars[k] !== id[k]).length }, [table, vars])
@@ -153,7 +156,10 @@ export function ExportDialog({ cfg, base, table, vars, projectName, files, fontC
     if (!kit) { setKitFiles(null); return }
     let on = true
     const m = measure(table, vars, cfg.cPrimary, { display: cfg.fontDisplay, body: cfg.fontBody }, { painted, anchors })
-    const overview = `These values were read off ${projectName}'s own build in UISandbox, not chosen: ${m.totals.values} design values out of its stylesheets, ${movedCount === 0 ? 'none of them changed' : `${movedCount} of them changed`} in this pass. They are written here in the names this kit publishes, so they are the ones to build against.`
+    const changed = movedCount === 0 ? 'none of them changed' : `${movedCount} of them changed`
+    const overview = kitDoorName
+      ? `These values start from ${kitDoorName} as it ships, read off the build UISandbox made of it: ${m.totals.values} design values, ${changed} in this pass. They are written here in the names this kit publishes, so they are the ones to build against.`
+      : `These values were read off ${projectName}'s own build in UISandbox, not chosen: ${m.totals.values} design values out of its stylesheets, ${changed} in this pass. They are written here in the names this kit publishes, so they are the ones to build against.`
     // The kit's own variables first; what was measured only fills the roles
     // it has none for. No family centre goes in for status: a centre is the
     // most-used member, which on AdminLTE was a syntax-highlight green, and a
@@ -166,7 +172,7 @@ export function ExportDialog({ cfg, base, table, vars, projectName, files, fontC
       if (on) setKitFiles(kitPackage(f))
     }).catch((e: unknown) => { if (on) { setKitFiles(null); setKitError(e instanceof Error ? e.message : String(e)) } })
     return () => { on = false }
-  }, [kit, kitValues, readPageVars, table, vars, cfg, projectName, painted, anchors, movedCount])
+  }, [kit, kitValues, readPageVars, table, vars, cfg, projectName, kitDoorName, painted, anchors, movedCount])
   const skillPath = kitFiles ? Object.keys(kitFiles).find((k) => k.endsWith('/SKILL.md')) : undefined
 
   const items = useMemo<Item[]>(() => [
@@ -523,7 +529,7 @@ export function ExportDialog({ cfg, base, table, vars, projectName, files, fontC
             </div>
             {turned.length ? (
               <div className="exp__turned">
-                <h3 className="exp__sec">Settings, from your code → the sandbox</h3>
+                <h3 className="exp__sec">Settings, from {kitDoorName ? 'the kit' : 'your code'} → the sandbox</h3>
                 <div className="exp__cols">
                 {turned.map((t, i) => (
                   <div key={i} className="exp__row">
@@ -536,7 +542,7 @@ export function ExportDialog({ cfg, base, table, vars, projectName, files, fontC
                 </div>
               </div>
             ) : (
-              <p className="exp__none">Nothing turned yet: every export is your code's own stand (the identity). Turn a knob and this list says exactly what changed.</p>
+              <p className="exp__none">Nothing turned yet: every export is {kitDoorName ? `${kitDoorName} as it ships` : "your code's own stand"} (the identity). Turn a knob and this list says exactly what changed.</p>
             )}
           </div>
         )}

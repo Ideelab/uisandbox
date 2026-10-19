@@ -1,3 +1,4 @@
+import DOOR from '../kits/door.json'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Download, Info, PanelLeftOpen, X } from 'lucide-react'
 import { SandboxPanel } from '../panel/SandboxPanel'
@@ -38,6 +39,9 @@ interface Loaded {
   archive: Archive
   /** The rendered page has had its one chance to decide the brand. */
   brandSeen?: boolean
+  /** A build WE made from a kit (the kit door, /kits/<id>.zip on this origin),
+   *  not somebody's code: the panel and the notes say "the kit", not "your code". */
+  kit?: { id: string; name: string }
 }
 
 export function App() {
@@ -193,7 +197,7 @@ export function App() {
     const canvasMoved = fams2.canvasId !== cur.report.baseline.families?.canvasId
     if (!fromTable && !fromDoc && !canvasMoved) return
     cur.report.baseline = { cfg: cfg2, tokens: buildTokens(cfg2), families: fams2 }
-    if (fromTable) cur.report.notes.push(`Corrected from rules your JS inserted at runtime: ${Object.entries(fromTable).map(([k, v]) => `${k} ${v}`).join(', ')}.`)
+    if (fromTable) cur.report.notes.push(`Corrected from rules inserted by JS at runtime: ${Object.entries(fromTable).map(([k, v]) => `${k} ${v}`).join(', ')}.`)
     if (fromDoc) cur.report.notes.push(`Corrected from the rendered page: ${Object.entries(fromDoc).map(([k, v]) => `${k} ${v}`).join(', ')}.`)
     // The refined baseline is still the starting point, not a step to undo.
     reset(cfg2)
@@ -289,7 +293,7 @@ export function App() {
     return onSheetGrow(() => { if (t) clearTimeout(t); t = setTimeout(() => { setSheetVersion((v) => v + 1); refineBaseline() }, 80) })
   }, [refineBaseline])
 
-  const onArchive = async (archive: Archive, root?: string) => {
+  const onArchive = async (archive: Archive, root?: string, kit?: Loaded['kit']) => {
     setError(null)
     if (!busy) fromUrlRef.current = false
     try {
@@ -315,7 +319,7 @@ export function App() {
       reset(report.baseline.cfg)
       const wanted = new URLSearchParams(location.search).get('screen')
       const first = (wanted && project.screens.find((s) => s.path === wanted || s.label === wanted)) || project.screens[0]!
-      setLoaded({ project, report, screen: first, archive })
+      setLoaded({ project, report, screen: first, archive, kit })
       setShowNotes(true)
     } catch (err) {
       setError((err as Error).message)
@@ -351,7 +355,11 @@ export function App() {
       }
       const blob = reader ? new Blob(chunks) : await res.blob()
       const name = decodeURIComponent((res.headers.get('content-disposition')?.match(/filename="?([^";]+)"?/)?.[1]) || url.split('/').pop() || 'archive.zip')
-      await onArchive(await openZip(new File([blob], name.endsWith('.zip') ? name : `${name}.zip`, { type: 'application/zip' })))
+      // The kit door's own builds, and only from this origin: a zip somebody
+      // names shadcn.zip is still their code.
+      const kitId = (() => { try { const u = new URL(url, location.href); return u.origin === location.origin ? u.pathname.match(/^\/kits\/([a-z0-9]+)\.zip$/)?.[1] : undefined } catch { return undefined } })()
+      const door = kitId ? DOOR.find((d) => d.id === kitId) : undefined
+      await onArchive(await openZip(new File([blob], name.endsWith('.zip') ? name : `${name}.zip`, { type: 'application/zip' })), undefined, door ? { id: door.id, name: door.name } : undefined)
     } catch (err) { setError((err as Error).message); setBusy(null) }
   }
   useEffect(() => {
@@ -401,7 +409,7 @@ export function App() {
         )}
         {loaded && (
           <div className="app__group">
-            <button type="button" className="btn btn--ghost btn--sm" onClick={() => setShowNotes((v) => !v)} title="What we read from your code"><Info size={14} /> Read</button>
+            <button type="button" className="btn btn--ghost btn--sm" onClick={() => setShowNotes((v) => !v)} title={loaded.kit ? 'What we read from the kit' : 'What we read from your code'}><Info size={14} /> Read</button>
             <button type="button" className="btn btn--primary btn--sm" onClick={() => setShowExport(true)}><Download size={14} /> Export</button>
             <button type="button" className="btn btn--ghost btn--sm" onClick={closeProject} title="Close this project"><X size={14} /> Close</button>
           </div>
@@ -429,6 +437,7 @@ export function App() {
                 onReset={() => dispatch({ type: 'REPLACE', cfg: loaded.report.baseline.cfg })}
                 history={{ undo, redo, canUndo, canRedo }}
                 radiiOnScreen={coverage ? coverage.radii.total : undefined}
+                kitName={loaded.kit?.name}
               />
             )}
             <Stage
@@ -444,14 +453,14 @@ export function App() {
               coverage={coverage}
               notes={showNotes ? (
               <div className="card popcard" role="dialog" aria-label="What was read">
-                <h3>What we read from your code</h3>
+                <h3>{loaded.kit ? `What we read from ${loaded.kit.name}` : 'What we read from your code'}</h3>
                 <ul className="notes">
                   {loaded.report.notes.map((n, i) => <li key={i}>{n}</li>)}
                   <li>{loaded.project.table.entries.length} distinct values in {Math.round(loaded.project.cssBytes / 1024)} KB of CSS: {(['color', 'radius', 'font-size', 'font-family', 'space', 'shadow', 'angle'] as const).map((k) => `${loaded.project.table.ofKind(k).length} ${k === 'angle' ? 'gradient angle' : k}`).join(' · ')}.</li>
                   {loaded.project.candidates.length > 1 && (
                     <li>Other roots in the archive:{' '}
                       {loaded.project.candidates.filter((c) => c !== loaded.project.root).slice(0, 6).map((c) => (
-                        <button key={c} type="button" className="btn btn--secondary btn--sm" style={{ marginRight: 6, marginTop: 4 }} onClick={() => { const a = loaded.archive; disown(loaded.project); setLoaded(null); void onArchive(a, c) }}>{c || '/'}</button>
+                        <button key={c} type="button" className="btn btn--secondary btn--sm" style={{ marginRight: 6, marginTop: 4 }} onClick={() => { const a = loaded.archive; disown(loaded.project); setLoaded(null); void onArchive(a, c, loaded.kit) }}>{c || '/'}</button>
                       ))}
                     </li>
                   )}
@@ -466,7 +475,7 @@ export function App() {
       </div>
       {loaded && <Footer />}
       {showExport && loaded && (
-        <ExportDialog cfg={cfg} base={loaded.report.baseline.cfg} table={loaded.project.table} vars={vars} projectName={loaded.project.name} files={loaded.project.raw} fontCss={fontCss} notes={loaded.report.notes} painted={coverage?.painted} anchors={coverage?.anchors} kit={coverage ? coverage.kit : undefined} kitValues={coverage?.kitValues} readPageVars={readPageVars} onClose={() => setShowExport(false)} />
+        <ExportDialog cfg={cfg} base={loaded.report.baseline.cfg} table={loaded.project.table} vars={vars} projectName={loaded.project.name} kitDoorName={loaded.kit?.name} files={loaded.project.raw} fontCss={fontCss} notes={loaded.report.notes} painted={coverage?.painted} anchors={coverage?.anchors} kit={coverage ? coverage.kit : undefined} kitValues={coverage?.kitValues} readPageVars={readPageVars} onClose={() => setShowExport(false)} />
       )}
     </div>
   )
