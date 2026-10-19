@@ -3037,7 +3037,9 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     Then by hand (2026-10-19): Alexander dragged the bookmarklet from the
     dev server to his own Chrome's bookmarks bar and clicked it on
     test.siteshare.dev/ideelab, logged in: it works. That is the real
-    bookmarks bar, and the app this was for. No numbers were taken there.
+    bookmarks bar, and the app this was for. Chrome asked nothing on the
+    way (no local network prompt for the https app opening a localhost
+    tab). No numbers were taken there.
 
     Where it stops:
 
