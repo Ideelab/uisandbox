@@ -3685,3 +3685,9 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     says so by name, and DESIGN.md names the face.
     Hold-outs: 173 in 1448 s, ok 155, differs 3, refused 1, no-load 14, no
     regressions (153 and 5 the run before).
+
+    The six keep what you chose. Alexander set Sky and opened Pick a look:
+    six looks in six other colours. A colour or a font turned away from the
+    kit's is now kept by default when the six open, so they vary the style
+    around it; untouched, they still vary the colour. The locks stay one
+    click, and the line under the six says what a look will set.

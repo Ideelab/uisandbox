@@ -161,6 +161,16 @@ function Editor() {
   // What on this screen reads as the AI look (sandbox/tells.ts), measured
   // again after a load and after every turn, never while the original shows.
   const [tells, setTells] = useState<Tell[] | null>(null)
+  // The six open holding on to what was chosen: a colour or a font turned
+  // away from the kit's is kept by default, so the looks vary the style
+  // around it; untouched, they vary the colour too. Unlocking is one click.
+  const openLooks = () => {
+    if (loaded) {
+      const b = loaded.report.baseline.cfg
+      setLocks({ colour: cfg.cPrimary !== b.cPrimary, font: cfg.fontDisplay !== b.fontDisplay || cfg.fontBody !== b.fontBody })
+    }
+    setLooksOpen(true)
+  }
   const looksOpenRef = useRef(looksOpen)
   looksOpenRef.current = looksOpen
   const peekRef = useRef(peek)
@@ -673,7 +683,7 @@ function Editor() {
     { n: 1, label: 'Your app', title: loaded?.kit ? 'Connect your app: any screen your browser shows, your dev server, or a build' : 'Your app is in',
       on: step === 1, done: !!loaded && !loaded.kit, go: () => { if (loaded?.kit) { setLooksOpen(false); tab === 'app' ? closeDoor() : openDoor() } } },
     { n: 2, label: lookOn ? DIRECTIONS.find((d) => d.id === lookOn)?.name ?? 'Pick a look' : 'Pick a look', title: 'Your screen in six directions, side by side',
-      on: step === 2, done: !!lookOn, go: () => { if (tab === 'app') closeDoor(); setLooksOpen((v) => !v) } },
+      on: step === 2, done: !!lookOn, go: () => { if (tab === 'app') closeDoor(); if (looksOpen) setLooksOpen(false); else openLooks() } },
     { n: 3, label: 'Tune', title: 'The knobs on the left, on your screen', on: step === 3, done: changedCount > 0,
       go: () => { if (tab === 'app') closeDoor(); setLooksOpen(false); setShowExport(false) } },
     { n: 4, label: 'Take it home', title: 'To your agent, or as code', on: step === 4, done: false, go: () => { setLooksOpen(false); setShowExport(true) } },
@@ -772,7 +782,7 @@ function Editor() {
               peek={peek}
               onPeek={setPeek}
               tells={tells ?? undefined}
-              onLooks={() => { if (tab === 'app') closeDoor(); setLooksOpen(true) }}
+              onLooks={() => { if (tab === 'app') closeDoor(); openLooks() }}
               looks={looksOpen && loaded ? <LookGrid project={loaded.project} screen={loaded.screen} looks={lookCards} current={lookOn} locks={locks} onLocks={setLocks}
                 onShuffle={() => setRoll((r) => reroll(r))} onPick={pickDirection} onClose={() => setLooksOpen(false)} /> : null}
               warningTitle={!thin && !missingFiles.length && flutterWeb ? 'A Flutter web build' : undefined}
