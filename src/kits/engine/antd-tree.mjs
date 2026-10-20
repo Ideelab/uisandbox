@@ -65,7 +65,7 @@ const {
   ConfigProvider, Button, Input, Select, Checkbox, Radio, Switch, Slider, Tag, Alert, Statistic,
   Progress, Table, List, Descriptions, Avatar, Empty, Tabs, Layout, Menu, Breadcrumb, Dropdown,
   Card, Typography, Flex, Space, Divider,
-  Pagination, Segmented, Tooltip, Modal, notification, Skeleton, Spin, Form,
+  Pagination, Segmented, Tooltip, Modal, notification, Skeleton, Spin, Form, Drawer,
 } = antd
 
 const e = React.createElement
@@ -249,6 +249,19 @@ const PART = {
   /* a menu a layer opens has no trigger of its own: their Dropdown still
      needs one to hang from, so it is there and not shown */
   e(Button, { icon: icon('chevron-down', 14), iconPosition: 'end', style: n.trigger === false ? { display: 'none' } : undefined }, text(n.trigger ?? 'Actions')))),
+  /* their Drawer, as their docs draw it in place (its pure panel), and a
+     command palette composed of their Input, Card and List: they ship none */
+  drawer: (n, kids) => e(Drawer._InternalPanelDoNotUseOrYouWillBeFired ?? Card, {
+    title: e('div', null, text(n.title), n.text ? e(Typography.Paragraph, { type: 'secondary', style: { margin: 0, fontWeight: 'normal' } }, text(n.text)) : null),
+    footer: n.foot ? element(n.foot, 'foot') : undefined, closable: true, placement: 'right', style: { height: '100%' } },
+    e(Flex, { vertical: true, gap: 16 }, ...kids)),
+  command: (n) => e(Card, { styles: { body: { padding: 8 } } },
+    e(Input, { placeholder: text(n.placeholder), prefix: icon('search'), variant: 'borderless', size: 'large' }),
+    ...list(n.groups).map((g, gi) => e('div', { key: gi },
+      e(Typography.Text, { type: 'secondary', style: { display: 'block', padding: '8px 12px 4px', fontSize: 12 } }, text(g.title)),
+      e(List, { size: 'small', split: false, dataSource: list(g.items),
+        renderItem: (it, i) => e(List.Item, { key: i, extra: it.meta ? e(Typography.Text, { type: 'secondary', keyboard: true }, text(it.meta)) : null },
+          e(Flex, { align: 'center', gap: 8 }, icon(it.icon), text(it.text))) })))),
   /* ── the screens' newer parts (decision 211) ──────────────────────────
      A tooltip, a dialog and a notification are portals in a running page;
      their own static panels (what their docs render inline) are the same

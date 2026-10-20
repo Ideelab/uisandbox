@@ -304,6 +304,7 @@ export const plain = (files) => Object.fromEntries(
  */
 export const COMPONENT_GAPS = {
   bootstrap: [
+    ['command', 'and no command palette; its form-control over list rows in a card'],
     ['footer', 'Bootstrap ships a navbar but no footer component; the one on the wall is its own utilities on plain markup'],
     ['chart', 'and no chart, so the bars are its own colour utilities on plain markup'],
     ['empty', 'and no empty state'],
@@ -314,6 +315,8 @@ export const COMPONENT_GAPS = {
     ['toast', 'its toast is Sonner, whose look is its own stylesheet and CSS variables, not classes; the one on the wall is the tokens shadcn hands Sonner (popover, its foreground, the border)'],
   ],
   radix: [
+    ['drawer', 'and no drawer or sheet, so its Card at full height'],
+    ['command', 'and no command palette, so its TextField and rows in a Card'],
     ['navbar', 'Radix Themes ships no navigation bar; the one on the wall is rt-Link and rt-Heading in a flex row'],
     ['footer', 'and no footer either, the same with rt-Grid'],
     ['sidenav', 'and no sidebar: its TabNav runs horizontally, so the rail is rt-Text and rt-Badge rows on its own accent scale'],
@@ -324,22 +327,30 @@ export const COMPONENT_GAPS = {
     ['toast', 'and no toast, so its Card on its own --shadow-5'],
   ],
   mantine: [
+    ['command', 'its command palette is Spotlight, in @mantine/spotlight, a separate package this page does not load; this is its TextInput over rows in a Paper'],
     ['navbar', 'the header and footer come from AppShell, which normally positions them for a whole app shell; on the wall they sit in flow'],
     ['chart', 'charts live in @mantine/charts, a separate package this page does not load; the bars are its own primary colour'],
   ],
   daisyui: [
+    ['drawer', 'daisyUI\'s drawer is a page layout with a toggle, not a panel; the one that slides in is its card on its own surface'],
+    ['command', 'and no command palette, so its input and list in a card'],
     ['chart', 'daisyUI ships no chart; the bars are its own primary colour on plain markup'],
     ['empty', 'and no empty state'],
   ],
   tailwind: [
+    ['drawer', 'nor a drawer; the one that slides in is its utilities on a panel, as Tailwind Plus builds a slide-over'],
+    ['command', 'nor a command palette, the same way'],
     ['chart', 'Tailwind ships utilities, not components, so everything on this wall is composed, the chart included'],
   ],
   antd: [
+    ['command', 'Ant Design ships no command palette; its Input over a List in a Card'],
     ['chart', 'Ant Design ships no chart; charts live in @ant-design/charts, a separate package, so the bars here are its own primary at two fills'],
     ['stack', 'their layout is Flex and Space, which are components; a column of ours is their spacing on a plain div'],
     ['sidenav', 'their Menu in inline mode is the sidebar, and it is theirs, but the rail on this wall has a count on one row, which their item API has no slot for, so that badge sits in the label'],
   ],
   material: [
+    ['drawer', 'the side sheet is in the M3 specification and not in @material/web, so it is its surface tokens on plain markup'],
+    ['command', 'and no command palette; md-outlined-text-field over md-list rows in a card'],
     ['navbar', 'M3 has a top app bar in the specification; @material/web ships only a bottom navigation bar, so the header is its tokens on plain markup'],
     ['footer', 'no footer in the specification or the package'],
     ['mediacard', 'no media card: md-outlined-card has no image slot, so the picture area is a plain div on their surface tokens'],

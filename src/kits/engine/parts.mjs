@@ -23,6 +23,7 @@ export const PARTS = [
   'dialog', 'tooltip', 'toast', 'skeleton', 'spinner',               //   and what floats or waits
   'layer',                                                           // what an app puts over itself
   'field', 'fields',                                                 // a form, as the kit composes one
+  'drawer', 'command',                                               // what slides in, what you type into
   'elevation', 'swatches', 'typespec', 'shapes',                     // foundation specimens
 ]
 
@@ -49,7 +50,7 @@ export const TONES = ['neutral', 'brand', 'success', 'warning', 'danger']
  * with a reference to nothing and a blank tool, with one line in the console
  * about a constant nobody had heard of.
  */
-export const BINDING_ICONS = ['chevron-down', 'check', 'chevron-left', 'chevron-right', 'x', 'loader-circle', 'panel-left', 'ellipsis-vertical', 'trending-up', 'trending-down']
+export const BINDING_ICONS = ['chevron-down', 'check', 'chevron-left', 'chevron-right', 'x', 'loader-circle', 'panel-left', 'ellipsis-vertical', 'trending-up', 'trending-down', 'search']
 
 export const esc = (s) => String(s ?? '').replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]))
 export const list = (v) => (Array.isArray(v) ? v : [])
@@ -96,10 +97,12 @@ export function render(node, bind) {
  */
 function inProps(node, bind) {
   const cells = node.p === 'table' && list(node.rows).some((r) => list(r).some((c) => c && typeof c === 'object'))
-  if (!cells && !(node.aside && typeof node.aside === 'object')) return node
+  const isNode = (v) => v && typeof v === 'object' && !Array.isArray(v)
+  if (!cells && !isNode(node.aside) && !isNode(node.foot)) return node
   return { ...node,
     ...(cells ? { rows: list(node.rows).map((r) => list(r).map((c) => (c && typeof c === 'object' ? { html: render(c, bind) } : c))) } : {}),
-    ...(node.aside && typeof node.aside === 'object' ? { asideHtml: render(node.aside, bind) } : {}) }
+    ...(isNode(node.aside) ? { asideHtml: render(node.aside, bind) } : {}),
+    ...(isNode(node.foot) ? { footHtml: render(node.foot, bind) } : {}) }
 }
 /** A table cell: text, or a node already rendered (inProps). */
 export const cellOf = (c) => (c && typeof c === 'object' && c.html != null ? c.html : esc(c))

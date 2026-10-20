@@ -123,6 +123,10 @@ table with its decision.
 | `wall-bindings.mjs` | a layer's id, opener and place (anchor, side, centre, corner); a menu without a trigger and with a plain end item; a stat's trend; table cells and a panel's aside as nodes; a chart's height | 214 |
 | `antd-tree.mjs` | the same for Ant: a hidden trigger, the end item, a stat's Tag, nodes in cells and in a card's head | 214 |
 | `icon-sets.mjs`, `kit-defaults.mjs` | trending-down in every set; Tailwind's onBrand from white, read as a colour | 213, 214 |
+| `parts.mjs`, `antd-nodes.mjs` | drawer and command; a part's foot as a node | 214 |
+| `wall-bindings.mjs`, `antd-tree.mjs` | drawer and command in every kit: shadcn's Sheet and CommandDialog, Bootstrap's offcanvas, Mantine's Drawer, Ant's Drawer panel, composed elsewhere; a centred layer near the top, its width, a key | 214 |
+| `kits/shadcn.json` | re-read with sheet, command, popover, calendar and input-group | 214 |
+| `generate.mjs` | the drawer and command gaps named | 214 |
 | `kits/shadcn.json`, `kits/antd.json`, `kits/antd.render.*`, `kits/material.elements.json` | refetched and re-rendered for the new parts | 211 |
 | `scenes.mjs` | the fallback font on :where(html), not #strip: a kit's own body font reaches its wall | 207 |
 | `kit-defaults.mjs` | each default read from the variable the build writes it into (daisyUI radius, Ant Design ink and muted ink); TABLE exported | 207 |

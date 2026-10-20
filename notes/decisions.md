@@ -3455,3 +3455,23 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     Measured: the whole path (avatar, Escape, bell, a click outside, a
     row's menu, Void invoice, the confirm, the toast) clicked through in
     all eight kits by a script, every step opening what it should.
+
+    Then the list and what slides in. Two new parts, drawer and command,
+    because both are components most kits ship and nothing on the wall was
+    one: shadcn's Sheet (which places itself, w-3/4 up to max-w-sm, with its
+    own close) and its CommandDialog (Command with an InputGroup, read from
+    the registry with sheet, command, popover, calendar and input-group),
+    Bootstrap's offcanvas, Mantine's Drawer, Ant's Drawer panel; the others
+    compose them of their own panel, input and list, and say so as a gap.
+    Invoices is now the list somebody lives in: a status filter, a search,
+    two selects in one toolbar row, a selection with what to do with it,
+    eight rows with a checkbox, a status badge and a menu, and a pager. A
+    number in the list, or Open in a row's menu, slides the invoice in:
+    status, tabs, its terms, what is paid, the PDF, its history, and a
+    reminder or a payment to record. On every shell page the search field
+    opens the command palette, as Cmd-K or Ctrl-K does. M3's controls are
+    elements of their own (md-filled-tonal-icon-button, md-menu-item) and
+    its text field names itself with label, so the script reads those too.
+
+    Measured: the drawer by its number, its close, a row's Open, Escape,
+    the search field and Cmd-K, clicked through in all eight kits.

@@ -50,7 +50,10 @@ const PARTS = ['button', 'badge', 'alert', 'card', 'input', 'textarea', 'select'
   'breadcrumb', 'sidebar', 'navigation-menu', 'empty', 'item', 'dropdown-menu',
   /* the screens' newer parts (decision 211): what floats, what waits, and the
      controls a sign-in and a list need */
-  'dialog', 'tooltip', 'skeleton', 'spinner', 'pagination', 'toggle-group', 'toggle', 'field']
+  'dialog', 'tooltip', 'skeleton', 'spinner', 'pagination', 'toggle-group', 'toggle', 'field',
+  /* and what the showcase screens open (decision 214): a drawer, a command
+     palette, a popover, the calendar a date field opens */
+  'sheet', 'command', 'popover', 'calendar', 'input-group']
 
 /* The preset, as the CLI spells it out (shadcn 4.22.1: `nova` in its preset
    table, `base` for the component library). */

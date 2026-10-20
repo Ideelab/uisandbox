@@ -367,13 +367,16 @@ const shellSide = (on) => ({ p: 'sidenav', brand: 'Ledgeway', mark: true, user: 
 const STATUS = { Overdue: 'danger', Sent: 'brand', Paid: 'success', Draft: 'neutral' }
 const status = (t) => ({ p: 'badge', tone: STATUS[t], text: t })
 const ROW_ACTION = { p: 'iconrow', items: ['ellipsis-vertical'] }
-const INVOICES = { p: 'table', cols: ['Number', 'Client', 'Status', 'Due', 'Amount', ''], rows: [
-  ['INV-1042', 'Halden & Rowe', status('Overdue'), '12 Sep', '€4,820.00', ROW_ACTION],
-  ['INV-1041', 'Northfield Studio', status('Sent'), '28 Sep', '€1,250.00', ROW_ACTION],
-  ['INV-1040', 'Vandermeer Architecten & Partners', status('Paid'), '9 Sep', '€18,374.65', ROW_ACTION],
-  ['INV-1039', 'Kestrel Logistics', status('Draft'), '', '€960.00', ROW_ACTION],
-  ['INV-1038', 'Brightwater Dental Care', status('Paid'), '2 Sep', '€2,105.40', ROW_ACTION],
-  ['INV-1037', 'Orchard Lane Bakery', status('Sent'), '30 Sep', '€312.75', ROW_ACTION],
+const pick = (on) => ({ p: 'checkbox', on, text: '' })
+const INVOICES = { p: 'table', cols: ['', 'Number', 'Client', 'Status', 'Issued', 'Due', 'Amount', ''], rows: [
+  [pick(true), 'INV-1042', 'Halden & Rowe', status('Overdue'), '12 Aug', '12 Sep', '€4,820.00', ROW_ACTION],
+  [pick(true), 'INV-1041', 'Northfield Studio', status('Sent'), '29 Aug', '28 Sep', '€1,250.00', ROW_ACTION],
+  [pick(false), 'INV-1040', 'Vandermeer Architecten & Partners', status('Paid'), '10 Aug', '9 Sep', '€18,374.65', ROW_ACTION],
+  [pick(false), 'INV-1039', 'Kestrel Logistics', status('Draft'), '', '', '€960.00', ROW_ACTION],
+  [pick(false), 'INV-1038', 'Brightwater Dental Care', status('Paid'), '3 Aug', '2 Sep', '€2,105.40', ROW_ACTION],
+  [pick(false), 'INV-1037', 'Orchard Lane Bakery', status('Sent'), '31 Aug', '30 Sep', '€312.75', ROW_ACTION],
+  [pick(false), 'INV-1036', 'Halden & Rowe', status('Paid'), '28 Jul', '27 Aug', '€2,940.00', ROW_ACTION],
+  [pick(false), 'INV-1035', 'Marrow & Finch Bookbinders', status('Overdue'), '20 Jul', '19 Aug', '€1,486.20', ROW_ACTION],
 ] }
 /* WHAT OPENS (decision 214). A layer with an id starts closed and says which
    control opens it: the avatar the account menu, the bell the
@@ -381,6 +384,22 @@ const INVOICES = { p: 'table', cols: ['Number', 'Client', 'Status', 'Due', 'Amou
    whose own Void invoice closes it and leaves a toast. Every shell page has
    the first two; a page with invoice rows has the rest. */
 const SHELL_LAYERS = { p: 'stack', gap: 0, kids: [
+  { p: 'layer', id: 'search', at: 'top', scrim: true, width: 560, key: 'k', opener: ['Search invoices and clients'], kids: [
+    { p: 'command', placeholder: 'Type a command or search', groups: [
+      { title: 'Invoices', items: [
+        { icon: 'file-text', text: 'INV-1042, Halden & Rowe', meta: 'Overdue' },
+        { icon: 'file-text', text: 'INV-1041, Northfield Studio', meta: 'Sent' },
+      ] },
+      { title: 'Clients', items: [
+        { icon: 'users', text: 'Vandermeer Architecten & Partners' },
+        { icon: 'users', text: 'Orchard Lane Bakery' },
+      ] },
+      { title: 'Go to', items: [
+        { icon: 'plus', text: 'New invoice', meta: 'N' },
+        { icon: 'settings', text: 'Workspace settings', meta: 'G S' },
+      ] },
+    ] },
+  ] },
   { p: 'layer', id: 'account', at: 'anchor', opener: ['MO', 'Maya Okafor', 'Account'], kids: [
     { p: 'menu', trigger: false, label: 'maya@okafor-studio.com', items: ['Profile', 'Billing', 'Workspace settings', 'Keyboard shortcuts'], end: 'Sign out' },
   ] },
@@ -408,14 +427,38 @@ const ROW_LAYERS = [
     { p: 'toast', title: 'Invoice INV-1042 voided', text: 'Halden & Rowe no longer owes it', action: 'Undo' },
   ] },
 ]
+/* the list somebody lives in: filters, a selection with what to do with it,
+   every row's status and menu, a pager (decision 214) */
 const invoiceList = () => ({ p: 'panel', kids: [{ p: 'stack', gap: 3, kids: [
-  { p: 'row', between: true, kids: [
+  /* a toolbar in a grid, so a field that fills its width cannot push the
+     others onto a line of their own */
+  { p: 'grid', tracks: 'auto minmax(0,1fr) minmax(0,200px) minmax(0,160px)', kids: [
     { p: 'segmented', items: ['All', 'Drafts', 'Overdue', 'Paid'], on: 0 },
-    { p: 'row', kids: [{ p: 'button', tone: 'outline', text: 'Export' }, { p: 'button', tone: 'brand', text: 'New invoice' }] },
+    { p: 'input', placeholder: 'Filter by number or client' },
+    { p: 'select', options: ['Any client', 'Halden & Rowe', 'Northfield Studio'] },
+    { p: 'select', options: ['This quarter', 'This year', 'All time'] },
   ] },
+  { p: 'alert', tone: 'brand', text: 'Two invoices selected, €6,070.00 in all. Send them a reminder, export them, or mark them as paid.' },
   INVOICES,
-  { p: 'row', between: true, kids: [{ p: 'muted', text: 'Showing 1 to 6 of 214' }, { p: 'pagination', pages: 5, on: 1 }] },
+  { p: 'row', between: true, kids: [{ p: 'muted', text: 'Showing 1 to 8 of 214' }, { p: 'pagination', pages: 5, on: 1 }] },
 ] }] })
+/* one invoice, as it slides in from the list */
+const INVOICE_DRAWER = { p: 'layer', id: 'invoice', at: 'side', scrim: true, opener: ['INV-1042', 'Open'], kids: [
+  { p: 'drawer', title: 'Invoice INV-1042', text: 'Halden & Rowe, issued 12 Aug 2026',
+    foot: { p: 'row', kids: [{ p: 'button', tone: 'outline', text: 'Send a reminder' }, { p: 'button', tone: 'brand', text: 'Record a payment' }] },
+    kids: [
+      { p: 'row', kids: [{ p: 'badge', tone: 'danger', text: 'Overdue' }, { p: 'muted', text: 'Due 12 Sep, eight days ago' }] },
+      { p: 'tabs', items: ['Details', 'Activity', 'Payments'] },
+      { p: 'kv', rows: [['Client', 'Halden & Rowe'], ['Issued', '12 Aug 2026'], ['Due', '12 Sep 2026'], ['Amount', '€4,820.00']] },
+      { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Paid so far, €1,928.00' }, { p: 'progress', value: 40 }] },
+      { p: 'row', between: true, kids: [{ p: 'link', text: 'Download the PDF' }, { p: 'tooltip', icon: 'copy', label: 'Copy link', text: 'Copy the payment link' }] },
+      { p: 'list', rows: [
+        { icon: 'bell', title: 'Reminder sent', sub: 'To accounts at Halden & Rowe', meta: '15 Sep' },
+        { icon: 'credit-card', title: 'Part payment received', sub: '€1,928.00 by bank transfer', meta: '1 Sep' },
+        { icon: 'file-text', title: 'Invoice sent', sub: 'To accounts at Halden & Rowe', meta: '12 Aug' },
+      ] },
+    ] },
+] }
 
 export const SCREENS = [
   {
@@ -564,25 +607,17 @@ export const SCREENS = [
   },
   {
     id: 'work', label: 'Invoices', shot: true, page: { shell: true, nav: 'Invoices' },
-    note: 'Ledgeway, the list somebody lives in, with one invoice open.',
+    note: 'Ledgeway, the list somebody lives in; an invoice slides in from it.',
     main: { p: 'stack', gap: 4, kids: [
-      { p: 'heading', level: 2, text: 'Invoices' },
-      { p: 'grid', tracks: '2fr 1fr', kids: [
-        invoiceList(),
-        { p: 'panel', kids: [{ p: 'stack', gap: 3, kids: [
-          { p: 'row', kids: [{ p: 'heading', text: 'Invoice INV-1042' }, { p: 'badge', tone: 'danger', text: 'Overdue' }] },
-          { p: 'kv', rows: [
-            ['Client', 'Halden & Rowe'],
-            ['Issued', '12 Aug 2026'],
-            ['Due', '12 Sep 2026'],
-            ['Amount', '€4,820.00'],
-          ] },
-          { p: 'link', text: 'Download the PDF' },
-          { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Paid so far' }, { p: 'progress', value: 40 }] },
-          { p: 'row', between: true, kids: [{ p: 'muted', text: 'Payment link' }, { p: 'tooltip', icon: 'copy', label: 'Copy link', text: 'Copy the payment link' }] },
-          { p: 'menu', trigger: 'More', label: 'Invoice INV-1042', items: ['Duplicate', 'Send a reminder', 'Mark as paid'], danger: 'Void invoice' },
-        ] }] },
+      { p: 'row', between: true, kids: [
+        { p: 'stack', gap: 1, kids: [
+          { p: 'heading', level: 2, text: 'Invoices' },
+          { p: 'muted', text: '214 this year, €312,480.20 invoiced and €12,940.50 still open.' },
+        ] },
+        { p: 'row', kids: [{ p: 'button', tone: 'outline', text: 'Export' }, { p: 'button', tone: 'brand', text: 'New invoice' }] },
       ] },
+      invoiceList(),
+      INVOICE_DRAWER,
       ...ROW_LAYERS,
     ] },
   },
@@ -676,9 +711,11 @@ export const LAYER_SCRIPT = `(() => {
   if (!layers.length) return
   const by = new Map()
   for (const l of layers) for (const k of JSON.parse(l.dataset.opener || '[]')) by.set(k, l)
-  const CONTROL = 'a,button,[role=button],[role=menuitem],[role=tab],td,li,input,label'
-  const keys = (el) => [el.getAttribute('aria-label'), el.getAttribute('placeholder'),
-    el.children.length === 0 || el.matches(CONTROL) ? (el.textContent || '').trim() : null].filter(Boolean)
+  /* M3's controls are elements of their own: md-icon-button, md-filled-tonal-
+     icon-button, md-menu-item; its text field names itself with label */
+  const isControl = (el) => el.matches('a,button,[role=button],[role=menuitem],[role=option],[role=tab],td,li,input,label') || /^md-.*(button|menu-item|text-field)$/.test(el.localName)
+  const keys = (el) => [el.getAttribute('aria-label'), el.getAttribute('placeholder'), el.localName.startsWith('md-') ? el.getAttribute('label') : null,
+    el.children.length === 0 || isControl(el) ? (el.textContent || '').trim() : null].filter(Boolean)
   const hit = (start) => {
     for (let el = start; el && el.nodeType === 1; el = el.parentElement) {
       for (const k of keys(el)) if (by.has(k)) return [by.get(k), el]
@@ -703,6 +740,7 @@ export const LAYER_SCRIPT = `(() => {
        and the click that opened the layer is one */
     setTimeout(() => { for (const m of l.querySelectorAll('md-menu')) m.open = true })
     if (l.dataset.at === 'anchor' && from) place(l, from); else l.hidden = false
+    if (l.dataset.at === 'top') l.querySelector('input')?.focus()
     if (l.dataset.at === 'corner') { clearTimeout(timers.get(l)); timers.set(l, setTimeout(() => close(l), 6000)) }
   }
   document.addEventListener('click', (ev) => {
@@ -717,13 +755,18 @@ export const LAYER_SCRIPT = `(() => {
     if (target) { ev.preventDefault(); open(target, from); return }
     if (!inside) return
     if (!ev.target.closest('[data-layer-box]')) { if (inside.dataset.at !== 'corner') close(inside); return }
-    const control = ev.target.closest('a,button,[role=menuitem],[role=option],md-menu-item')
-    if (!control) return
+    let control = ev.target
+    while (control && !control.hasAttribute('data-layer-box') && !(isControl(control) && !control.matches('td,li,label,input'))) control = control.parentElement
+    if (!control || control.hasAttribute('data-layer-box')) return
     if (control.matches('a')) ev.preventDefault()
     const name = (control.getAttribute('aria-label') || control.textContent || '').trim()
     if (inside.dataset.at !== 'side' || /^(close|cancel|x)$/i.test(name)) close(inside)
   }, true)
-  document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') for (const l of layers) if (l.dataset.at !== 'corner') close(l) })
+  document.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Escape') for (const l of layers) if (l.dataset.at !== 'corner') close(l)
+    const keyed = (ev.metaKey || ev.ctrlKey) && layers.find((l) => l.dataset.key === ev.key.toLowerCase())
+    if (keyed) { ev.preventDefault(); open(keyed) }
+  })
   const want = /[#&]open=([\\w-]+)/.exec(location.hash)
   const first = want && layers.find((l) => l.dataset.layerId === want[1])
   if (first) {

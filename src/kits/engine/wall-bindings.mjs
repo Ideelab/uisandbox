@@ -56,7 +56,7 @@ const brandOf = (n, paint) => `<span style="display:inline-flex;align-items:cent
    is the page's LAYER_SCRIPT (scenes.mjs), ours and kit-free; the look is
    still entirely the kit's. */
 const layerAttrs = (n) => n.id
-  ? ` data-layer-id="${esc(n.id)}" data-at="${esc(n.at ?? 'center')}"${n.opener ? ` data-opener="${esc(JSON.stringify(list(n.opener)))}"` : ''}${n.then ? ` data-then="${esc(n.then)}"` : ''}${n.open ? '' : ' hidden'}`
+  ? ` data-layer-id="${esc(n.id)}" data-at="${esc(n.at ?? 'center')}"${n.opener ? ` data-opener="${esc(JSON.stringify(list(n.opener)))}"` : ''}${n.then ? ` data-then="${esc(n.then)}"` : ''}${n.key ? ` data-key="${esc(n.key)}"` : ''}${n.open ? '' : ' hidden'}`
   : ''
 const layerOf = (n, k, scrim = '') => n.at === 'corner'
   ? `<div data-layer="corner"${layerAttrs(n)} style="position:fixed;inset:auto 24px 24px auto;z-index:1100;width:min(380px,calc(100vw - 48px))"><div data-layer-box>${k}</div></div>`
@@ -66,7 +66,7 @@ const layerOf = (n, k, scrim = '') => n.at === 'corner'
     /* a drawer comes in from the right, over the scrim */
     : n.at === 'side'
       ? `<div data-layer="side"${layerAttrs(n)} style="position:fixed;inset:0;z-index:1000">${n.scrim ? scrim : ''}<div data-layer-box style="position:absolute;inset:0 0 0 auto;width:min(${n.width ?? 440}px,100%);overflow:auto">${k}</div></div>`
-      : `<div data-layer="center"${layerAttrs(n)} style="position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:24px">${n.scrim ? scrim : ''}<div data-layer-box style="position:relative;z-index:1;width:min(460px,100%)">${k}</div></div>`
+      : `<div data-layer="center"${layerAttrs(n)} style="position:fixed;inset:0;z-index:1000;display:flex;align-items:${n.at === 'top' ? 'flex-start' : 'center'};justify-content:center;padding:${n.at === 'top' ? '12vh 24px 24px' : '24px'}">${n.scrim ? scrim : ''}<div data-layer-box style="position:relative;z-index:1;width:min(${n.width ?? 460}px,100%)">${k}</div></div>`
 
 /* ── the icons ────────────────────────────────────────────────────────────
  * Read at build time and HANDED IN — the same hand-in as Mantine's class map,
@@ -1471,6 +1471,43 @@ radix.layer = (n, k) => layerOf(n, k, '<div class="rt-BaseDialogOverlay" style="
 mantine.layer = (n, k) => layerOf(n, k, `<div class="${mc('Overlay')}" style="--overlay-bg:rgba(0, 0, 0, 0.6);z-index:0"></div>`)
 /* .antd is where their variables live, so the scrim carries it */
 antd.layer = (n, k) => layerOf(n, k, '<div class="antd" style="position:absolute;inset:0;background:var(--ant-color-bg-mask)"></div>')
+
+/* ── what slides in and what you type into (decision 214) ─────────────────
+ * A drawer and a command palette. Where a kit ships them they are its own
+ * (shadcn's Sheet and Command, Bootstrap's offcanvas, Mantine's Drawer, Ant's
+ * Drawer); where it does not, they are composed of its own panel, input and
+ * list, and named as a gap (generate.mjs). A drawer's x closes it. */
+const drawerOf = (bind) => (n, k) => bind.panel({ title: n.title, text: n.text, asideHtml: bind.iconrow({ items: ['x'] }) },
+  bind.stack({ gap: 4 }, k + (n.footHtml ? bind.divider({}) + n.footHtml : '')))
+const commandOf = (bind) => (n) => bind.panel({}, bind.stack({ gap: 3 }, bind.input({ placeholder: n.placeholder })
+  + list(n.groups).map((g) => bind.stack({ gap: 1 }, bind.label({ text: g.title })
+    + bind.list({ rows: list(g.items).map((it) => ({ icon: it.icon, title: it.text, sub: it.sub ?? '', meta: it.meta ?? '' })) }))).join('')))
+for (const bind of [tailwind, daisyui, material, radix]) { bind.drawer = drawerOf(bind); bind.command = commandOf(bind) }
+bootstrap.command = commandOf(bootstrap)
+mantine.command = commandOf(mantine)
+/* their offcanvas, at the end, shown: drawn in the layer's box, so its own
+   fixed place and slide are let go */
+bootstrap.drawer = (n, k) => `<div class="offcanvas offcanvas-end show" role="dialog" aria-modal="true" style="position:relative;visibility:visible;transform:none;width:100%;height:100%;max-width:none;border:0">
+  <div class="offcanvas-header"><div><h2 class="offcanvas-title h5">${esc(n.title)}</h2>${n.text ? `<p class="text-body-secondary small mb-0">${esc(n.text)}</p>` : ''}</div><button type="button" class="btn-close" aria-label="Close"></button></div>
+  <div class="offcanvas-body d-flex flex-column gap-3">${k}</div>${n.footHtml ? `<div class="border-top p-3 d-flex justify-content-end gap-2">${n.footHtml}</div>` : ''}</div>`
+/* their Drawer's content: ModalBase's header, title, close and body */
+mantine.drawer = (n, k) => `<section role="dialog" aria-modal="true" class="${cls(mc('Paper'), mc('ModalBase', 'content'), mc('Drawer', 'content'))}" style="--paper-radius:0;--paper-shadow:var(--mantine-shadow-xl);height:100%;max-height:none;flex:1;display:flex;flex-direction:column">
+  <header class="${cls(mc('ModalBase', 'header'), mc('Drawer', 'header'))}"><div><h2 class="${mc('ModalBase', 'title')}">${esc(n.title)}</h2>${n.text ? `<p class="${mc('Text')}" style="--text-color:var(--mantine-color-dimmed);--text-fz:var(--mantine-font-size-sm);margin:0">${esc(n.text)}</p>` : ''}</div>
+  <button type="button" aria-label="Close" class="${cls(MN_FOCUS, mc('CloseButton'), mc('CloseButton', 'root--subtle'), mc('UnstyledButton'), mc('ModalBase', 'close'))}" style="--cb-size:var(--cb-size-md);--cb-radius:var(--mantine-radius-default)">${ico('x')}</button></header>
+  <div class="${mc('ModalBase', 'body')}" style="flex:1;display:flex;flex-direction:column;gap:var(--mantine-spacing-md)">${k}</div>${n.footHtml ? `<div style="display:flex;justify-content:flex-end;gap:var(--mantine-spacing-sm);padding:var(--mantine-spacing-md);border-top:1px solid var(--mantine-color-default-border)">${n.footHtml}</div>` : ''}</section>`
+/* their Sheet from the right, which places itself (fixed, w-3/4, max-w-sm),
+   with their own close; and their CommandDialog: Command in DialogContent */
+shadcn.drawer = (n, k) => `<div role="dialog" aria-modal="true" data-slot="sheet-content" data-side="right" data-open="" class="${sSlot('sheet-content')}">
+  <div data-slot="sheet-header" class="${sSlot('sheet-header')}"><h2 data-slot="sheet-title" class="${sSlot('sheet-title')}">${esc(n.title)}</h2>${n.text ? `<p data-slot="sheet-description" class="${sSlot('sheet-description')}">${esc(n.text)}</p>` : ''}</div>
+  <div class="grid flex-1 auto-rows-min gap-6 overflow-y-auto px-4">${k}</div>
+  ${n.footHtml ? `<div data-slot="sheet-footer" class="${sSlot('sheet-footer')}">${n.footHtml}</div>` : ''}
+  <button type="button" data-slot="sheet-close" data-variant="ghost" data-size="icon-sm" class="${twMerge(sCva('button', 'buttonVariants', { variant: 'ghost', size: 'icon-sm' }), 'absolute top-3 right-3')}">${ico('x')}<span class="sr-only">Close</span></button></div>`
+shadcn.command = (n) => `<div role="dialog" aria-modal="true" data-slot="dialog-content" data-open="" class="${twMerge(sSlot('dialog-content'), 'overflow-hidden rounded-xl! p-0')}" style="position:relative;top:auto;left:auto;translate:none;max-width:100%;z-index:auto">
+  <div data-slot="command" class="${sSlot('command')}"><div data-slot="command-input-wrapper" class="${sSlot('command-input-wrapper')}"><div data-slot="input-group" role="group" class="${twMerge(sSlot('input-group'), 'h-8! rounded-lg! border-input/30 bg-input/30 shadow-none!')}">
+    <input data-slot="command-input" class="${twMerge(sSlot('input-group-control'), sSlot('command-input'))}" placeholder="${esc(n.placeholder ?? '')}">
+    <div data-slot="input-group-addon" data-align="inline-start" class="${twMerge(sCva('input-group', 'inputGroupAddonVariants', { align: 'inline-start' }), 'pl-2!')}">${ico('search', 16, 'size-4 shrink-0 opacity-50')}</div></div></div>
+  <div data-slot="command-list" role="listbox" class="${sSlot('command-list')}">${list(n.groups).map((g, gi) => `${gi ? `<div data-slot="command-separator" class="${sSlot('command-separator')}"></div>` : ''}<div data-slot="command-group" class="${sSlot('command-group')}"><div cmdk-group-heading="">${esc(g.title)}</div><div role="group">${
+    list(g.items).map((it, i) => `<div role="option" data-slot="command-item"${!gi && !i ? ' data-selected=""' : ''} class="${sSlot('command-item')}">${ico(it.icon)}<span>${esc(it.text)}</span>${it.meta ? `<span data-slot="command-shortcut" class="${sSlot('command-shortcut')}">${esc(it.meta)}</span>` : ''}</div>`).join('')}</div></div>`).join('')}</div></div></div>`
 
 /* ── a form, as the kit composes one (decision 213) ───────────────────────
  * shadcn answers field and fields in its own Field anatomy and Ant in its

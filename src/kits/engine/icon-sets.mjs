@@ -46,7 +46,7 @@ export const TRANSLATIONS = {
   heroicons: {
     'users': 'users', 'receipt': 'receipt-percent', 'settings': 'cog-6-tooth',
     'chevron-left': 'chevron-left', 'chevron-right': 'chevron-right', 'x': 'x-mark', 'loader-circle': 'arrow-path',
-    'panel-left': 'bars-3', 'ellipsis-vertical': 'ellipsis-vertical',
+    'panel-left': 'bars-3', 'search': 'magnifying-glass', 'ellipsis-vertical': 'ellipsis-vertical',
     'archive': 'archive-box', 'arrow-left-right': 'arrows-right-left', 'bell': 'bell',
     'car': 'truck', 'check': 'check', 'chevron-down': 'chevron-down',
     'coffee': 'building-storefront', 'copy': 'document-duplicate', 'credit-card': 'credit-card',
@@ -59,7 +59,7 @@ export const TRANSLATIONS = {
   'bootstrap-icons': {
     'users': 'people', 'receipt': 'receipt', 'settings': 'gear',
     'chevron-left': 'chevron-left', 'chevron-right': 'chevron-right', 'x': 'x-lg', 'loader-circle': 'arrow-repeat',
-    'panel-left': 'layout-sidebar', 'ellipsis-vertical': 'three-dots-vertical',
+    'panel-left': 'layout-sidebar', 'ellipsis-vertical': 'three-dots-vertical', 'search': 'search',
     'archive': 'archive', 'arrow-left-right': 'arrow-left-right', 'bell': 'bell',
     'car': 'car-front', 'check': 'check-lg', 'chevron-down': 'chevron-down',
     'coffee': 'cup-hot', 'copy': 'copy', 'credit-card': 'credit-card',
@@ -72,7 +72,7 @@ export const TRANSLATIONS = {
   'material-symbols': {
     'users': 'group', 'receipt': 'receipt_long', 'settings': 'settings',
     'chevron-left': 'chevron_left', 'chevron-right': 'chevron_right', 'x': 'close', 'loader-circle': 'progress_activity',
-    'panel-left': 'side_navigation', 'ellipsis-vertical': 'more_vert',
+    'panel-left': 'side_navigation', 'search': 'search', 'ellipsis-vertical': 'more_vert',
     'archive': 'archive', 'arrow-left-right': 'swap_horiz', 'bell': 'notifications',
     'car': 'directions_car', 'check': 'check', 'chevron-down': 'keyboard_arrow_down',
     'coffee': 'local_cafe', 'copy': 'content_copy', 'credit-card': 'credit_card',
@@ -85,7 +85,7 @@ export const TRANSLATIONS = {
   'radix-icons': {
     'users': 'person', 'receipt': 'reader', 'settings': 'gear',
     'chevron-left': 'chevron-left', 'chevron-right': 'chevron-right', 'x': 'cross-2', 'loader-circle': 'reload',
-    'panel-left': 'view-vertical', 'ellipsis-vertical': 'dots-vertical',
+    'panel-left': 'view-vertical', 'search': 'magnifying-glass', 'ellipsis-vertical': 'dots-vertical',
     'archive': 'archive', 'arrow-left-right': 'width', 'bell': 'bell',
     'car': null, 'check': 'check', 'chevron-down': 'chevron-down',
     'coffee': null, 'copy': 'copy', 'credit-card': null,
@@ -98,7 +98,7 @@ export const TRANSLATIONS = {
   tabler: {
     'users': 'users', 'receipt': 'receipt', 'settings': 'settings',
     'chevron-left': 'chevron-left', 'chevron-right': 'chevron-right', 'x': 'x', 'loader-circle': 'loader-2',
-    'panel-left': 'layout-sidebar', 'ellipsis-vertical': 'dots-vertical',
+    'panel-left': 'layout-sidebar', 'ellipsis-vertical': 'dots-vertical', 'search': 'search',
     'archive': 'archive', 'arrow-left-right': 'arrows-left-right', 'bell': 'bell',
     'car': 'car', 'check': 'check', 'chevron-down': 'chevron-down',
     'coffee': 'coffee', 'copy': 'copy', 'credit-card': 'credit-card',
@@ -111,7 +111,7 @@ export const TRANSLATIONS = {
   'antd-icons': {
     'users': 'TeamOutlined', 'receipt': 'AccountBookOutlined', 'settings': 'SettingOutlined',
     'chevron-left': 'LeftOutlined', 'chevron-right': 'RightOutlined', 'x': 'CloseOutlined', 'loader-circle': 'LoadingOutlined',
-    'panel-left': 'MenuFoldOutlined', 'ellipsis-vertical': 'MoreOutlined',
+    'panel-left': 'MenuFoldOutlined', 'search': 'SearchOutlined', 'ellipsis-vertical': 'MoreOutlined',
     'archive': 'ContainerOutlined', 'arrow-left-right': 'SwapOutlined', 'bell': 'BellOutlined',
     'car': 'CarOutlined', 'check': 'CheckOutlined', 'chevron-down': 'DownOutlined',
     'coffee': 'CoffeeOutlined', 'copy': 'CopyOutlined', 'credit-card': 'CreditCardOutlined',
