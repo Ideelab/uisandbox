@@ -71,7 +71,7 @@ export function FolderDrop({
       <p>
         {busy
           ? 'Everything stays on this machine.'
-          : lede || 'Drop a folder here, and the components you already build appear on this stage — themed by the kit your code implies.'}
+          : lede || 'Drop a folder here, and the components you already build appear on this stage, themed by the kit your code implies.'}
       </p>
       {!busy && (
         <>

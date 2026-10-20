@@ -89,7 +89,7 @@ export const identitySid = (id: string) => `${id}-id`
 export function ensureWorker(): Promise<ServiceWorkerRegistration> {
   if (ready) return ready
   if (!('serviceWorker' in navigator)) {
-    return Promise.reject(new Error('This browser has no service worker — the sandbox cannot serve your files here.'))
+    return Promise.reject(new Error('This browser has no service worker, so the sandbox cannot serve your files here.'))
   }
   ready = (async () => {
     const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' })

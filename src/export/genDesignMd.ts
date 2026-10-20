@@ -15,6 +15,7 @@
  * field for exactly that, and a design doc that guesses at a component library
  * it never saw would send an agent off writing fiction.
  */
+import { fontLink } from '../kits/engine/generate.mjs'
 import type { SubstitutionTable } from '../sandbox/table'
 import type { Config } from '../tokens/types'
 import { measure, pxOf, type Measured, type NamedRow, type Row } from './measured'
@@ -115,6 +116,10 @@ export interface DesignMdOptions {
   painted?: Map<number, PaintRoles>
   /** What the page computes for its own ink, ground and type levels. */
   anchors?: Anchors
+  /** Families the Type knob chose from Google Fonts. DESIGN.md says where
+   *  to fetch them, or an agent told to add no new fonts falls back to
+   *  the generic (decision 216). */
+  webfonts?: string[]
 }
 
 export function genDesignMd(
@@ -180,7 +185,7 @@ export function genDesignMd(
   if (m.palette.length) {
     for (const p of m.palette) {
       const how = p.count ? `${describeRole(p)}, used ${p.count} time${p.count === 1 ? '' : 's'} in the build` : p.name === 'primary' ? 'the brand colour' : describeRole(p)
-      body.push(`- **${cap(p.name)} (${p.value})** — ${how}.${p.changed ? ` Was ${p.was}.` : ''}`)
+      body.push(`- **${cap(p.name)} (${p.value})**: ${how}.${p.changed ? ` Was ${p.was}.` : ''}`)
     }
     const named = m.palette[0] && /^#[0-9a-f]{6}$/i.test(m.palette[0].value) ? nameColor(m.palette[0].value as `#${string}`) : ''
     body.push('', `The brand colour reads as ${named || 'the primary'}. Use it for the single most important action on a screen; everything else comes from the neutrals above.`)
@@ -201,6 +206,9 @@ export function genDesignMd(
     if (m.sizes.length > levels.length) body.push('', `The build paints ${m.sizes.length} distinct font sizes; the four above are the ones that carry the page. Snap a new size onto the nearest of them rather than adding another step.`)
   } else {
     body.push(`Headings in **${m.fonts.display}**, body in **${m.fonts.body}**. No size ladder could be read from this build.`)
+  }
+  if (opts.webfonts?.length) {
+    body.push('', `${opts.webfonts.map((f) => `**${f}**`).join(' and ')} must be fetched. Put this in the document head, or every measurement here is off:`, '', '```html', fontLink(opts.webfonts), '```')
   }
   body.push('')
 
@@ -243,7 +251,7 @@ export function genDesignMd(
   if (changedPalette.length) body.push(`- Don't reintroduce ${changedPalette.map((p) => `\`${p.was}\``).join(' or ')}: ${changedPalette.length === 1 ? 'it was' : 'they were'} replaced everywhere in this pass.`)
   if (m.radii.every((r) => pxOf(r.value) === 0)) body.push("- Don't add rounded corners: this build is square throughout.")
   if (!m.shadows.length) body.push("- Don't add shadows: this build has none, and one new card with a shadow reads as a mistake.")
-  body.push("- Don't treat this file as a component spec. It records values, not structure — check the existing components before adding a new one.")
+  body.push("- Don't treat this file as a component spec. It records values, not structure: check the existing components before adding a new one.")
   body.push('')
 
   return fm.join('\n') + '\n\n' + body.join('\n')

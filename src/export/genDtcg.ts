@@ -98,7 +98,7 @@ export function genDtcg(
   const m = measure(table, vars, cfg.cPrimary, { display: cfg.fontDisplay, body: cfg.fontBody }, { painted: opts.painted, anchors: opts.anchors })
   const date = opts.date ?? new Date().toISOString().slice(0, 10)
   const out: Json = {
-    $description: `${projectName} — measured from the built app by UISandbox on ${date}. ${m.totals.moved} of ${m.totals.values} values changed in this pass. W3C Design Tokens Format Module 2025.10.`,
+    $description: `${projectName}, measured from the built app by UISandbox on ${date}. ${m.totals.moved} of ${m.totals.values} values changed in this pass. W3C Design Tokens Format Module 2025.10.`,
   }
 
   const color: Json = { $type: 'color' }

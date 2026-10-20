@@ -1,7 +1,7 @@
 {
   "id": "tailwind",
   "name": "Tailwind CSS",
-  "what": "utility classes — no components; the theme is CSS variables you can override",
+  "what": "utility classes and no components; the theme is CSS variables you can override",
   "layer": "utility",
   "standalone": false,
   "plain": null,

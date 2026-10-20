@@ -55,7 +55,7 @@ export function detectPlatform(paths: string[], hasIndexHtml: boolean, texts: { 
   }
   if (expoSource) return { kind: 'react-native', label: 'React Native / Expo', evidence: ['app.json with expo, react-native in package.json'], renders: false }
   if (flutterSource) return { kind: 'flutter', label: 'Flutter (Dart)', evidence: [`${count(paths, /\.dart$/)} Dart files`, 'web/index.html is the build template'], renders: false }
-  if (viteSource) return { kind: 'web-source', label: 'Web source (dev entry, no build)', evidence: [`index.html loads ${(pages.find((t) => DEV_ENTRY.test(t.head))!.head.match(DEV_ENTRY)![0].match(/src=["']([^"']+)/)![1])} — a dev entry, not a build`], renders: false }
+  if (viteSource) return { kind: 'web-source', label: 'Web source (dev entry, no build)', evidence: [`index.html loads ${(pages.find((t) => DEV_ENTRY.test(t.head))!.head.match(DEV_ENTRY)![0].match(/src=["']([^"']+)/)![1])}, a dev entry, not a build`], renders: false }
   if (has(paths, /\.xcodeproj\/|(^|\/)Package\.swift$|\.xcassets\//) || count(paths, /\.swift$/) > 3) {
     ev.push(`${count(paths, /\.swift$/)} Swift files`, `${count(paths, /\.colorset\/Contents\.json$/)} colour sets`)
     if (!has(paths, /pubspec\.yaml$/)) return { kind: 'ios', label: 'iOS / macOS (Swift)', evidence: ev, renders: false }
@@ -91,16 +91,16 @@ export function detectPlatform(paths: string[], hasIndexHtml: boolean, texts: { 
  * "tinkering with your own app", and half a promise is worse than none.
  */
 export function refusalFor(p: Platform, detail: { files: number }): string {
-  const tail = ' Drop a BUILT web app instead — its dist/, build/ or out/ folder with an index.html — and it renders exactly as deployed.'
+  const tail = ' Drop a BUILT web app instead (its dist/, build/ or out/ folder with an index.html) and it renders exactly as deployed.'
   switch (p.kind) {
-    case 'ios': return `This is an iOS/macOS project (${p.evidence.join(', ')}). No browser can render SwiftUI or UIKit, so the sandbox cannot show it 1:1 — and it will not show you a look-alike.` + tail
+    case 'ios': return `This is an iOS/macOS project (${p.evidence.join(', ')}). No browser can render SwiftUI or UIKit, so the sandbox cannot show it 1:1, and it will not show you a look-alike.` + tail
     case 'android': return `This is an Android project (${p.evidence.join(', ')}). Compose and XML layouts have no browser render, so the sandbox cannot show it 1:1.` + tail
-    case 'flutter': return `This is a Flutter project (${p.evidence.join(', ')}). A Flutter WEB build renders here — run \`flutter build web\` and drop build/web/; the Dart source alone cannot.`
-    case 'react-native': return `This is a React Native / Expo project (${p.evidence.join(', ')}). Native views have no browser render; a WEB export does — run \`npx expo export -p web\` (or \`expo build:web\`) and drop the dist/ folder.`
+    case 'flutter': return `This is a Flutter project (${p.evidence.join(', ')}). A Flutter WEB build renders here: run \`flutter build web\` and drop build/web/; the Dart source alone cannot.`
+    case 'react-native': return `This is a React Native / Expo project (${p.evidence.join(', ')}). Native views have no browser render; a WEB export does: run \`npx expo export -p web\` (or \`expo build:web\`) and drop the dist/ folder.`
     case 'qt': return `This is a Qt/QML project. There is no browser render for QML, so the sandbox cannot show it 1:1.` + tail
     case 'kivy': return `This is a Kivy (Python) project. There is no browser render for kv layouts, so the sandbox cannot show it 1:1.` + tail
     case 'python-gui': return `This looks like a Python project without a web build. The sandbox renders web builds only.` + tail
-    case 'web-source': return `This is web SOURCE without a built page (${p.evidence.join(', ')}). Build it first — \`npm run build\`, or for a WordPress theme a static export of the site — then drop the output folder (dist/, build/ or out/).`
+    case 'web-source': return `This is web SOURCE without a built page (${p.evidence.join(', ')}). Build it first (\`npm run build\`, or for a WordPress theme a static export of the site), then drop the output folder (dist/, build/ or out/).`
     case 'unknown': return `No index.html and nothing the sandbox can render was found in these ${detail.files} files.` + tail
     default: return 'This archive has no page the sandbox can open.' + tail
   }

@@ -1,7 +1,7 @@
 {
   "id": "bootstrap",
   "name": "Bootstrap",
-  "what": "component classes, no build step needed — the widest-installed CSS framework there is",
+  "what": "component classes, no build step needed: the widest-installed CSS framework there is",
   "layer": "components",
   "standalone": true,
   "plain": null,

@@ -215,7 +215,7 @@ export async function deriveBaseline(archive: Archive, table: SubstitutionTable)
   if (fonts.body) cfg = { ...cfg, fontBody: fonts.body }
   if (fonts.display) cfg = { ...cfg, fontDisplay: fonts.display }
   else if (fonts.body) cfg = { ...cfg, fontDisplay: fonts.body }
-  if (fonts.body || fonts.display) notes.push(`Fonts from the stylesheets: body ${fonts.body ?? '—'}, display ${fonts.display ?? fonts.body ?? '—'}.`)
+  if (fonts.body || fonts.display) notes.push(`Fonts from the stylesheets: body ${fonts.body ?? 'none'}, display ${fonts.display ?? fonts.body ?? 'none'}.`)
 
   const baseline: Baseline = { cfg, tokens: buildTokens(cfg), families: familiesOf(table, cfg.cPrimary) }
   const derived = inferred ? derivedFromAudit(inferred) : {}

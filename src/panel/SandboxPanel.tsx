@@ -124,7 +124,7 @@ export function SandboxPanel({ cfg, tokens, base, families, scheme, codeFonts = 
     dot: <span className={`fmrow__dot ${noBrandInCss ? 'fmrow__dot--none' : ''}`} style={noBrandInCss ? undefined : { background: cfg.cPrimary }} />,
     body: () => (
       <>
-        {noBrandInCss && <p className="sbp__hint" style={{ marginTop: 0 }}>Your CSS has no colour near a brand role — there is nothing for this knob to move. Hue, Saturation and Contrast still reach every colour the page does have.</p>}
+        {noBrandInCss && <p className="sbp__hint" style={{ marginTop: 0 }}>Your CSS has no colour near a brand role, so there is nothing for this knob to move. Hue, Saturation and Contrast still reach every colour the page does have.</p>}
         <div className="fmpop__grid">
           {THEMES.map((t) => (
             <button key={t.id} type="button" className={`menu__item fmopt ${themeOf(cfg.cPrimary)?.id === t.id ? 'menu__item--on' : ''}`} onClick={() => { dispatch({ type: 'APPLY_COLOR_THEME', id: t.id }); close() }}>

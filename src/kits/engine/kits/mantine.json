@@ -1,7 +1,7 @@
 {
   "id": "mantine",
   "name": "Mantine",
-  "what": "React components — its variables are public, its class names are build hashes",
+  "what": "React components: its variables are public, its class names are build hashes",
   "layer": "components",
   "standalone": true,
   "plain": null,

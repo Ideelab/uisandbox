@@ -19,7 +19,7 @@ export function genReadme(projectName: string, files: ReadmeFile[], opts: { move
   const root = (groups.get('root') ?? []).map((f) => `| \`${f.name}\` | ${f.what} |`).join('\n')
   const patchedCount = (groups.get('patched/') ?? []).length
 
-  return `# ${projectName} — UISandbox export
+  return `# ${projectName}: UISandbox export
 
 ${opts.moved} of ${opts.total} design values were changed, across ${opts.changedFiles} file${opts.changedFiles === 1 ? '' : 's'}. Exported ${date}.
 
@@ -33,7 +33,7 @@ ${opts.moved} of ${opts.total} design values were changed, across ${opts.changed
 
 **If you edit the code yourself:**
 
-1. Open \`patched/\` — those are your own files with the new values already written in, in their original folders.
+1. Open \`patched/\`: those are your own files with the new values already written in, in their original folders.
 2. Diff them against your source, take what you want.
 3. \`sandbox-patch.txt\` is the same change as a find-and-replace list if you would rather do it by hand.
 
@@ -46,7 +46,7 @@ ${patchedCount ? `| \`patched/…\` | ${patchedCount} of your own file${patchedC
 ## Notes
 
 - Values here are the ones on screen in the sandbox, not a re-derivation. What you saw is what these files say.
-- \`DESIGN.md\` and \`design.tokens.json\` describe **your app as measured**. \`tokens.css\`, \`tokens.json\`, the Tailwind and shadcn files and the native ones describe **a fresh token system seeded from these values** — a different thing, useful if you are starting a system rather than patching one.
+- \`DESIGN.md\` and \`design.tokens.json\` describe **your app as measured**. \`tokens.css\`, \`tokens.json\`, the Tailwind and shadcn files and the native ones describe **a fresh token system seeded from these values**, a different thing, useful if you are starting a system rather than patching one.
 - \`sandbox-values.css\` is a reference list of every value found, under names of our own. It is not a drop-in stylesheet; your CSS does not read those variable names.
 
 Made with [UISandbox](https://uisandbox.org). Your files never left your browser.

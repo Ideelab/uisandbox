@@ -25,3 +25,5 @@ export interface GenerateOptions {
  *  .claude/skills/<slug>/SKILL.md, tokens.json, AGENTS.md, CLAUDE.md,
  *  .cursor/rules, and a kit's own extras (antd.theme.ts …). */
 export function generate(values: RoleValues, kitIds: KitId[], kits: Record<string, unknown>, opts?: GenerateOptions): Record<string, string>
+/** The Google Fonts <link> for these families, or "" for none. */
+export function fontLink(families: string[]): string

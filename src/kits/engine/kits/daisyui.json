@@ -1,7 +1,7 @@
 {
   "id": "daisyui",
   "name": "daisyUI",
-  "what": "component classes on top of Tailwind — no JavaScript, works in any framework",
+  "what": "component classes on top of Tailwind: no JavaScript, and it works in any framework",
   "layer": "components",
   "standalone": false,
   "plain": {

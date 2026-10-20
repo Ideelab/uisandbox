@@ -84,7 +84,7 @@ export function genTailwind(cfg: Config): string {
   --text-body: ${v['--k-type-body']};
   --text-small: ${v['--k-type-small']};
   --text-eyebrow: ${v['--k-type-eyebrow']};
-  /* Motion — three-tier durations + direction-aware easings.
+  /* Motion: three-tier durations + direction-aware easings.
      Use duration-fast / duration / duration-slow for transition-duration utils,
      ease-out for enter animations, ease-in for exit. */
   --default-transition-duration: ${v['--k-dur']};
@@ -95,7 +95,7 @@ export function genTailwind(cfg: Config): string {
   --ease: ${v['--k-ease']};
   --ease-out: ${v['--k-ease-out']};
   --ease-in: ${v['--k-ease-in']};
-  /* Named animation shorthands — use with: animate-[var(--animate-fade-in)] */
+  /* Named animation shorthands, to use with: animate-[var(--animate-fade-in)] */
   --animate-fade-in: ${v['--k-anim-fade-in']};
   --animate-fade-out: ${v['--k-anim-fade-out']};
   --animate-slide-up: ${v['--k-anim-slide-up']};
@@ -103,11 +103,11 @@ export function genTailwind(cfg: Config): string {
   --animate-scale-in: ${v['--k-anim-scale-in']};
   --animate-scale-out: ${v['--k-anim-scale-out']};
   --animate-spin-default: ${v['--k-anim-spin']};
-  /* Menu "roll-down" signature — panel + staggered items (see tokens.css keyframes) */
+  /* Menu "roll-down" signature: panel + staggered items (see tokens.css keyframes) */
   --animate-menu: ${v['--k-anim-menu']};
   --animate-menu-item: ${v['--k-anim-menu-item']};
   --menu-stagger: ${v['--k-menu-stagger']};
-  /* UI text — applies to buttons, badges, tabs, nav rows, form labels.
+  /* UI text: applies to buttons, badges, tabs, nav rows, form labels.
      Sentence case at the 14px body floor; uppercase only via the eyebrow role. */
   --ui-font-weight: ${v['--k-ui-weight']};
   /* State + focus ring + disabled opacity */
@@ -120,16 +120,16 @@ ${Object.entries(Z_INDEX).map(([k, val]) => `  --z-${k}: ${val};`).join('\n')}
 ${Object.entries(BREAKPOINTS).map(([k, val]) => `  --breakpoint-${k}: ${val};`).join('\n')}
   /* Container widths */
 ${Object.entries(CONTAINER_WIDTHS).map(([k, val]) => `  --container-${k}: ${val};`).join('\n')}
-  /* Decorative + chart palette — accent-1..6 (avatars/tiles/labels) and
+  /* Decorative + chart palette: accent-1..6 (avatars/tiles/labels) and
      chart-1..6 (same colours). Gradient pairs ship in tokens.css as
      --k-grad-1..6. */
 ${Object.entries(buildPalette(cfg))
   .filter(([k]) => !k.startsWith('grad-') && !k.endsWith('-ink'))
   .map(([k, val]) => `  --color-${k}: ${val};`)
   .join('\n')}
-  /* Extended type scale — h3/h4/h5/caption/eyebrow + display */
+  /* Extended type scale: h3/h4/h5/caption/eyebrow + display */
 ${Object.entries(buildTypeScale(cfg)).map(([k, val]) => `  --text-${k}: ${val};`).join('\n')}
-  /* Spacing scale — s-0 through s-12 (multiples of --k-space) */
+  /* Spacing scale: s-0 through s-12 (multiples of --k-space) */
 ${Object.entries(buildSpacingScale(cfg)).map(([k, val]) => `  --spacing-${k.replace('s-', '')}: ${val};`).join('\n')}`
 
   const darkColors = colorMap
@@ -138,7 +138,7 @@ ${Object.entries(buildSpacingScale(cfg)).map(([k, val]) => `  --spacing-${k.repl
     .join('\n')
 
   const lib = ICON_LIBS[cfg.iconSet]
-  return `/* globals.css — UIcockpit design system, Tailwind v4
+  return `/* globals.css: UISandbox design system, Tailwind v4
  *
  * Standalone: imports Tailwind v4 and registers the Cockpit theme.
  * Place in src/app/globals.css (Next) or src/styles/globals.css (Vite),
@@ -167,7 +167,7 @@ ${colors}
 ${rest}
 }
 
-/* Dark mode — apply class="dark" to <html> or any parent element */
+/* Dark mode: apply class="dark" to <html> or any parent element */
 .dark {
 ${darkColors}
 }

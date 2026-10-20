@@ -83,13 +83,13 @@ export function genCss(cfg: Config): string {
   ]
   const m3Block = m3Aliases.map(([m3, k]) => `  --md-sys-color-${m3}: var(${k});`).join('\n')
 
-  return `/* tokens.css — UISandbox tokens
+  return `/* tokens.css: UISandbox tokens
  *
  * Drop-in usage:
  *   <link rel="stylesheet" href="tokens.css">  (or @import in your CSS)
  *
  * Dark mode:
- *   <html class="dark"> or any ancestor element — the .dark block
+ *   <html class="dark"> or any ancestor element: the .dark block
  *   re-resolves every --k-* token.
  *
  * Fonts are pulled from Google Fonts. To self-host, remove the @import

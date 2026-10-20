@@ -1,7 +1,7 @@
 {
   "id": "material",
   "name": "Material 3",
-  "what": "Google's design system — 47 colour roles derived from ONE seed, plus web components",
+  "what": "Google's design system: 47 colour roles derived from ONE seed, plus web components",
   "layer": "components",
   "standalone": true,
   "plain": null,

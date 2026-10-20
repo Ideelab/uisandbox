@@ -1,7 +1,7 @@
 {
   "id": "shadcn",
   "name": "shadcn/ui",
-  "what": "React components copied into your repo — you own the source, it is not a dependency",
+  "what": "React components copied into your repo: you own the source, it is not a dependency",
   "layer": "components",
   "standalone": false,
   "plain": null,

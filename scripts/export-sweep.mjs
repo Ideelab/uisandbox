@@ -153,7 +153,14 @@ for (const [i, f] of PICKS.entries()) {
       return ''
     })
     if (opened) throw new Error(opened)
-    await page.waitForSelector('.exp__card', { timeout: 15000 })
+    // The cards sit folded under "Other formats" since Take it home leads the
+    // dialog; a closed <details> hides them, so it is opened before waiting.
+    async function cards() {
+      await page.waitForSelector('details.exp__more', { state: 'attached', timeout: 15000 })
+      await page.evaluate(() => { const d = document.querySelector('details.exp__more'); if (d) d.open = true })
+      await page.waitForSelector('.exp__card', { timeout: 15000 })
+    }
+    await cards()
 
     const grab = async (card, tab) => {
       // Back to the overview FIRST, in its own step: React re-renders after the
@@ -162,7 +169,7 @@ for (const [i, f] of PICKS.entries()) {
         const back = document.querySelector('.dialog__pane') && document.querySelector('.dialog__head .btn--ghost')
         if (back) back.click()
       })
-      await page.waitForSelector('.exp__card', { timeout: 15000 })
+      await cards()
       const miss = await page.evaluate((c) => {
         // `a|b`: the card under either name (191 renamed "Hand it to your agent"
         // to "Design system + Skill" where a kit is detected).

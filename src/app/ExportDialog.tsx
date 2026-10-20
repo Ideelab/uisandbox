@@ -18,7 +18,8 @@ import { genAgentsBlock } from '../export/genAgents'
 import { genDtcg } from '../export/genDtcg'
 import { measure } from '../export/measured'
 import { roleValues } from '../kits/values'
-import { isCustomFont, SYSTEM_FONT } from '../tokens/fonts'
+import { isCustomFont, SYSTEM_FONT, SERIF_FONTS, MONO_FONTS } from '../tokens/fonts'
+import { MAP } from '../kits/engine/roles.mjs'
 import type { RoleValues } from '../kits/engine/generate.mjs'
 import { kitExport, kitPackage } from '../kits/kitExport'
 import { knobLabel } from '../state/carry'
@@ -155,14 +156,19 @@ const KIT_NAME: Record<KitId, string> = {
  *  which the engine reads as a system stack, so DESIGN.md never said where
  *  Figtree comes from and an agent told to add no new fonts fell back to
  *  sans-serif (decision 216). An uploaded font has no address to give. */
-function chosenFonts(cfg: Config, base: Config, rv: RoleValues): RoleValues {
+function chosenFonts(cfg: Config, base: Config): RoleValues {
   const out: RoleValues = {}
-  const as = (f: string, measured: unknown) => `'${f}', ${String(measured ?? '').split(',').slice(1).join(',').trim() || 'sans-serif'}`
-  const web = (f: string, was: string) => f !== was && f !== SYSTEM_FONT && !isCustomFont(f)
-  if (web(cfg.fontBody, base.fontBody)) out.fontBody = as(cfg.fontBody, rv.fontBody)
-  if (web(cfg.fontDisplay, base.fontDisplay)) out.fontHeading = as(cfg.fontDisplay, rv.fontHeading)
+  // the generic is the family's own: the page's heading variable can still
+  // hold the body stack, and Fraunces went out as `'Fraunces', sans-serif`
+  const as = (f: string) => `'${f}', ${SERIF_FONTS.includes(f) ? 'serif' : MONO_FONTS.includes(f) ? 'monospace' : 'sans-serif'}`
+  if (isWeb(cfg.fontBody, base.fontBody)) out.fontBody = as(cfg.fontBody)
+  if (isWeb(cfg.fontDisplay, base.fontDisplay)) out.fontHeading = as(cfg.fontDisplay)
   return out
 }
+const isWeb = (f: string, was: string) => f !== was && f !== SYSTEM_FONT && !isCustomFont(f)
+/** The same families by name, for the own-app DESIGN.md's font link. */
+const webFamilies = (cfg: Config, base: Config) =>
+  [...new Set([cfg.fontDisplay, cfg.fontBody].filter((f, i) => isWeb(f, i === 0 ? base.fontDisplay : base.fontBody)))]
 
 export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName, shareUrl, files, fontCss, notes, painted, anchors, kit, kitValues, readPageVars, onClose, send, tells = [] }: ExportDialogProps) {
   const [patched, setPatched] = useState<Array<{ path: string; text: string }> | null>(null)
@@ -190,12 +196,20 @@ export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName,
     // kit default named in MANIFEST.md beats a guess.
     // and the two dials DESIGN.md describes as turned: depth said "100% of
     // its published strength" with Elevation at ×0.5 (decision 216)
-    const rv = { ...roleValues(m), ...kitValues }
-    const values = { ...rv, ...chosenFonts(cfg, base, rv), elevation: String(cfg.sb.shadow ?? 1), spaceScale: String(cfg.sb.space ?? 1) }
+    const chosen = chosenFonts(cfg, base)
+    const values = { ...roleValues(m), ...kitValues, ...chosen, elevation: String(cfg.sb.shadow ?? 1), spaceScale: String(cfg.sb.space ?? 1) }
     void kitExport(kit, values, projectName, { overview }).then((f) => {
       // A build's own variables win; the engine's derivation only fills what
       // the build does not define.
-      if (readPageVars && f['theme.css']) f = { ...f, 'theme.css': pinToBuild(f['theme.css'], readPageVars(lightDeclarations(f['theme.css']))).css }
+      // A family the knob chose is not pinned back: the knob sets headings by
+      // selector, so the page's own --font-heading still says the body face,
+      // and pinning put Figtree back where Fraunces was chosen (Tailwind, Radix).
+      if (readPageVars && f['theme.css']) {
+        const page = readPageVars(lightDeclarations(f['theme.css']))
+        const map = (MAP as Record<string, Record<string, { var?: string; also?: string[] } | null>>)[kit] ?? {}
+        for (const role of Object.keys(chosen)) for (const n of [map[role]?.var, ...(map[role]?.also ?? [])]) if (n) delete page[n]
+        f = { ...f, 'theme.css': pinToBuild(f['theme.css'], page).css }
+      }
       if (on) setKitFiles(kitPackage(f))
     }).catch((e: unknown) => { if (on) { setKitFiles(null); setKitError(e instanceof Error ? e.message : String(e)) } })
     return () => { on = false }
@@ -214,7 +228,7 @@ export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName,
         'Add the AGENTS.md block (next tab) so your agent picks it up on every task.',
         'Then ask: apply DESIGN.md to the UI.',
       ],
-      make: () => kitFiles?.['DESIGN.md'] ?? genDesignMd(table, vars, cfg, projectName, { notes, painted, anchors }),
+      make: () => kitFiles?.['DESIGN.md'] ?? genDesignMd(table, vars, cfg, projectName, { notes, painted, anchors, webfonts: webFamilies(cfg, base) }),
     },
     {
       id: 'agents-md', label: 'AGENTS.md', sub: 'the one line that points at it', icon: <Bot size={15} strokeWidth={1.75} />, file: 'AGENTS.snippet.md',

@@ -39,9 +39,9 @@ export function genSheetCss(table: SubstitutionTable, vars: Record<string, strin
   const lines = rows.map((r) => {
     const where = r.entry.sites.slice(0, 3).map((s) => `${s.file}${s.selector ? ` ${s.selector}` : ''} { ${s.prop} }`).join(' · ')
     const was = r.changed ? ` (was ${cssValue(r.entry.value)})` : ''
-    return `  /* ×${r.entry.count}${was} — ${where}${r.entry.count > 3 ? ' …' : ''} */\n  ${r.name}: ${r.current};`
+    return `  /* ×${r.entry.count}${was}: ${where}${r.entry.count > 3 ? ' …' : ''} */\n  ${r.name}: ${r.current};`
   })
-  return `/* UISandbox — your values, as they stand in the sandbox.\n * ${rows.length} variables${opts.changedOnly ? ' (changed only)' : ''}; every one replaced a literal in your CSS.\n */\n:root {\n${lines.join('\n')}\n}\n`
+  return `/* UISandbox: your values, as they stand in the sandbox.\n * ${rows.length} variables${opts.changedOnly ? ' (changed only)' : ''}; every one replaced a literal in your CSS.\n */\n:root {\n${lines.join('\n')}\n}\n`
 }
 
 export function genSheetJson(table: SubstitutionTable, vars: Record<string, string>): string {
@@ -68,8 +68,8 @@ export function genPatch(table: SubstitutionTable, vars: Record<string, string>)
       byFile.get(f)!.push({ from: cssValue(r.entry.value), to: r.current, kind: r.entry.kind, count: r.entry.sites.filter((s) => s.file === f).length })
     }
   }
-  if (!byFile.size) return '# Nothing changed — the sandbox is still 1:1 with your code.\n'
-  const out: string[] = ['# UISandbox patch — replace these literals in your source to apply what you see.', '# One line per value: kind  original  →  current  (occurrences seen in the built CSS)', '']
+  if (!byFile.size) return '# Nothing changed: the sandbox is still 1:1 with your code.\n'
+  const out: string[] = ['# UISandbox patch: replace these literals in your source to apply what you see.', '# One line per value: kind  original  →  current  (occurrences seen in the built CSS)', '']
   for (const [file, list] of [...byFile.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
     out.push(`## ${file}`)
     for (const l of list) out.push(`${l.kind.padEnd(11)} ${l.from}  →  ${l.to}   (×${l.count})`)

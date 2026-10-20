@@ -250,3 +250,17 @@ test("shadcn's theme carries the chosen family where init put Geist", () => {
   // and with nothing chosen, shadcn's own Geist stays
   assert.match(generate({}, ['shadcn'], KITS)['theme.css'], /--font-sans: 'Geist Variable'/)
 })
+
+test('daisyUI takes the chosen families through Tailwind, headings through one rule', () => {
+  const css = generate({ fontBody: "'Figtree', sans-serif", fontHeading: "'Fraunces', serif" }, ['daisyui'], KITS)['theme.css']
+  assert.match(css, /@theme \{\n  --font-sans: 'Figtree', sans-serif;\n  --font-heading: 'Fraunces', serif;\n\}/)
+  assert.match(css, /h1, h2, h3, h4, h5, h6 \{ font-family: var\(--font-heading\); \}/)
+  assert.doesNotMatch(generate({}, ['daisyui'], KITS)['theme.css'], /--font-sans/, 'nothing chosen, nothing written')
+})
+
+test('no generated file carries an em-dash, on any kit', () => {
+  for (const id of ALL) {
+    const f = generate({ ...VALUES, fontBody: "'Figtree', sans-serif", fontHeading: "'Fraunces', serif", elevation: '0.5', spaceScale: '1.2' }, [id], KITS)
+    for (const [name, text] of Object.entries(f)) if (typeof text === 'string') assert.ok(!text.includes('—'), `${id} ${name}: ${text.slice(Math.max(0, text.indexOf('—') - 60), text.indexOf('—') + 20)}`)
+  }
+})

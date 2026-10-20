@@ -1,7 +1,7 @@
 {
   "id": "radix",
   "name": "Radix Themes",
-  "what": "React components with a real theming API — but one that takes CHOICES, not values",
+  "what": "React components with a real theming API, but one that takes CHOICES, not values",
   "layer": "components",
   "standalone": true,
   "plain": null,
@@ -533,7 +533,7 @@
   "bands": {
     "behaviour": {
       "by": "radix-ui",
-      "what": "the Radix behaviour packages — unstyled focus, keyboard and ARIA",
+      "what": "the Radix behaviour packages: unstyled focus, keyboard and ARIA",
       "from": [
         "@radix-ui/colors",
         "radix-ui"

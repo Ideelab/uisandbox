@@ -141,7 +141,7 @@ export function compareDocuments(raw: Document, sandbox: Document, props: readon
   // it came from somewhere else (the host's own index after the worker was
   // lost) — comparing that would be the instrument measuring itself.
   if (!raw.getElementById('us-guard') || !sandbox.getElementById('us-guard')) {
-    return { ok: false, refusal: 'The sandbox did not serve this screen (the worker is gone or the page left the sandbox) — nothing of yours was compared.', elements: 0, unpaired: { raw: 0, sandbox: 0 }, mismatches: [] }
+    return { ok: false, refusal: 'The sandbox did not serve this screen (the worker is gone or the page left the sandbox), so nothing of yours was compared.', elements: 0, unpaired: { raw: 0, sandbox: 0 }, mismatches: [] }
   }
   blurDeep(raw); blurDeep(sandbox)
   const a = allElements(raw.body).filter((el) => !isOurs(el) && inFlatTree(el))

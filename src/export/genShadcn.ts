@@ -96,17 +96,17 @@ export function genShadcn(cfg: Config): string {
   const dark = buildTokens({ ...cfg, mode: 'dark' }).vars
   const lib = ICON_LIBS[cfg.iconSet]
 
-  return `/* globals.css — UIcockpit theme for shadcn/ui (Tailwind v4)
+  return `/* globals.css: UISandbox theme for shadcn/ui (Tailwind v4)
  *
  * Standalone: replaces the globals.css that \`npx shadcn@latest init\`
  * generates. Drop into src/app/globals.css (Next.js) or your equivalent,
- * then \`npx shadcn@latest add button card …\` — every component will
+ * then \`npx shadcn@latest add button card …\` and every component will
  * theme itself from this file without further config.
  *
  * Dark mode: add class="dark" to <html> or a parent.
  *
  * Icons (this kit uses ${lib.label}):
- *   ${lib.install}${lib.pkg === 'lucide-react' ? '\n *   (shadcn defaults to lucide-react — no overrides needed)' : '\n *\n * shadcn defaults to lucide-react. Override icon imports in shadcn\n * components by search & replacing "lucide-react" → "' + lib.pkg + '".'}
+ *   ${lib.install}${lib.pkg === 'lucide-react' ? '\n *   (shadcn defaults to lucide-react; no overrides needed)' : '\n *\n * shadcn defaults to lucide-react. Override icon imports in shadcn\n * components by search & replacing "lucide-react" → "' + lib.pkg + '".'}
  */
 
 @import "tailwindcss";

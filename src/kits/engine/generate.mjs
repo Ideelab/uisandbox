@@ -19,6 +19,24 @@ import { contrast } from './color.mjs'
 const stamp = (kit) => `${kit.name}${kit.version ? ' ' + kit.version : ''}`
 const decl = (vars, indent = '  ') => Object.entries(vars).map(([k, v]) => `${indent}${k}: ${v};`).join('\n')
 
+/* For a kit that rides on Tailwind for its type (daisyUI). Its fonts "inherit
+   the base" (roles.mjs), and on its own export no base is written, so a chosen
+   family reached DESIGN.md and no stylesheet (decision 216). It goes into
+   Tailwind's theme; headings take theirs through one base rule. */
+const tailwindType = (values) => {
+  const sans = values.fontBody
+  const head = values.fontHeading && values.fontHeading !== values.fontBody ? values.fontHeading : null
+  if (!sans && !head) return ''
+  return `
+
+/* The type, in Tailwind's theme: this kit takes its families from there. */
+@theme {
+${sans ? `  --font-sans: ${sans};\n` : ''}${head ? `  --font-heading: ${head};\n` : ''}}${head ? `
+@layer base {
+  h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
+}` : ''}`
+}
+
 /* ── one block per kit, in the form that kit reads ────────────────────────── */
 const EMIT = {
   tailwind: (r, kit) => `/* ${stamp(kit)}: semantic names Tailwind does not ship.
@@ -101,7 +119,7 @@ ${decl(bridge)}${own ? `\n${decl(own)}` : radius ? `
    *
    * So the rule the whole product already claims applies to us too: their
    * defaults are the base, our values go on top. */
-  daisyui: (r, kit) => `/* ${stamp(kit)}: a named theme, registered as the default.
+  daisyui: (r, kit, values = {}) => `/* ${stamp(kit)}: a named theme, registered as the default.
    Their published defaults with your values over them: a theme block replaces
    the theme, so anything left out would be missing rather than inherited.
    SET data-theme="yourkit" ON YOUR <html>. A dark theme is registered below with
@@ -114,7 +132,7 @@ ${decl(bridge)}${own ? `\n${decl(own)}` : radius ? `
   default: true;
 ${decl(kit.plain?.light ?? {})}
 ${decl({ ...kit.modes.light, ...r.vars })}
-}`,
+}${tailwindType(values)}`,
 
   bootstrap: (r, kit) => `/* ${stamp(kit)}: what a running page can change.
    The brand is NOT here: see _custom.scss. \`var(--bs-primary)\` appears zero
@@ -208,7 +226,7 @@ ${r.needsBuild
   antd: (r) => ({
     'antd.theme.ts': `// The theme, because Ant Design has no stylesheet to edit.
 // Its 1,289 variables are computed from these by its own algorithm, so this
-// object is the whole of your kit — a variable written by hand would move one
+// object is the whole of your kit: a variable written by hand would move one
 // value and leave the two hundred derived from it behind.
 import type { ThemeConfig } from 'antd'
 

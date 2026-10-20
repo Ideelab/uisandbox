@@ -261,7 +261,7 @@ export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, pi
             <div style={{ marginTop: 10, display: 'flex', gap: 8, alignItems: 'center' }}>
               <button type="button" className="btn btn--secondary btn--sm" onClick={runVerify}>Run again</button>
               {verify && !('busy' in verify) && !verify.ok && !verify.refusal && (
-                <a className="btn btn--ghost btn--sm" href={reportUrl(project, `1:1 differs — ${verify.mismatches.slice(0, 3).map((m) => `${m.prop}: ${m.raw} → ${m.sandbox}`).join('; ')}`)} target="_blank" rel="noopener">Report this build</a>
+                <a className="btn btn--ghost btn--sm" href={reportUrl(project, `1:1 differs: ${verify.mismatches.slice(0, 3).map((m) => `${m.prop}: ${m.raw} → ${m.sandbox}`).join('; ')}`)} target="_blank" rel="noopener">Report this build</a>
               )}
             </div>
           </div>

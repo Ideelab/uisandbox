@@ -1,7 +1,7 @@
 {
   "id": "antd",
   "name": "Ant Design",
-  "what": "React components with the styles generated at runtime — no stylesheet to import, a theme object instead",
+  "what": "React components with the styles generated at runtime: no stylesheet to import, a theme object instead",
   "layer": "components",
   "standalone": true,
   "plain": null,
@@ -680,7 +680,7 @@
   "bands": {
     "behaviour": {
       "by": "rc-component",
-      "what": "the rc-* behaviour packages — the unstyled React primitives Ant Design is built on",
+      "what": "the rc-* behaviour packages, the unstyled React primitives Ant Design is built on",
       "from": [
         "@rc-component/cascader",
         "@rc-component/checkbox",

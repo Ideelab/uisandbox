@@ -16,7 +16,7 @@ export function genAgentsBlock(projectName: string, opts: { date?: string; moved
   const date = opts.date ?? new Date().toISOString().slice(0, 10)
   const name = projectName.replace(/\.(zip|tar|gz)$/i, '').replace(/[-_]+/g, ' ').trim() || 'this app'
   return `<!-- Append this to AGENTS.md in your repo root. The same block works in
-     CLAUDE.md, GEMINI.md or .cursorrules — whichever your agent reads. -->
+     CLAUDE.md, GEMINI.md or .cursorrules, whichever your agent reads. -->
 
 ## Design
 

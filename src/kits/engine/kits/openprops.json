@@ -1,7 +1,7 @@
 {
   "id": "openprops",
   "name": "Open Props",
-  "what": "CSS variables and nothing else — no components, so it sits under whatever renders",
+  "what": "CSS variables and nothing else: no components, so it sits under whatever renders",
   "layer": "tokens",
   "standalone": false,
   "plain": null,

@@ -194,8 +194,8 @@ export async function openZip(file: File): Promise<Archive> {
   // The size guard: a build is tens of megabytes; an archive claiming more than
   // 2 GB unpacked, or 60,000 files, is not one we can hold in a tab.
   const total = named.reduce((n, e) => n + e.size, 0)
-  if (total > 2 * 1024 ** 3) throw new Error(`This archive unpacks to ${Math.round(total / 1024 ** 3)} GB — more than a browser tab can hold. Drop the built site only (its dist/ or build/ folder).`)
-  if (named.length > 60000) throw new Error(`This archive holds ${named.length.toLocaleString()} files — more than a browser tab can hold. Drop the built site only (its dist/ or build/ folder).`)
+  if (total > 2 * 1024 ** 3) throw new Error(`This archive unpacks to ${Math.round(total / 1024 ** 3)} GB, more than a browser tab can hold. Drop the built site only (its dist/ or build/ folder).`)
+  if (named.length > 60000) throw new Error(`This archive holds ${named.length.toLocaleString()} files, more than a browser tab can hold. Drop the built site only (its dist/ or build/ folder).`)
   return {
     rootName,
     entries: named,

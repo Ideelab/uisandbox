@@ -3657,3 +3657,31 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     after the merge of the new flow (b67c3fe) the site stayed on the old build
     for ten minutes with no build check on the commit. It went live with
     `pnpm build && npx wrangler deploy` from the repo root (version 5703f070).
+
+    Then a sweep of what goes in and what comes out, after the merge.
+    Loading: the 173 hold-outs. Export: the 13-build export sweep (it had gone
+    blind: it waited for cards that now sit folded under Other formats, and
+    opens that fold now), and a new pass over all eight kit doors with Colour,
+    both fonts, Shape, Space, Elevation and Text size turned, reading back the
+    Copy for your AI text and the zip. It found, and these are fixed:
+    - Tailwind and Radix: theme.css said the heading face was Figtree with
+      Fraunces chosen. Pinning to the page put it back: the knob sets
+      headings by selector, so the page's own heading variable still holds
+      the body face. A chosen family is no longer pinned.
+    - Fraunces went out as `'Fraunces', sans-serif`; the generic is the
+      family's own now.
+    - daisyUI: no family in theme.css at all (it rides on Tailwind, and no
+      Tailwind layer is written on its own export). It writes one now.
+    - Your own app: DESIGN.md named the families and never said where to
+      fetch them; it carries the same font link as the kit export now.
+    - The copy rules: em-dashes in 13 of the 17 files the export writes, in
+      the kits' own descriptions (which reach MANIFEST.md), and "UIcockpit"
+      in the Tailwind and shadcn headers. A test now reads every file for
+      both (copyRules.test.ts, and one in the engine for all nine kits).
+    - The app's own messages: 13 dashes in what the door says when it
+      refuses a build (iOS, Flutter, Expo, web source, too large) and in two
+      hints. Rewritten; the 15 refused and no-load hold-outs re-run as expected.
+    Left as it is: Ant Design has no token for a heading face; MANIFEST.md
+    says so by name, and DESIGN.md names the face.
+    Hold-outs: 173 in 1448 s, ok 155, differs 3, refused 1, no-load 14, no
+    regressions (153 and 5 the run before).
