@@ -18,6 +18,8 @@ export function AboutDialog({ section, onClose }: { section?: string; onClose: (
   // CSS can suppress an animation but not an autoplaying video, so the clip
   // asks here and hands over the controls instead of starting on its own.
   const [stillPlease] = useState(() => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches)
+  // Four steps first; everything else folded, open when a link asks for a part of it.
+  const [more, setMore] = useState(!!section)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', onKey)
@@ -39,8 +41,21 @@ export function AboutDialog({ section, onClose }: { section?: string; onClose: (
           <button type="button" className="btn btn--ghost btn--icon about-dialog__close" onClick={onClose} aria-label="Close"><X size={16} /></button>
         </div>
         <div className="landing">
+          {/* Four steps, the same four as the top bar (decision 216): what to
+              do, at a glance. The rest is one click further down. */}
           <section className="landing__sec">
             <h2>How it works</h2>
+            <ol className="steps4">
+              <li><b>Bring your app.</b> Drag <em>Take this screen along</em> to your bookmarks bar and click it on your app.</li>
+              <li><b>Pick a look.</b> See your screen six ways and pick the one that fits.</li>
+              <li><b>Tune it.</b> Colour, Type, Shape and Space. Hold Space to see your original.</li>
+              <li><b>Take it home.</b> Copy it for your AI, or send it to your agent.</li>
+            </ol>
+            <p className="steps4__note">Your files never leave this tab.</p>
+          </section>
+          <details className="about__more" open={more} onToggle={(e) => setMore((e.currentTarget as HTMLDetailsElement).open)}>
+            <summary>More about how it works</summary>
+          <section className="landing__sec">
             <p className="landing__lead">What would your app look like in another brand colour, a bigger type scale, or dark mode? Find out on the real app in about a minute. Keep what you see as code, or close the tab and nothing happened.</p>
             <ol className="steps">
               <li><b>Start on a kit, then bring your own app.</b> The editor opens on shadcn/ui as it ships, with seven more kits one pick away. Your own app comes in through the Your app tab: click a bookmark on any screen your browser shows, run <code>npx uisandbox-mcp open</code> for a build or a running dev server, or drop a zip, a folder or a public repo. What you turned on the kit comes along.</li>
@@ -109,6 +124,7 @@ export function AboutDialog({ section, onClose }: { section?: string; onClose: (
             <h2>Who made this</h2>
             <p>I'm <a href="https://github.com/AlexanderKaan" target="_blank" rel="noopener">Alexander Kaan</a>, and I build open-source tooling for user interfaces. UISandbox grew out of the design system generator I made before it: I could hand somebody a finished kit, but I could not show them their own app in it. Every decision, including the ones I had to undo, is in the repo's <a href="https://github.com/Ideelab/uisandbox/blob/main/notes/decisions.md" target="_blank" rel="noopener">notes</a>. It's <a href="https://github.com/Ideelab/uisandbox" target="_blank" rel="noopener">MIT</a>, and issues and pull requests are welcome.</p>
           </section>
+          </details>
         </div>
       </div>
     </div>

@@ -545,7 +545,7 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
    page of its own; now the three a visitor meets first look like one family.
    The glow is a shadow, not a layer behind: Export clips what lies outside it
    (overflow: hidden), and a shadow is not clipped. */
-.door { position: relative; width: min(680px, 100%); }
+.door { position: relative; width: min(900px, 100%); }
 :is(.stage__door .door, .privacy, .dialog__backdrop) > .card {
   border: 3px solid transparent;
   background:
@@ -581,7 +581,7 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
   /* Export: one destination per row, gutters in from 26 to 16, tabs wrap. */
   .exp__destgrid { grid-template-columns: 1fr; }
   .exp__cols { columns: 1; }
-  .exp__stats, .exp__dest, .exp__none, .exp__turned, .exp__how, .exp__head { padding-left: 16px; padding-right: 16px; }
+  .exp__home, .exp__stats, .exp__dest, .exp__none, .exp__turned, .exp__how, .exp__head { padding-left: 16px; padding-right: 16px; }
   .exp__stats { flex-wrap: wrap; }
   .exp__tabs { flex-wrap: wrap; }
 }
@@ -808,3 +808,107 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
 .capture__grip { color: var(--app-fg-faint); }
 .capture__hint { font-size: 12.5px; color: var(--app-fg-muted); line-height: 1.45; min-height: 1.45em; }
 .capture__hint kbd { color: var(--app-fg); }
+
+/* Hold to see your original (decision 216): a pill over the canvas, bottom
+   centre, dark like the editor's own primary; lit while held. */
+.peek { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 30; display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border: 0; border-radius: 999px; background: var(--app-fg); color: var(--app-bg); font: inherit; font-size: 12.5px; font-weight: 550; box-shadow: var(--app-shadow-md); cursor: pointer; user-select: none; touch-action: none; }
+.peek kbd { font: inherit; font-size: 11px; padding: 1px 6px; border-radius: 5px; background: color-mix(in srgb, var(--app-bg) 18%, transparent); }
+.peek--on { background: var(--app-bg); color: var(--app-fg); outline: 2px solid var(--app-fg); }
+
+/* Pick a look (decision 216): the screen six times over the frame, two rows
+   of three, each card the real page scaled down. */
+.stage__looks { position: absolute; inset: 0; z-index: 35; overflow-y: auto; background: var(--app-bg); }
+.looks { display: flex; flex-direction: column; gap: 14px; padding: 16px 18px 20px; }
+.looks__bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.looks__title { flex: 1; margin: 0; font-size: 15px; font-weight: 650; }
+.looks__bar kbd { font: inherit; font-size: 11px; padding: 0 5px; border-radius: 4px; background: var(--app-hover); }
+.looks__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 1100px) { .looks__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .looks__grid { grid-template-columns: minmax(0, 1fr); } }
+.looks__card { display: flex; flex-direction: column; gap: 6px; padding: 8px 8px 10px; border: 1px solid var(--app-border); border-radius: 12px; background: var(--app-surface); color: var(--app-fg); font: inherit; text-align: left; cursor: pointer; transition: border-color var(--app-dur) var(--app-ease), box-shadow var(--app-dur) var(--app-ease); }
+.looks__card:hover { border-color: var(--app-fg-muted); box-shadow: var(--app-shadow-md); }
+.looks__card--on { border: 2px solid var(--app-fg); padding: 7px 7px 9px; }
+.looks__shot { position: relative; overflow: hidden; border-radius: 8px; border: 1px solid var(--app-border); background: #fff; }
+.looks__shot iframe { position: absolute; top: 0; left: 0; border: 0; transform-origin: 0 0; pointer-events: none; }
+.looks__name { display: inline-flex; align-items: center; gap: 7px; font-size: 13.5px; font-weight: 650; padding: 0 2px; }
+.looks__dot { width: 10px; height: 10px; border-radius: 99px; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15); }
+.looks__what { font-size: 12px; color: var(--app-fg-muted); padding: 0 2px; }
+.looks__foot { margin: 0; font-size: 12px; color: var(--app-fg-muted); }
+
+/* The four steps (decision 216): centred in the top bar, numbered, the one
+   you are on dark, the ones behind you ticked. On a phone only the numbers. */
+.steps { flex: 1; display: flex; justify-content: center; align-items: center; gap: 2px; min-width: 0; }
+.steps__step { display: inline-flex; align-items: center; gap: 7px; height: 30px; padding: 0 11px 0 6px; border: 0; border-radius: 999px; background: none; color: var(--app-fg-muted); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+.steps__step:hover { background: var(--app-hover); color: var(--app-fg); }
+.steps__n { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 99px; border: 1px solid var(--app-border); font-size: 11px; font-weight: 650; }
+.steps__step--done { color: var(--app-fg); }
+.steps__step--done .steps__n { border-color: var(--app-fg); }
+.steps__step--on, .steps__step--on:hover { background: var(--app-fg); color: var(--app-bg); }
+.steps__step--on .steps__n { border-color: transparent; background: var(--app-bg); color: var(--app-fg); }
+@media (max-width: 860px) { .steps__label { display: none; } .steps__step { padding: 0 5px; } }
+
+/* Take it home (decision 216): the one thing to do, then what changed, then
+   the other formats folded. */
+.exp__h2sub { margin-left: 8px; font-size: 12.5px; font-weight: 450; color: var(--app-fg-muted); }
+.exp__home { display: flex; flex-direction: column; gap: 8px; padding: 24px 26px 4px; }
+.exp__homebtns { display: flex; flex-wrap: wrap; gap: 12px 10px; }
+.exp__opt { display: flex; flex-direction: column; gap: 6px; flex: 1 1 180px; min-width: 0; }
+.exp__opt > .btn { align-self: stretch; justify-content: center; }
+.exp__optnote { font-size: 12px; line-height: 1.4; color: var(--app-fg-muted); }
+.exp__homebtn { min-height: 40px; padding: 0 16px; font-size: 14px; }
+.exp__homenote { margin: 4px 0 0; font-size: 12.5px; color: var(--app-fg-muted); line-height: 1.5; }
+.exp__more > summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px; }
+.exp__more > summary::-webkit-details-marker { display: none; }
+.exp__more > summary::before { content: '›'; display: inline-block; transition: transform var(--app-dur) var(--app-ease); }
+.exp__more[open] > summary::before { transform: rotate(90deg); }
+.exp__more[open] > summary { margin-bottom: 10px; }
+
+/* Why it looks generic (decision 216): the tells, split by who can fix them. */
+.tells ul { margin: 2px 0 8px; padding-left: 18px; display: flex; flex-direction: column; gap: 3px; }
+.tells__sec { margin: 8px 0 0; font-size: 11px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; color: var(--app-fg-muted); }
+.tells__fine { margin: 4px 0 10px; font-size: 12px; color: var(--app-fg-muted); line-height: 1.45; }
+
+/* The way in (decision 216): what it is for, the bookmarklet, the rest folded. */
+.intake__card .door__head { margin-bottom: 18px; }
+.intake__card .door__head h2 { margin: 0 0 6px; font-size: 22px; font-weight: 650; letter-spacing: -0.01em; }
+.intake__card .door__head p { margin: 0; color: var(--app-fg-muted); font-size: 14.5px; }
+.door__try { display: block; margin: 6px auto 0; border: 0; background: none; font: inherit; font-size: 13px; color: var(--app-fg-muted); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.door__try:hover { color: var(--app-fg); }
+.intake__card .door__others { margin: 26px 0 8px; font-size: 11px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; color: var(--app-fg-muted); text-align: left; }
+
+/* One look at full size, in the looks' own room (decision 216). */
+.looks:has(.looks__focus) { height: 100%; box-sizing: border-box; }
+.looks__grid[hidden] { display: none; }
+.looks__focus { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; }
+.looks__focusbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.looks__focusnav { flex: 1; display: flex; align-items: center; justify-content: center; gap: 10px; min-width: 0; }
+.looks__focusnav .looks__what, .looks__count { font-size: 12.5px; color: var(--app-fg-muted); }
+.looks__count { font-variant-numeric: tabular-nums; }
+.looks__pick { min-height: 34px; padding: 0 16px; }
+.looks__stage { flex: 1; min-height: 420px; border-radius: 10px; overflow: hidden; border: 1px solid var(--app-border); background: #fff; }
+.looks__stage iframe { width: 100%; height: 100%; border: 0; display: block; }
+.looks__picked { margin-left: 6px; padding: 1px 7px; border-radius: 99px; background: var(--app-fg); color: var(--app-bg); font-size: 10.5px; font-weight: 600; }
+@media (max-width: 760px) { .looks__focusnav .looks__what { display: none; } }
+
+/* The door, landscape like Take it home (decision 216): a head bar, the one
+   way on the left, the other ways on the right; one column on a phone. */
+.intake__card.door__card { width: 100%; padding: 0; text-align: left; overflow: hidden; }
+.door__bar { display: flex; align-items: center; gap: 10px; padding: 14px 18px 14px 22px; border-bottom: 1px solid var(--app-border); }
+.door__bar h2 { flex: 1; margin: 0; font-size: 15px; font-weight: 650; }
+.door__grid { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 26px; padding: 22px 24px 24px; align-items: start; }
+.door__main { margin: 0; }
+.intake__card .door__side .door__others { margin: 2px 0 8px; }
+.door__side .door__try { margin: 14px 0 0; }
+@media (max-width: 760px) { .door__grid { grid-template-columns: minmax(0, 1fr); gap: 18px; padding: 18px 16px 20px; } }
+
+/* How it works (decision 216): four steps at a glance, the rest folded. */
+.steps4 { margin: 14px 0 0; padding: 0; list-style: none; counter-reset: s4; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.steps4 li { counter-increment: s4; position: relative; padding: 14px 14px 14px 50px; border: 1px solid var(--app-border); border-radius: 12px; font-size: 14px; line-height: 1.5; color: var(--app-fg-muted); }
+.steps4 li b { display: block; color: var(--app-fg); font-size: 14.5px; }
+.steps4 li::before { content: counter(s4); position: absolute; left: 14px; top: 14px; width: 24px; height: 24px; border-radius: 99px; display: grid; place-items: center; background: var(--app-fg); color: var(--app-bg); font-size: 12px; font-weight: 650; }
+.steps4__note { margin: 12px 0 0; font-size: 13px; color: var(--app-fg-muted); }
+@media (max-width: 640px) { .steps4 { grid-template-columns: minmax(0, 1fr); } }
+.about__more > summary { cursor: pointer; list-style: none; margin: 8px 0 0; padding: 12px 0; border-top: 1px solid var(--app-border); font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.about__more > summary::-webkit-details-marker { display: none; }
+.about__more > summary::before { content: '›'; display: inline-block; transition: transform var(--app-dur) var(--app-ease); }
+.about__more[open] > summary::before { transform: rotate(90deg); }

@@ -9,6 +9,7 @@ import type { ConfigAction } from '../state/configReducer'
 import { FontPicker } from './FontPicker'
 import { ColorField } from './ColorPicker'
 import { DEFAULT_DIALS, DIALS, fmtDial, nearestSnap, type DialSpec, type Dials } from '../sandbox/dials'
+import { DIRECTIONS } from '../sandbox/directions'
 import type { Families, Family } from '../sandbox/mapping'
 import { formatCssColor } from '../sandbox/cssColor'
 import type { Scheme } from '../sandbox/scheme'
@@ -276,7 +277,31 @@ export function SandboxPanel({ cfg, tokens, base, families, scheme, codeFonts = 
     body: () => <FontPicker inline value={cfg[key]} inCode={codeFonts} groups={key === 'fontDisplay' ? DISPLAY_GROUPS : BODY_FONTS} onChange={(f) => { set({ [key]: f }); close() }} />,
     wide: true,
   })
-  rows.push(fontRow('fontDisplay', 'Display font'), fontRow('fontBody', 'Body font'))
+  rows.push(fontRow('fontDisplay', 'Heading font'), fontRow('fontBody', 'Text font'))
+  // Type as a pair (decision 216): a maker picks a heading and text face that
+  // belong together, not two fonts from two lists. The pairs are the looks'
+  // own, plus the app's; each font alone stays under More.
+  // Inter as well: the looks keep off it (it is the default the tells name),
+  // but a maker who wants it should not have to dig for it under More.
+  const pairs: Array<[string, string]> = ([[base.fontDisplay, base.fontBody], ['Inter', 'Inter']] as Array<[string, string]>).concat(DIRECTIONS.flatMap((d) => d.fonts))
+    .filter((p, i, a) => a.findIndex((q) => q[0] === p[0] && q[1] === p[1]) === i)
+  const pairName = (d: string, b: string) => (d === b ? d : `${d} + ${b}`).replace(/Custom: /g, '')
+  rows.push({
+    key: 'pair', label: 'Type', changed: cfg.fontDisplay !== base.fontDisplay || cfg.fontBody !== base.fontBody,
+    value: pairName(cfg.fontDisplay, cfg.fontBody),
+    body: () => (
+      <div className="fmpop__list">
+        {pairs.map(([d, b], i) => {
+          const on = cfg.fontDisplay === d && cfg.fontBody === b
+          return (
+            <button key={`${d}|${b}`} type="button" className={`menu__item fmopt ${on ? 'menu__item--on' : ''}`} onClick={() => { set({ fontDisplay: d, fontBody: b }); close() }}>
+              <span className="fmopt__label">{pairName(d, b)}{i === 0 ? ' (yours)' : ''}</span>{on && <Check size={14} strokeWidth={2.5} className="fmopt__check" />}
+            </button>
+          )
+        })}
+      </div>
+    ),
+  })
   for (const spec of DIALS.filter((d) => d.section === 'Type')) rows.push(dialRow(spec))
   // ── Shape ──
   DIALS.filter((d) => d.section === 'Shape').forEach((spec, i) => rows.push(dialRow(spec, i === 0 ? 'Shape' : undefined)))
@@ -285,9 +310,13 @@ export function SandboxPanel({ cfg, tokens, base, families, scheme, codeFonts = 
   // shadcn's own Create leads with: theme, base colour, fonts, radius, plus
   // the page and the density). The rest is Fine-tune, folded: nineteen rows
   // of equal weight read as nineteen equal decisions.
-  const ESSENTIAL = ['brand', 'background', 'dark', 'neutral', 'fontDisplay', 'fontBody', 'radius', 'space']
-  const GROUP: Record<string, 'Colour' | 'Type' | 'Shape'> = { type: 'Type', lineHeight: 'Type', tracking: 'Type', weight: 'Type', borderWidth: 'Shape', shadow: 'Shape', motion: 'Shape' }
-  const essential = ESSENTIAL.map((k) => rows.find((r) => r.key === k)).filter((r): r is Row => !!r).map((r) => ({ ...r, sec: undefined }))
+  // Four knobs in a maker's words, plus their own dark mode (decision 216):
+  // Colour, Type, Shape, Space. The grey tint, the background, each font
+  // alone and every dial are under More, still one click away.
+  const ESSENTIAL = ['brand', 'pair', 'radius', 'space', 'dark']
+  const PLAIN: Record<string, string> = { brand: 'Colour', radius: 'Shape', space: 'Space' }
+  const GROUP: Record<string, 'Colour' | 'Type' | 'Shape'> = { fontDisplay: 'Type', fontBody: 'Type', type: 'Type', lineHeight: 'Type', tracking: 'Type', weight: 'Type', borderWidth: 'Shape', shadow: 'Shape', motion: 'Shape' }
+  const essential = ESSENTIAL.map((k) => rows.find((r) => r.key === k)).filter((r): r is Row => !!r).map((r) => ({ ...r, sec: undefined, label: PLAIN[r.key] ?? r.label }))
   const rest = rows.filter((r) => !ESSENTIAL.includes(r.key)).map((r) => ({ ...r, grp: GROUP[r.key] ?? 'Colour' }))
   const fine = (['Colour', 'Type', 'Shape'] as const).flatMap((g) => rest.filter((r) => r.grp === g).map((r, i) => ({ ...r, sec: i === 0 ? g : undefined })))
   const fineChanged = fine.filter((r) => r.changed).length
@@ -333,7 +362,7 @@ export function SandboxPanel({ cfg, tokens, base, families, scheme, codeFonts = 
           {fine.length > 0 && (
             <button type="button" className="menu__label fmsec fmsec--fold" onClick={() => setFineOpen((v) => !v)} aria-expanded={fineOpen}>
               <ChevronRight size={12} strokeWidth={2.25} className={`fmsec__chev ${fineOpen ? 'fmsec__chev--open' : ''}`} />
-              Fine-tune
+              More
               <span className="fmsec__count">{fineChanged ? `${fineChanged} changed` : fine.length}</span>
             </button>
           )}

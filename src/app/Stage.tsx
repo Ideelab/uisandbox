@@ -3,6 +3,7 @@ import { ExternalLink, Info, RefreshCw, ShieldCheck, Star, X } from 'lucide-reac
 import { ScreenPicker } from './ScreenPicker'
 import type { SandboxProject, Screen } from '../sandbox/project'
 import { identitySid, rawSid, sandboxUrl } from '../sandbox/host'
+import type { Tell } from '../sandbox/tells'
 import { compareDocuments, loadHidden, type VerifyResult } from '../sandbox/verify'
 import { pct, type Coverage } from '../sandbox/coverage'
 
@@ -30,6 +31,14 @@ interface StageProps {
   /** The tabs (merge phase 3). On a kit: its components sheet, its screens,
    *  and "Your app", whose empty state is the door. */
   tab?: StageTab
+  /** The AI tells measured on this screen, and the way out of them (decision 216). */
+  tells?: Tell[]
+  onLooks?: () => void
+  /** Pick a look: the grid over the frame; step 2 in the top bar opens it (decision 216). */
+  looks?: React.ReactNode
+  /** Held: the frame shows the original values (decision 216). */
+  peek?: boolean
+  onPeek?: (on: boolean) => void
   onTab?: (t: StageTab) => void
   /** Set when the stage shows a kit build of ours, not somebody's app. */
   kitName?: string
@@ -73,8 +82,9 @@ function reportUrl(project: SandboxProject, detail: string): string {
   return `https://github.com/Ideelab/uisandbox/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}&labels=build-report`
 }
 
-export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, pinnable, changedCount, warning, warningTitle, coverage, notes, tab = 'app', onTab, kitName, door, barExtra, onToggleNotes, notesOpen, notesLabel }: StageProps) {
+export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, pinnable, changedCount, peek, onPeek, looks, tells, onLooks, warning, warningTitle, coverage, notes, tab = 'app', onTab, kitName, door, barExtra, onToggleNotes, notesOpen, notesLabel }: StageProps) {
   const [showCov, setShowCov] = useState(false)
+  const [showTells, setShowTells] = useState(false)
   const [width, setWidth] = useState<string>('fit')
   const [verify, setVerify] = useState<VerifyResult | { busy: true } | null>(null)
   const [showVerify, setShowVerify] = useState(false)
@@ -163,6 +173,17 @@ export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, pi
             it: the knobs, the reach and the export keep working while a
             visitor decides what to bring. */}
         {atDoor && <div className="stage__door">{door}</div>}
+        {!atDoor && looks && <div className="stage__looks">{looks}</div>}
+        {/* Hold to see your original: the comparison a maker actually wants,
+            their screen now against their screen restyled, on the same page. */}
+        {!atDoor && !looks && onPeek && changedCount > 0 && (
+          <button type="button" className={`peek ${peek ? 'peek--on' : ''}`} aria-pressed={!!peek}
+            onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); onPeek(true) }}
+            onPointerUp={() => onPeek(false)} onPointerCancel={() => onPeek(false)} onLostPointerCapture={() => onPeek(false)}
+            onKeyDown={(e) => { if (e.key === 'Enter') onPeek(true) }} onKeyUp={(e) => { if (e.key === 'Enter') onPeek(false) }}>
+            {peek ? 'Your original' : 'Hold to see your original'} <kbd>Space</kbd>
+          </button>
+        )}
         <iframe
           key={project.id}
           name={`us:${project.id}`}
@@ -188,6 +209,16 @@ export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, pi
         {/* The door is its own card; nothing lies on top of it. */}
         {!showVerify && !atDoor && notes}
         <div className="stage__low">
+        {showTells && tells && !atDoor && !looks && (
+          <div className="card popcard popcard--low verify tells" role="dialog" aria-label="Why it looks generic">
+            <button type="button" className="btn btn--ghost btn--icon popcard__x" onClick={() => setShowTells(false)} aria-label="Close" title="Close"><X size={15} /></button>
+            <h3>{tells.length ? 'Why it looks generic' : 'No AI tells on this screen'}</h3>
+            {tells.some((t) => t.knobs) && <><p className="tells__sec">The knobs fix these</p><ul>{tells.filter((t) => t.knobs).map((t) => <li key={t.id}>{t.what}</li>)}</ul></>}
+            {tells.some((t) => !t.knobs) && <><p className="tells__sec">For your agent: no knob reaches these</p><ul>{tells.filter((t) => !t.knobs).map((t) => <li key={t.id}>{t.what}</li>)}</ul></>}
+            <p className="tells__fine">Measured on this screen from computed styles, the way Adrian Krebs measured 1,590 Show HN pages. Layout tells (a centred hero, identical icon cards) are not measured here; they go to your agent as don'ts.</p>
+            {onLooks && tells.some((t) => t.knobs) && <button type="button" className="btn btn--primary btn--sm" onClick={() => { setShowTells(false); onLooks() }}>Show me six ways out</button>}
+          </div>
+        )}
         {showCov && coverage && (
           <div className="card popcard popcard--low verify" role="dialog" aria-label="Reach">
             <button type="button" className="btn btn--ghost btn--icon popcard__x" onClick={() => setShowCov(false)} aria-label="Close" title="Close"><X size={15} /></button>
@@ -245,6 +276,11 @@ export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, pi
           </button>
         )}
         {changedCount > 0 ? <span className="chip chip--warn"><span className="chip__dot" />{changedCount} value{changedCount === 1 ? '' : 's'} moved</span> : <span className="chip chip--ok"><span className="chip__dot" />identity: nothing turned</span>}
+        {tells && (
+          <button type="button" className={`chip ${tells.length ? 'chip--warn' : 'chip--ok'} ${showTells ? 'chip--on' : ''}`} onClick={() => setShowTells((v) => !v)} aria-pressed={showTells} title="The tells of the AI look, measured on this screen">
+            <span className="chip__dot" />{tells.length ? `${tells.length} AI tell${tells.length === 1 ? '' : 's'}` : 'No AI tells'}
+          </button>
+        )}
         {onToggleNotes && (
           <button type="button" className={`chip ${notesOpen ? 'chip--on' : ''}`} onClick={onToggleNotes} aria-pressed={notesOpen} title={notesLabel}>
             <Info size={12} strokeWidth={2} /> What we read

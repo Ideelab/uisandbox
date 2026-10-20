@@ -240,3 +240,13 @@ test('tokens.json is in the W3C shapes: colour objects, {value, unit} lengths, f
   // and no value is a bare string where the format wants an object
   for (const g of [t.color, t.size]) for (const v of Object.values(g)) assert.notEqual(typeof v.$value, 'string')
 })
+
+test("shadcn's theme carries the chosen family where init put Geist", () => {
+  const css = generate({ fontBody: 'Figtree, sans-serif' }, ['shadcn'], KITS)['theme.css']
+  assert.match(css, /--font-sans: Figtree, sans-serif;/)
+  assert.doesNotMatch(css, /Geist/, 'a chosen family is not overruled by the default')
+  const two = generate({ fontBody: 'Figtree, sans-serif', fontHeading: 'Fraunces, serif' }, ['shadcn'], KITS)['theme.css']
+  assert.match(two, /--font-heading: Fraunces, serif;/)
+  // and with nothing chosen, shadcn's own Geist stays
+  assert.match(generate({}, ['shadcn'], KITS)['theme.css'], /--font-sans: 'Geist Variable'/)
+})

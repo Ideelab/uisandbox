@@ -18,16 +18,22 @@ import { genAgentsBlock } from '../export/genAgents'
 import { genDtcg } from '../export/genDtcg'
 import { measure } from '../export/measured'
 import { roleValues } from '../kits/values'
+import { isCustomFont, SYSTEM_FONT } from '../tokens/fonts'
 import type { RoleValues } from '../kits/engine/generate.mjs'
 import { kitExport, kitPackage } from '../kits/kitExport'
 import { knobLabel } from '../state/carry'
-import { ShareButton } from './EditorBar'
+import { SendButton, ShareButton } from './EditorBar'
+import { LAYOUT_DONTS, type Tell } from '../sandbox/tells'
 import { pinToBuild, lightDeclarations } from '../kits/pin'
 import type { KitId } from '../kits/engine/detect.mjs'
 import { genReadme } from '../export/genReadme'
 import { zipSync } from '../export/zip'
 
 interface ExportDialogProps {
+  /** Opened by the local server: Send hands it back to the agent or terminal (decision 216). */
+  send?: { to: 'agent' | 'terminal'; onSend: () => Promise<{ waiting: number } | null> }
+  /** The tells measured on the screen: the ones no knob reaches go into the prompt as don'ts. */
+  tells?: Tell[]
   /** The stand of their code — the overview names what was turned, from → to. */
   base: Config
   cfg: Config
@@ -144,7 +150,21 @@ const KIT_NAME: Record<KitId, string> = {
   openprops: 'Open Props', radix: 'Radix Themes', shadcn: 'shadcn/ui', tailwind: 'Tailwind',
 }
 
-export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName, shareUrl, files, fontCss, notes, painted, anchors, kit, kitValues, readPageVars, onClose }: ExportDialogProps) {
+/** A family the Type knob chose, in the form the engine writes a webfont:
+ *  `'Figtree', sans-serif`. The page computes it as `Figtree, sans-serif`,
+ *  which the engine reads as a system stack, so DESIGN.md never said where
+ *  Figtree comes from and an agent told to add no new fonts fell back to
+ *  sans-serif (decision 216). An uploaded font has no address to give. */
+function chosenFonts(cfg: Config, base: Config, rv: RoleValues): RoleValues {
+  const out: RoleValues = {}
+  const as = (f: string, measured: unknown) => `'${f}', ${String(measured ?? '').split(',').slice(1).join(',').trim() || 'sans-serif'}`
+  const web = (f: string, was: string) => f !== was && f !== SYSTEM_FONT && !isCustomFont(f)
+  if (web(cfg.fontBody, base.fontBody)) out.fontBody = as(cfg.fontBody, rv.fontBody)
+  if (web(cfg.fontDisplay, base.fontDisplay)) out.fontHeading = as(cfg.fontDisplay, rv.fontHeading)
+  return out
+}
+
+export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName, shareUrl, files, fontCss, notes, painted, anchors, kit, kitValues, readPageVars, onClose, send, tells = [] }: ExportDialogProps) {
   const [patched, setPatched] = useState<Array<{ path: string; text: string }> | null>(null)
   useEffect(() => { let on = true; void genPatchedFiles(files, table, vars, fontCss).then((p) => { if (on) setPatched(p) }); return () => { on = false } }, [files, table, vars, fontCss])
   const movedCount = useMemo(() => { const id = table.identityVars(); return Object.keys(vars).filter((k) => vars[k] !== id[k]).length }, [table, vars])
@@ -168,7 +188,10 @@ export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName,
     // it has none for. No family centre goes in for status: a centre is the
     // most-used member, which on AdminLTE was a syntax-highlight green, and a
     // kit default named in MANIFEST.md beats a guess.
-    const values = { ...roleValues(m), ...kitValues }
+    // and the two dials DESIGN.md describes as turned: depth said "100% of
+    // its published strength" with Elevation at ×0.5 (decision 216)
+    const rv = { ...roleValues(m), ...kitValues }
+    const values = { ...rv, ...chosenFonts(cfg, base, rv), elevation: String(cfg.sb.shadow ?? 1), spaceScale: String(cfg.sb.space ?? 1) }
     void kitExport(kit, values, projectName, { overview }).then((f) => {
       // A build's own variables win; the engine's derivation only fills what
       // the build does not define.
@@ -176,7 +199,7 @@ export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName,
       if (on) setKitFiles(kitPackage(f))
     }).catch((e: unknown) => { if (on) { setKitFiles(null); setKitError(e instanceof Error ? e.message : String(e)) } })
     return () => { on = false }
-  }, [kit, kitValues, readPageVars, table, vars, cfg, projectName, kitDoorName, painted, anchors, movedCount])
+  }, [kit, kitValues, readPageVars, table, vars, cfg, base, projectName, kitDoorName, painted, anchors, movedCount])
   const skillPath = kitFiles ? Object.keys(kitFiles).find((k) => k.endsWith('/SKILL.md')) : undefined
 
   const items = useMemo<Item[]>(() => [
@@ -440,6 +463,32 @@ export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName,
     return () => document.removeEventListener('keydown', onKey)
   }, [onClose])
   const [copied, setCopied] = useState(false)
+  // Take it home (decision 216): one thing to do with it, for a maker whose
+  // next step is their AI. The prompt carries the design system whole, so it
+  // works pasted into any of them, not only the ones the MCP server reaches.
+  const [aiCopied, setAiCopied] = useState(false)
+  const copyForAi = async () => {
+    const design = items.find((i) => i.id === 'design-md')?.make() ?? ''
+    const skill = items.find((i) => i.id === 'skill-md')?.make()
+    // theme.css first: it is the part an agent pastes; DESIGN.md and SKILL.md
+    // keep pointing at it, and without it the prompt named a file it lacked
+    const theme = kitFiles?.['theme.css']
+    // the measured tells no knob reaches, in the same words as the standing
+    // don'ts and without repeating them
+    const MEASURED: Record<string, string> = { gradients: 'gradients as decoration', 'dark-only': 'a dark mode with no light one' }
+    const donts = [...new Set([...tells.filter((t) => !t.knobs && MEASURED[t.id]).map((t) => MEASURED[t.id]!), ...LAYOUT_DONTS])]
+    const prompt = [
+      kitDoorName ? `Restyle this app, built on ${kitDoorName}, to the design system below. It was made in UISandbox.` : `Restyle ${projectName} to the design system below. It was made in UISandbox from this app's own build.`,
+      `Use only its tokens${skill ? ' and the components SKILL.md names' : ''}. Do not fall back to the defaults, and add no raw colours, one-off sizes or new fonts.`,
+      '', 'Keep the layout clear of the generic AI look. Avoid:',
+      ...donts.map((d) => `- ${d}`),
+      ...(theme ? ['', '--- theme.css (put this in your global stylesheet) ---', theme] : []),
+      '', '--- DESIGN.md ---', design,
+      ...(skill ? ['', '--- SKILL.md ---', skill] : []),
+    ].join('\n')
+    await navigator.clipboard.writeText(prompt)
+    setAiCopied(true); setTimeout(() => setAiCopied(false), 2400)
+  }
   const item = items.find((i) => i.id === active)
   const dest = item ? dests.find((d) => d.ids.includes(item.id)) : undefined
   const text = useMemo(() => item ? item.make() : '', [item])
@@ -478,13 +527,10 @@ export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName,
           {item ? (
             <button type="button" className="btn btn--ghost btn--sm" onClick={() => { setActive('overview'); setCopied(false) }}><ChevronLeft size={14} /> Export</button>
           ) : (
-            <h2>Export: exactly what is in the sandbox</h2>
+            <h2>Take it home <span className="exp__h2sub">exactly what is in the sandbox</span></h2>
           )}
           <span className="stage__spacer" style={{ flex: 1 }} />
           <ShareButton url={shareUrl ?? null} />
-          {kitDoorName
-            ? <button type="button" className="btn btn--primary btn--sm" onClick={downloadKit} disabled={!kitFiles} title={kitFiles ? 'theme.css, DESIGN.md, SKILL.md, tokens.json, install.md and MANIFEST.md' : 'Writing the design system…'}><Download size={13} strokeWidth={2} /> Design system + Skill (.zip)</button>
-            : <button type="button" className="btn btn--secondary btn--sm" onClick={downloadAll}><Download size={13} strokeWidth={2} /> Everything (.zip)</button>}
           <button type="button" className="btn btn--ghost btn--icon" onClick={onClose} aria-label="Close"><X size={15} /></button>
         </div>
         {item ? (
@@ -514,13 +560,41 @@ export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName,
           </div>
         ) : (
           <div className="exp__overview">
+            <div className="exp__home">
+              {/* one line per way, saying when it is the one: the long sentence
+                  under the row was read as "the zip adds a skill", while the
+                  prompt already carries SKILL.md (decision 216) */}
+              <div className="exp__homebtns">
+                {send && (
+                  <div className="exp__opt">
+                    <SendButton to={send.to} onSend={send.onSend} />
+                    <span className="exp__optnote">Straight to the agent in your project.</span>
+                  </div>
+                )}
+                <div className="exp__opt">
+                  <button type="button" className={`btn ${send ? 'btn--secondary' : 'btn--primary'} exp__homebtn`} onClick={() => void copyForAi()}>
+                    {aiCopied ? <Check size={15} strokeWidth={2} /> : <Copy size={15} strokeWidth={2} />} {aiCopied ? 'Copied. Paste it into your AI' : 'Copy for your AI'}
+                  </button>
+                  <span className="exp__optnote">One paste and it restyles the app you have.</span>
+                </div>
+                <div className="exp__opt">
+                  {kitDoorName
+                    ? <button type="button" className="btn btn--secondary exp__homebtn" onClick={downloadKit} disabled={!kitFiles} title={kitFiles ? 'theme.css, DESIGN.md, SKILL.md, tokens.json, install.md and MANIFEST.md' : 'Writing the design system…'}><Download size={15} strokeWidth={2} /> Design system + Skill (.zip)</button>
+                    : <button type="button" className="btn btn--secondary exp__homebtn" onClick={downloadAll}><Download size={15} strokeWidth={2} /> Everything (.zip)</button>}
+                  <span className="exp__optnote">{kitDoorName
+                    ? 'Kept in your repo, so screens you build later get the look too.'
+                    : 'The changed files and every format, to apply by hand.'}</span>
+                </div>
+              </div>
+              {!send && <p className="exp__homenote">Works in Claude Code, Cursor, Codex, Lovable and v0. To send it straight in, run <code>npx uisandbox-mcp open</code> in your project.</p>}
+            </div>
             <div className="exp__stats">
               <div className="exp__stat"><b>{movedCount}</b><span>of {table.entries.length} values moved</span></div>
               {!kitDoorName && <div className="exp__stat"><b>{patched?.length ?? 0}</b><span>file{(patched?.length ?? 0) === 1 ? '' : 's'} changed</span></div>}
               <div className="exp__stat"><b>{turned.length}</b><span>knob{turned.length === 1 ? '' : 's'} turned</span></div>
             </div>
-            <div className="exp__dest">
-              <h3 className="exp__sec">How do you want to apply it?</h3>
+            <details className="exp__dest exp__more">
+              <summary className="exp__sec">Other formats: your own files, Tailwind or shadcn, tokens, native</summary>
               <div className="exp__destgrid">
                 {dests.map((d) => (
                   <button key={d.title} type="button" className="exp__card" onClick={() => { setActive(d.ids[0]!); setCopied(false) }}>
@@ -535,7 +609,7 @@ export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName,
                   </button>
                 ))}
               </div>
-            </div>
+            </details>
             {turned.length ? (
               <div className="exp__turned">
                 <h3 className="exp__sec">Settings, from {kitDoorName ? 'the kit' : 'your code'} → the sandbox</h3>

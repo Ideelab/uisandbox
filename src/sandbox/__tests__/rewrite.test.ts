@@ -184,9 +184,28 @@ describe('their variables stay where they are scoped', () => {
   it('a shadow that references THEIR var() is not hoisted to :root (measured on a real build)', () => {
     const t = sheet()
     const out = rewriteCss(`.a{box-shadow:inset 0 0 0 1px var(--accD)}.b{box-shadow:0 1px 2px #000, 0 0 0 1px var(--edge)}`, t, 'x.css')
-    expect(t.ofKind('shadow')).toEqual([])
-    // The literal colour inside .b is still tokenised; the shadow as a whole is not.
-    expect(out).toBe(`.a{box-shadow:inset 0 0 0 1px var(--accD)}.b{box-shadow:0 1px 2px var(--us-v1), 0 0 0 1px var(--edge)}`)
+    // Never the shadow as a whole: no entry carries their variable.
+    expect(t.ofKind('shadow').some((e) => /var\(--(accD|edge)/.test(e.value))).toBe(false)
+    // Decision 216: its lengths are tokenised one by one, so Elevation reaches
+    // it; their var()s stay exactly where they were.
+    expect(t.ofKind('shadow').map((e) => e.value).sort()).toEqual(['1px', '2px'])
+    expect(out).toContain('var(--accD)')
+    expect(out).toContain('var(--edge)')
+    expect(out).not.toMatch(/\b1px\b|\b2px\b/)
+  })
+})
+
+describe('Tailwind v4, as it writes (decision 216)', () => {
+  it('a line height written as a ratio is the numerator, never the divisor', () => {
+    const t = sheet()
+    rewriteCss(`:root{--text-sm--line-height:calc(1.25 / .875)}`, t, 'x.css')
+    expect(t.ofKind('line-height').map((e) => e.value)).toEqual(['1.25'])
+  })
+  it('a shadow that reads its --tw-shadow-color keeps the variable and gives Elevation its lengths', () => {
+    const t = sheet()
+    const out = rewriteCss(`.shadow-xs{--tw-shadow:0 1px 2px 0 var(--tw-shadow-color,#0000000d)}`, t, 'x.css')
+    expect(out).toContain('var(--tw-shadow-color,')
+    expect(t.ofKind('shadow').map((e) => e.value).sort()).toEqual(['1px', '2px'])
   })
 })
 

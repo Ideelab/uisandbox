@@ -129,6 +129,7 @@ table with its decision.
 | `generate.mjs` | the drawer and command gaps named | 214 |
 | `scenes.mjs` | New invoice; Settings with the plan, members and an invite drawer; Expenses in use | 214 |
 | `wall-bindings.mjs`, `antd-tree.mjs` | a field's type; a grid's align; Ant's Form.Item vertical on the item | 214 |
+| `generate.mjs` | OWN_PACKAGE: a kit's own chart, toast or command named instead of "do not install"; the heading without the body's line height; the spacing as turned; signed UISandbox; no dashes in the generated copy; shadcn's emitter takes the values, so a chosen family replaces init's Geist in `@theme` | 216 |
 | `kits/shadcn.json`, `kits/antd.json`, `kits/antd.render.*`, `kits/material.elements.json` | refetched and re-rendered for the new parts | 211 |
 | `scenes.mjs` | the fallback font on :where(html), not #strip: a kit's own body font reaches its wall | 207 |
 | `kit-defaults.mjs` | each default read from the variable the build writes it into (daisyUI radius, Ant Design ink and muted ink); TABLE exported | 207 |

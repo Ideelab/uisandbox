@@ -44,6 +44,12 @@ export interface Entry {
 
 export const SITE_CAP = 25
 
+/* The brand's name and the roles that only borrow it, as mapping.ts reads
+   them (BRAND_NAME, ROLE_PRIMARY): kept here so the table needs no import
+   back from the mapping that reads it. */
+const BRAND_PROP = /^(?:--)?(?![\w-]*\bon[_-]?primary)(?:[\w.-]*?[-_.])?(primary|brand)(?:[-_]?(color|colour|base|default|500|600|main|hex))?(?:-(rgb|hsl|channels))?$/i
+const ROLE_PRIMARY_PROP = /(^|[-_.])(text|bg|background|surface|border|fg|foreground|ink|content|font|label|icon|heading|body)[-_.]primary/i
+
 export const varName = (id: number): string => `--us-v${id}`
 
 export class SubstitutionTable {
@@ -58,7 +64,16 @@ export class SubstitutionTable {
   /** Register one occurrence; returns the variable reference to write in its place. */
   add(kind: Kind, value: string, site: Site): string {
     const norm = normalise(kind, value)
-    const key = `${kind} ${norm}`
+    /* A colour written straight into a property that NAMES the brand
+       (`--primary`, `--bs-primary`, in :root or in .dark) gets a variable of
+       its own, not the one every other use of that literal shares. shadcn's
+       dark `--primary` is #e5e5e5, the same literal as its light `--border`
+       and `--input`: one shared variable read as a grey, so Brand never
+       reached the dark primary, and moving it would have moved the borders
+       (decision 216). The page renders the same: the variable holds the same
+       value. */
+    const brandOwn = kind === 'color' && site.prop.startsWith('--') && BRAND_PROP.test(site.prop) && !ROLE_PRIMARY_PROP.test(site.prop)
+    const key = `${kind} ${norm}${brandOwn ? ' @brand' : ''}`
     let e = this.byKey.get(key)
     if (!e) {
       e = { id: this.entries.length + 1, kind, value: norm, count: 0, sites: [] }
@@ -73,7 +88,8 @@ export class SubstitutionTable {
 
   /** The entry a literal WOULD map to, without registering it. */
   find(kind: Kind, value: string): Entry | undefined {
-    return this.byKey.get(`${kind} ${normalise(kind, value)}`)
+    const key = `${kind} ${normalise(kind, value)}`
+    return this.byKey.get(key) ?? this.byKey.get(`${key} @brand`)
   }
 
   get(id: number): Entry | undefined {

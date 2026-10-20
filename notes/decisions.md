@@ -3510,3 +3510,145 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     layer behind the card, because Export clips what lies outside it and a
     shadow is not clipped. The door also closes now (a cross, Escape, the
     Connect button again), to the tab of the screen under it.
+
+216. The editor walks a maker from their app to their agent.
+
+    From the research (reports/, kept out of the repo): the key user is the
+    solo builder shipping a shadcn or Tailwind app from Cursor, Claude Code or
+    Codex, who sees that it looks like every AI app and cannot name the few
+    foundation choices that fix it. Alexander approved a flow sketched as a
+    canvas (bring your app, why it looks generic, pick a look, tune, before
+    and after, take it home), to be built on a branch and merged by PR.
+
+    First, before and after. Hold Space, or the pill at the foot of the
+    canvas, and the frame gets the identity sheet (the values the app's own
+    CSS had), no chosen fonts and the app's own scheme; let go and it is
+    turned again. Nothing reloads, no second frame: the same identity Check
+    1:1 measures against. The pill shows once something has moved. No tool
+    in the research offered this on the user's own app.
+
+    Then the looks. Pick a look puts the screen on stage six times over the
+    frame, each a live copy of the same sandboxed page at 1000px, cut at
+    620 where the head, the figures and the first chart are, with one
+    direction's sheet written in: Editorial, Swiss, Calm, Bold, Technical,
+    Soft (sandbox/directions.ts). A direction is a coherent set put through
+    the knobs everything else uses (brand, grey tint, a type pair, corners,
+    spacing, depth, weight), so picking one is a turn Undo takes back and
+    Export carries. Each holds two or three brands and type pairs: Shuffle
+    (or Space) varies within a direction instead of rolling every knob. Keep
+    my colour and Keep my font lock those two. The dials a look turns are
+    put back to the app's own before a direction is applied, so one look
+    never inherits another's. Kept off the tells on purpose, and held there
+    by a test: no Inter, no indigo or violet brand, nothing outside the
+    dials' own range, only fonts the picker can load. The six are a start
+    to be reviewed in the PR, not a verdict.
+
+    Then the steps and the plain knobs. The top bar carries the four steps,
+    Your app, Pick a look (the look's name once one is picked), Tune and
+    Take it home, numbered, the one you are on dark, the ones behind you
+    ticked; each opens what it names (the door, the looks, the canvas,
+    Export) and closes the others, and Your app takes the place of the
+    Connect button. The knobs lead with a maker's words: Colour, Type,
+    Shape, Space, and their own Dark mode. Type is a pair now, heading and
+    text face together, from the app's own and the looks' pairs; the grey
+    tint, the background, each font alone and every dial are under More,
+    which is what Fine-tune was called. Pick a look left the stage bar: the
+    step is where it lives.
+
+    Then take it home. Export opens on one thing to do: Send to your agent
+    when the local server opened the sandbox, otherwise Copy for your AI, a
+    prompt that carries DESIGN.md (and SKILL.md on a kit) whole and asks the
+    AI to keep to the tokens and add no raw colours, one-off sizes or new
+    fonts, so it works pasted into Claude Code, Cursor, Codex, Lovable or
+    v0, not only the ones the MCP server reaches. The design system zip, or
+    everything, sits beside it; what was turned stays visible; every other
+    format is folded under Other formats. Its title is the step's, Take it
+    home, with "exactly what is in the sandbox" kept beside it.
+
+    Then why it looks generic. A chip under the canvas counts the AI tells on
+    this screen, and opens them split by who can fix them: the knobs (the
+    default fonts Inter, Geist, Space Grotesk and Instrument Serif, their
+    variable builds included; an indigo or violet brand; shadcn's own
+    near-black and Geist) or the agent (gradients, frosted glass, coloured
+    left borders, emoji as icons, dark mode with no light one). Measured
+    from computed style only, the way Krebs measured 1,590 Show HN pages,
+    again after a load and after every turn, never while the original shows;
+    on the shadcn kit as it ships it says 2, after Editorial 0. Layout tells
+    are not claimed: on an app screen a row of figures is the point of a
+    dashboard, so they go to the agent as don'ts, in Copy for your AI, with
+    the measured ones no knob reaches. "Show me six ways out" opens the
+    looks.
+
+    And the way in. The door opens on what it is for, "Make your app look
+    like yours", then the one way: Take this screen along. Over a kit,
+    "No app at hand? Try it on the kit first" closes it. The other ways (one
+    line on your machine, a script line for a deployed app, a build loaded
+    here) are folded under Other ways in, each one click away. The tells and
+    the looks no longer stand over the door.
+
+    Measured, over the six: tests green (483, 145, 121), kit gates green
+    (101, 18), each step tried in the browser at 1440 and the top bar at
+    375. The kits were not rebuilt: nothing in this PR changes their pages.
+
+    Then, from Alexander on the preview: clicking a look made it the choice
+    at once, with no closer look. Now a look opens at full size in the same
+    room as the six, the bar above it kept (the title, the locks, Shuffle):
+    step to the previous or next one (the arrows, or ← and →), back to All
+    six (or Escape), and only Pick this one makes it the choice. One frame
+    for the full-size view, its sheet rewritten on every step, and the six
+    stay loaded under it, so both ways are instant. The title reads "The
+    kit, six ways", not "Your The kit".
+
+    Then every knob, measured. Alexander turned Colour in dark mode and saw
+    nothing, and a reload flashed his colour before the dark scheme took it
+    away. A script turned each knob alone on the Dashboard, in light and in
+    dark, and read what moved. Four did not, all for reasons in the engine:
+
+    - Colour in dark. shadcn's dark `--primary` is #e5e5e5, the same literal
+      as its light `--border` and `--input`, so the three shared one
+      variable, read as a grey. A colour written straight into a property
+      that names the brand now gets a variable of its own (table.ts), and a
+      grey brand's twin in the dark scope takes the pick itself (mapping.ts);
+      by delta it came out #f3f3f3. One test changed with it: a grey brand
+      that is also body text is admitted now, since the text keeps its own
+      variable and turning the brand no longer reaches it.
+    - Line height. Tailwind v4 writes `calc(1.25 / .875)`, and both numbers
+      were tokenised, so the ratio stayed put (20px to 20.0018px). The
+      divisor is skipped now: 20px to 25px at ×1.25.
+    - Elevation. Tailwind v4's `--tw-shadow` reads `var(--tw-shadow-color, …)`,
+      so it was rightly never hoisted to :root as one value, and so nothing
+      scaled. Its lengths are tokenised one by one now, as shadows; the
+      colour variable stays where it was. One test changed with it, to say
+      exactly that: never the whole shadow, its lengths yes.
+    - Grey tint. A pure grey took the tint only as a delta of chroma, 0.0007
+      on shadcn; it takes half the tint now, in the brand's hue.
+
+    Still not moving, and left: Background in dark (it is the light page's
+    colour, by design) and Border tone on shadcn's translucent dark border.
+
+    And the hand-off, which Alexander read: DESIGN.md said primary #e5e5e5
+    (the dark grey, now the brand), depth "100% of its published strength"
+    with Elevation at ×0.5 (the dial is passed now), nothing about the
+    spacing he turned (it says ×1.2 now, and the one Tailwind v4 line), and
+    gave the heading the body's line height of 1.65 (no longer). SKILL.md
+    told a shadcn project not to install a chart or a toast, which shadcn
+    ships itself (OWN_PACKAGE names its own), signed itself UIcockpit, and
+    carried dashes the copy rule forbids. The prompt now carries theme.css,
+    the file every other part points at, says "this app, built on shadcn/ui",
+    and no longer tells a dashboard to drop its row of figures.
+
+    Then the font. Alexander chose Figtree and the prompt said Geist: DESIGN.md
+    named Figtree, theme.css still wrote init's `--font-sans: 'Geist Variable'`
+    in `@theme`, because shadcn's fonts "inherit the base" and on a shadcn
+    export no base is written. The emitter now puts the chosen family there.
+    And the export passes a family the Type knob chose as `'Figtree',
+    sans-serif`, the form the engine reads as a webfont, so DESIGN.md says
+    where to fetch it; the page's own `Figtree, sans-serif` read as a system
+    stack, and an agent told to add no new fonts would have fallen back to
+    sans-serif. Checked on all nine kits: every one carries the chosen two.
+
+    Take it home, one line per way. Alexander used only Copy for your AI and
+    did not miss the skill, and read the long note as "the zip adds a skill".
+    It does not: the prompt already carries SKILL.md. What the zip adds is
+    that the files stay in the repo, so later screens keep the look. Each
+    button now says when it is the one; the note keeps the tools and the MCP line.

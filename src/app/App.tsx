@@ -1,6 +1,6 @@
 import DOOR from '../kits/door.json'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Download, PanelLeftOpen, X, BookOpen, Plug } from 'lucide-react'
+import { Check, Download, PanelLeftOpen, X, BookOpen } from 'lucide-react'
 import { SandboxPanel } from '../panel/SandboxPanel'
 import type { Config } from '../tokens/types'
 import { useConfig } from '../state/useConfig'
@@ -23,8 +23,10 @@ import { observeFrame } from '../sandbox/live'
 import { measureCoverage, type Coverage } from '../sandbox/coverage'
 import { nestedDocs } from '../sandbox/verify'
 import { applyScheme } from '../sandbox/scheme'
-import { googleFontsImport, isCustomFont, customFontFamily, SYSTEM_FONT } from '../tokens/fonts'
-import { customFontUrl } from '../tokens/customFonts'
+import { fontCssFor } from './fontCss'
+import { LookGrid, type LookCard } from './LookGrid'
+import { measureTells, type Tell } from '../sandbox/tells'
+import { DIRECTIONS, applyDirection, firstRoll, reroll, type LookLocks, type LookRoll } from '../sandbox/directions'
 import { Door, LoadStages } from './Intake'
 import { CaptureDoor } from './CaptureDoor'
 import { captureArchive, readCapture, sanitizeHtml, screenPath, type CapturedScreen } from '../capture/receive'
@@ -146,29 +148,24 @@ function Editor() {
   )
   const varsRef = useRef(vars)
   varsRef.current = vars
-  const fontCss = useMemo(() => {
-    if (!loaded) return ''
-    const base = loaded.report.baseline.cfg
-    const chosen = [cfg.fontDisplay, cfg.fontBody].filter((f, i) => f !== (i === 0 ? base.fontDisplay : base.fontBody) && f !== SYSTEM_FONT)
-    if (!chosen.length) return ''
-    const google = chosen.filter((f) => !isCustomFont(f))
-    const custom = chosen.filter(isCustomFont)
-    const parts: string[] = []
-    if (google.length) parts.push(googleFontsImport(google[0]!, google[1] ?? google[0]!))
-    for (const f of custom) {
-      const url = customFontUrl(f)
-      if (url) parts.push(`@font-face{font-family:'${customFontFamily(f)}';src:url(${url});font-weight:100 900;font-display:swap}`)
-    }
-    // Display font: most apps set ONE family and let headings inherit it, so
-    // there is no heading literal for the sheet to move. The knob therefore
-    // speaks by SELECTOR — the one semantic override that is honest, because
-    // "which face do headings use" is a real question in every app.
-    if (cfg.fontDisplay !== base.fontDisplay) {
-      const stack = String(buildTokens(cfg).vars['--k-font-display'])
-      parts.push(`h1,h2,h3,h4,h5,h6,[class*="title"],[class*="heading"],[class*="hero"],[class*="display"]{font-family:${stack} !important}`)
-    }
-    return parts.join('\n')
-  }, [cfg.fontDisplay, cfg.fontBody, loaded])
+  // Hold to see your original (decision 216): while held, the frame gets the
+  // identity sheet, the values their own CSS had, and none of the chosen
+  // fonts or the chosen scheme. Nothing is reloaded; letting go puts it back.
+  const [peek, setPeek] = useState(false)
+  // Pick a look (decision 216): open or not, which brand and type pair each
+  // direction shows, what is locked, and which direction the knobs stand on.
+  const [looksOpen, setLooksOpen] = useState(false)
+  const [roll, setRoll] = useState<LookRoll>(firstRoll)
+  const [locks, setLocks] = useState<LookLocks>({ colour: false, font: false })
+  const [lookOn, setLookOn] = useState<string | null>(null)
+  // What on this screen reads as the AI look (sandbox/tells.ts), measured
+  // again after a load and after every turn, never while the original shows.
+  const [tells, setTells] = useState<Tell[] | null>(null)
+  const looksOpenRef = useRef(looksOpen)
+  looksOpenRef.current = looksOpen
+  const peekRef = useRef(peek)
+  peekRef.current = peek
+  const fontCss = useMemo(() => (loaded ? fontCssFor(cfg, loaded.report.baseline.cfg) : ''), [cfg.fontDisplay, cfg.fontBody, loaded]) // eslint-disable-line react-hooks/exhaustive-deps
   const coverageRef = useRef<Coverage | null>(null)
   const fontCssRef = useRef(fontCss)
   fontCssRef.current = fontCss
@@ -190,6 +187,26 @@ function Editor() {
     document.title = aboutOpen ? "How UISandbox works · Play with your app's design, right in the browser"
       : loaded && !loaded.kit ? `UISandbox · ${loaded.project.name}` : "UISandbox · Play with your app's design. Right in the browser"
   }, [loaded, aboutOpen])
+  // Each direction on the knobs as they stand, with the dials a look turns
+  // put back to the app's own first, so one look never inherits another's.
+  const lookCards = useMemo<LookCard[]>(() => {
+    if (!loaded || !looksOpen) return []
+    const base = loaded.report.baseline.cfg
+    const reset = Object.fromEntries([...new Set(DIRECTIONS.flatMap((d) => Object.keys(d.sb)))].map((k) => [k, (base.sb as unknown as Record<string, number>)[k]]))
+    const from: Config = { ...cfg, sb: { ...cfg.sb, ...reset } }
+    return DIRECTIONS.map((d) => {
+      const c = applyDirection(from, d, roll[d.id], locks)
+      return { id: d.id, name: d.name, what: d.what, brand: c.cPrimary, key: JSON.stringify([roll[d.id], locks]),
+        sheet: { vars: computeVars(loaded.project.table, loaded.report.baseline, c, buildTokens(c)), fonts: fontCssFor(c, base), dark: c.sb.dark ?? null }, cfg: c }
+    })
+  }, [loaded, looksOpen, cfg, roll, locks])
+  const pickDirection = (id: string) => {
+    const card = lookCards.find((l) => l.id === id) as (LookCard & { cfg: Config }) | undefined
+    if (!card) return
+    dispatch({ type: 'REPLACE', cfg: card.cfg })
+    setLookOn(id)
+    setLooksOpen(false)
+  }
   const changedCount = useMemo(() => {
     if (!loaded) return 0
     const id = loaded.project.table.identityVars()
@@ -205,13 +222,15 @@ function Editor() {
     // renders every story inside iframe.html): the sheet applies to each.
     for (const doc of [top, ...nestedDocs(top)]) applyTo(doc)
     function applyTo(doc: Document) {
+    const cur = loadedRef.current
+    const original = peekRef.current && cur
     let el = doc.getElementById('us-vars')
     if (!el) {
       el = doc.createElement('style')
       el.id = 'us-vars'
       ;(doc.head ?? doc.documentElement).prepend(el)
     }
-    const css = varsStyleTag(varsRef.current)
+    const css = varsStyleTag(original ? cur.project.table.identityVars() : varsRef.current)
     const inner = css.slice(css.indexOf('>') + 1, css.lastIndexOf('<'))
     if (el.textContent !== inner) el.textContent = inner
     // A font the knob chose has to LOAD in their document: Google Fonts by
@@ -222,14 +241,20 @@ function Editor() {
       fonts.id = 'us-fonts'
       el.after(fonts)
     }
-    const fcss = fontCssRef.current
+    const fcss = original ? '' : fontCssRef.current
     if (fonts.textContent !== fcss) fonts.textContent = fcss
     // Their dark mode, switched on their own hooks (sandbox/scheme.ts).
-    const cur = loadedRef.current
-    if (cur) { try { applyScheme(doc, cur.project.scheme, cfgRef.current.sb.dark ?? null) } catch { /* mid-navigation */ } }
+    if (cur) { try { applyScheme(doc, cur.project.scheme, (original ? cur.report.baseline.cfg.sb.dark : cfgRef.current.sb.dark) ?? null) } catch { /* mid-navigation */ } }
     }
   }, [])
-  useEffect(() => { applyVars() }, [vars, fontCss, cfg.sb.dark, applyVars])
+  useEffect(() => { applyVars() }, [vars, fontCss, cfg.sb.dark, peek, applyVars])
+  const remeasureTells = useCallback(() => {
+    const doc = frameRef.current?.contentDocument
+    const cur = loadedRef.current
+    if (!doc || !cur || peekRef.current) return
+    try { setTells(measureTells(doc, cfgRef.current.cPrimary, { hasScheme: !!cur.project.scheme })) } catch { /* mid-navigation */ }
+  }, [])
+  useEffect(() => { const t = setTimeout(remeasureTells, 450); return () => clearTimeout(t) }, [vars, fontCss, peek, remeasureTells])
   // Opened by the local MCP server (`&sync=<id>`): the knobs flow back to it,
   // so an agent can export/verify what the user turned by hand. Same origin,
   // 127.0.0.1, debounced; nothing else ever receives the state.
@@ -359,6 +384,7 @@ function Editor() {
   }, [])
   const onFrameLoaded = useCallback(() => {
     applyVars()
+    setTimeout(remeasureTells, 600)
     stopObserver.current?.()
     const doc = frameRef.current?.contentDocument
     // A shell with nothing in it is not "your app": say so rather than let a
@@ -444,6 +470,7 @@ function Editor() {
       liveFirst.current = false
       // A fresh project is a fresh start: no history, no hash from the last one.
       reset(report.baseline.cfg)
+      setLookOn(null)
       // A shared link's knobs, once; else what was turned on the kit before.
       let pendingCarry: Loaded['pendingCarry']
       if (sharedCfg.current) { dispatch({ type: 'REPLACE', cfg: sharedCfg.current }); sharedCfg.current = null }
@@ -570,6 +597,18 @@ function Editor() {
     return () => clearTimeout(t)
   }, [])
 
+  // Space, held, shows the original; not while typing or on a focused control,
+  // where Space means what it always means.
+  useEffect(() => {
+    const busy = (t: EventTarget | null) => t instanceof HTMLElement && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT|BUTTON|A)$/.test(t.tagName))
+    // (with the looks open, Space shuffles them instead: LookGrid)
+    const down = (e: KeyboardEvent) => { if (e.code === 'Space' && !e.repeat && !busy(e.target) && loadedRef.current && !looksOpenRef.current) { e.preventDefault(); setPeek(true) } }
+    const up = (e: KeyboardEvent) => { if (e.code === 'Space') setPeek(false) }
+    const off = () => setPeek(false)
+    window.addEventListener('keydown', down); window.addEventListener('keyup', up); window.addEventListener('blur', off)
+    return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); window.removeEventListener('blur', off) }
+  }, [])
+
   // Keyboard: ⌘Z / ⇧⌘Z for the knobs.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -627,10 +666,18 @@ function Editor() {
   // baseline; "Custom" once something was turned on top of a look.
   const lookNow = !loaded || encode(cfg) === encode(loaded.report.baseline.cfg) ? null : lookApplied && encode(lookApplied.cfg) === encode(cfg) ? lookApplied.id : lookApplied ? '' : null
   const hasScheme = !!loaded && (loaded.project.scheme.media || loaded.project.scheme.hooks.length > 0)
-  const turnedOnKit = loaded?.kit ? differingKeys(loaded.report.baseline.cfg, cfg).filter(isShownKnob) : []
-  // Three names read; a shuffle's twenty do not. The rest is counted.
-  const carryList = (keys: string[]) => { const n = keys.map(knobLabel); return n.length <= 3 ? n.join(', ') : `${n.slice(0, 3).join(', ')} and ${n.length - 3} more` }
-  const carryNote = turnedOnKit.length ? `What you turned on ${loaded!.kit!.name} comes with it: ${carryList(turnedOnKit)}. Everything else starts as your code has it.` : undefined
+  // The four steps (decision 216), each opening what it names. Opening one
+  // closes the others: one card over the canvas at a time.
+  const step = tab === 'app' && loaded?.kit ? 1 : looksOpen ? 2 : showExport ? 4 : 3
+  const steps: Array<{ n: number; label: string; title: string; on: boolean; done: boolean; go: () => void }> = [
+    { n: 1, label: 'Your app', title: loaded?.kit ? 'Connect your app: any screen your browser shows, your dev server, or a build' : 'Your app is in',
+      on: step === 1, done: !!loaded && !loaded.kit, go: () => { if (loaded?.kit) { setLooksOpen(false); tab === 'app' ? closeDoor() : openDoor() } } },
+    { n: 2, label: lookOn ? DIRECTIONS.find((d) => d.id === lookOn)?.name ?? 'Pick a look' : 'Pick a look', title: 'Your screen in six directions, side by side',
+      on: step === 2, done: !!lookOn, go: () => { if (tab === 'app') closeDoor(); setLooksOpen((v) => !v) } },
+    { n: 3, label: 'Tune', title: 'The knobs on the left, on your screen', on: step === 3, done: changedCount > 0,
+      go: () => { if (tab === 'app') closeDoor(); setLooksOpen(false); setShowExport(false) } },
+    { n: 4, label: 'Take it home', title: 'To your agent, or as code', on: step === 4, done: false, go: () => { setLooksOpen(false); setShowExport(true) } },
+  ]
   // The door opens over the kit and closes back to the tab of the screen under
   // it: read from the screen, so the two can never disagree.
   const openDoor = () => setTab('app')
@@ -638,7 +685,7 @@ function Editor() {
   // One card at a time: Export or How it works, opened from the top bar or
   // the footer the door leaves uncovered, closes the door under it.
   useEffect(() => { if ((showExport || aboutOpen) && tab === 'app' && loaded?.kit) closeDoor() }, [showExport, aboutOpen]) // eslint-disable-line react-hooks/exhaustive-deps
-  const makeDoor = (standalone = false) => <Door standalone={standalone} onClose={!standalone && loaded?.kit ? closeDoor : undefined} carryNote={standalone ? undefined : carryNote} onArchive={onArchive} onUrl={(u) => void loadFromUrl(`/__repo/?u=${encodeURIComponent(u)}`)} onSample={(p) => void loadFromUrl(p)} busy={busy} error={error} />
+  const makeDoor = (standalone = false) => <Door standalone={standalone} onClose={!standalone && loaded?.kit ? closeDoor : undefined} onArchive={onArchive} onUrl={(u) => void loadFromUrl(`/__repo/?u=${encodeURIComponent(u)}`)} onSample={(p) => void loadFromUrl(p)} busy={busy} error={error} />
   return (
     <div className="app">
       <header className="app__topbar">
@@ -646,13 +693,19 @@ function Editor() {
         {/* Beside the name, where "Design System Generator" stood (it lives in
             the footer): the one link a newcomer looks for first. */}
         <a className="app__how" href="/about" title="How it works" onClick={openAbout}><BookOpen size={14} /> <span>How it works</span></a>
-        <span className="app__spacer" />
+        {/* The four steps (decision 216): where a maker is, and the way on.
+            Each opens what it names: the door, the looks, the canvas, Export.
+            Your app replaces the Connect button that stood here. */}
+        {loaded ? (
+          <nav className="steps" aria-label="Steps">
+            {steps.map((st) => (
+              <button key={st.n} type="button" className={`steps__step ${st.on ? 'steps__step--on' : ''} ${st.done ? 'steps__step--done' : ''}`} aria-current={st.on ? 'step' : undefined} onClick={st.go} title={st.title}>
+                <span className="steps__n">{st.done && !st.on ? <Check size={11} strokeWidth={3} /> : st.n}</span><span className="steps__label">{st.label}</span>
+              </button>
+            ))}
+          </nav>
+        ) : <span className="app__spacer" />}
         <div className="app__group">
-          {/* The site's main action, beside Export, which follows it: it opens
-              the door (the bookmarklet, the local command, a build) and stays
-              lit while the door is open. Gone once your own app is in: Close
-              and the Kit menu speak for it then. */}
-          {loaded?.kit && <button type="button" className={`btn btn--secondary btn--sm app__connect ${tab === 'app' ? 'app__connect--on' : ''}`} aria-pressed={tab === 'app'} onClick={() => (tab === 'app' ? closeDoor() : openDoor())} title={tab === 'app' ? 'Close and go back to the kit' : 'Connect your app: any screen your browser shows, your dev server, or a build'}><Plug size={14} strokeWidth={1.75} /><span className="ebar__txt"> Connect your app</span></button>}
           {!loaded && <><McpButton /><StarButton /></>}
           {loaded && <>
             <button type="button" className={`btn ${sendTo ? 'btn--secondary' : 'btn--primary'} btn--sm`} onClick={() => setShowExport(true)}><Download size={14} /> Export</button>
@@ -695,7 +748,7 @@ function Editor() {
                 dispatch={dispatch}
                 onCollapse={() => setPanelOpen(false)}
                 onRandomize={() => dispatch({ type: 'REPLACE', cfg: shuffle(cfg, loaded.report.baseline, Math.random, { kit: !!loaded.kit }) })}
-                onReset={() => dispatch({ type: 'REPLACE', cfg: loaded.report.baseline.cfg })}
+                onReset={() => { dispatch({ type: 'REPLACE', cfg: loaded.report.baseline.cfg }); setLookOn(null) }}
                 history={{ undo, redo, canUndo, canRedo }}
                 radiiOnScreen={coverage ? coverage.radii.total : undefined}
                 kitName={loaded.kit?.name}
@@ -716,6 +769,12 @@ function Editor() {
               onPin={pinCurrent}
               pinnable={unlistedRoute}
               changedCount={changedCount}
+              peek={peek}
+              onPeek={setPeek}
+              tells={tells ?? undefined}
+              onLooks={() => { if (tab === 'app') closeDoor(); setLooksOpen(true) }}
+              looks={looksOpen && loaded ? <LookGrid project={loaded.project} screen={loaded.screen} looks={lookCards} current={lookOn} locks={locks} onLocks={setLocks}
+                onShuffle={() => setRoll((r) => reroll(r))} onPick={pickDirection} onClose={() => setLooksOpen(false)} /> : null}
               warningTitle={!thin && !missingFiles.length && flutterWeb ? 'A Flutter web build' : undefined}
               warning={thin ?? (missingFiles.length ? `${missingFiles.length === 1 ? 'A file' : `${missingFiles.length} files`} this page asked for ${missingFiles.length === 1 ? 'is' : 'are'} not in the archive: ${missingFiles.slice(0, 3).join(', ')}${missingFiles.length > 3 ? '…' : ''}. ${loaded.captured ? 'The page was taken along as it rendered; these it asks for here, and the capture did not see.' : 'That usually means source, not the built output: parts of the page cannot run here.'}` : flutterWeb ? `Flutter paints this app into a <canvas>: there is almost no CSS for the knobs to move (${loaded.project.table.entries.length} values found). The 1:1 check and the reach meter still tell the truth about it; a design pass on a Flutter app belongs in its ThemeData.` : null)}
               coverage={coverage}
@@ -762,7 +821,7 @@ function Editor() {
       {(loaded || !error) && <Footer onAbout={(section) => aboutDialog.open(section)} />}
       {aboutDialog.about && <AboutDialog section={aboutDialog.about.section} onClose={aboutDialog.close} />}
       {showExport && loaded && (
-        <ExportDialog cfg={cfg} base={loaded.report.baseline.cfg} table={loaded.project.table} vars={vars} projectName={loaded.project.name} kitDoorName={loaded.kit?.name} shareUrl={shareUrl} files={loaded.project.raw} fontCss={fontCss} notes={loaded.report.notes} painted={coverage?.painted} anchors={coverage?.anchors} kit={coverage ? coverage.kit : undefined} kitValues={coverage?.kitValues} readPageVars={readPageVars} onClose={() => setShowExport(false)} />
+        <ExportDialog cfg={cfg} base={loaded.report.baseline.cfg} table={loaded.project.table} vars={vars} projectName={loaded.project.name} kitDoorName={loaded.kit?.name} shareUrl={shareUrl} files={loaded.project.raw} fontCss={fontCss} notes={loaded.report.notes} painted={coverage?.painted} anchors={coverage?.anchors} kit={coverage ? coverage.kit : undefined} kitValues={coverage?.kitValues} readPageVars={readPageVars} send={sendTo ? { to: sendTo, onSend: sendBack } : undefined} tells={tells ?? []} onClose={() => setShowExport(false)} />
       )}
     </div>
   )

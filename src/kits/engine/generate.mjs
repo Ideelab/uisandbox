@@ -35,7 +35,7 @@ ${decl(r.vars)}
    * globals.css does it with @theme inline; we did not, and every shadcn
    * component in the preview rendered completely unstyled. The package had the
    * same hole, so anyone installing it would have seen the same nothing. */
-  shadcn: (r, kit) => {
+  shadcn: (r, kit, values = {}) => {
     /* THEIR defaults, ours over them — the same rule daisyUI needed. Our knobs
      * reach seven of shadcn's variables; its components read seventeen. Writing
      * only ours left --secondary, --accent and --destructive undefined, so
@@ -52,6 +52,12 @@ ${decl(r.vars)}
        4xl ×2.6) where new-york subtracted pixels. Its badge is rounded-4xl:
        26px from the scale, 32px from Tailwind's default without it. */
     const own = kit.theme ? Object.fromEntries(Object.entries(kit.theme).filter(([n]) => !n.startsWith('--color-'))) : null
+    /* Its fonts "inherit the base" (roles.mjs), but on a shadcn export no
+       base is written, so init's Geist stood in @theme over a family the
+       person had chosen: DESIGN.md said Figtree and theme.css said Geist
+       (decision 216). The chosen family goes where init put Geist. */
+    if (own && values.fontBody) own['--font-sans'] = values.fontBody
+    if (own && values.fontHeading && values.fontHeading !== values.fontBody) own['--font-heading'] = values.fontHeading
     return `/* ${stamp(kit)}: the variables its components read, its published
    defaults with your values over them. The dark half is below. */
 :root {
@@ -75,7 +81,7 @@ ${decl(bridge)}${own ? `\n${decl(own)}` : radius ? `
  * width and leaves the colour at currentColor. (No backticks in here: this
  * whole block is a JS template literal, and one backtick in a comment breaks
  * the file at a line far from the edit. Fourth time.) Without this rule every card,
- * input and table in a shadcn app draws its border in the TEXT colour — a
+ * input and table in a shadcn app draws its border in the TEXT colour: a
  * near-black hairline where a #e5e5e5 one belongs. It looked wrong on the wall
  * and it was wrong in the package we hand people. */
 @layer base {
@@ -302,6 +308,18 @@ export const plain = (files) => Object.fromEntries(
  * because it is the one kit here whose components are code: its package is the
  * authority on what exists, and what is absent from it is absent, full stop.
  */
+/* What a kit DOES ship for a part its wall draws from tokens: in a real
+   project that is the thing to use, not a dependency to avoid. "Do not
+   install a dependency for a chart" told a shadcn project to skip the chart
+   shadcn adds itself (decision 216). */
+export const OWN_PACKAGE = {
+  'shadcn:chart': 'its own Chart, `npx shadcn add chart` (Recharts underneath)',
+  'shadcn:toast': 'Sonner, through its own `npx shadcn add sonner`',
+  'mantine:chart': '`@mantine/charts`',
+  'mantine:command': '`@mantine/spotlight`',
+  'antd:chart': '`@ant-design/charts`',
+}
+
 export const COMPONENT_GAPS = {
   bootstrap: [
     ['command', 'and no command palette; its form-control over list rows in a card'],
@@ -537,7 +555,7 @@ export function generate(values, kitIds, kits, opts = {}) {
     const emit = EMIT[r.kit]
     if (!emit) throw new Error(`no emitter for "${r.kit}": a kit without one would ship an empty theme`)
     Object.assign(files, EXTRA[r.kit]?.(r, kit, values) ?? {})
-    const pair = [emit(r, kit), darkBlock(r, kit)].filter(Boolean)
+    const pair = [emit(r, kit, values), darkBlock(r, kit)].filter(Boolean)
     byKit[r.kit] = pair.join('\n\n')
     return pair
   })
@@ -545,7 +563,7 @@ export function generate(values, kitIds, kits, opts = {}) {
   files['theme.css'] = `/* YOUR DESIGN SYSTEM
  *
  * Generated from ${routed.length} kit${routed.length > 1 ? 's' : ''} and ${Object.keys(values).length} values.
- * Every variable below belongs to the kit that publishes it — nothing here is
+ * Every variable below belongs to the kit that publishes it. Nothing here is
  * ours. Read MANIFEST.md for what could not be set and why.
  */
 
@@ -591,7 +609,7 @@ It carries the design system: the values, where each one comes from, what this
 stack cannot express, and the rules for working inside it. It is generated, so
 do not edit it by hand; change it where it was made and export again.
 
-The working rules — composition, motion, icons, states, the self-checks — are
+The working rules (composition, motion, icons, states, the self-checks) are
 the skill at \`${skillPath}\`. Claude Code loads it on its own for UI work;
 every other tool should read it like a second page of this file.
 
@@ -693,7 +711,7 @@ function manifest(routed, kits, values, opts = {}) {
       if (t?.overrides && values[role.id]) out.push(`- **${k.name} · ${role.id}**: this kit derives that colour itself. Your value replaces ${t.overrides}; everything else in the scheme still comes from the seed.`)
     }
     if (r.noDarkMode) out.push(`- **${k.name} · dark mode**: this kit publishes no dark values of its own, so none were generated. Anything else would be a palette we invented.`)
-    if (r.greyscale?.length) out.push(`- **${k.name} · dark mode for \`${r.greyscale.join('`, `')}\`**: this kit's own light-to-dark change does not fit your colour: carrying it through would cost more than half its chroma to stay inside sRGB, which washes it out rather than darkening it. ${k.name === 'shadcn/ui' ? 'shadcn ships no brand colour of its own — --primary is part of its neutral ramp and simply inverts — so it has never said what to do with a colour. ' : ''}Left unchanged; check it against the contrast list.`)
+    if (r.greyscale?.length) out.push(`- **${k.name} · dark mode for \`${r.greyscale.join('`, `')}\`**: this kit's own light-to-dark change does not fit your colour: carrying it through would cost more than half its chroma to stay inside sRGB, which washes it out rather than darkening it. ${k.name === 'shadcn/ui' ? 'shadcn ships no brand colour of its own: --primary is part of its neutral ramp and simply inverts, so it has never said what to do with a colour. ' : ''}Left unchanged; check it against the contrast list.`)
     for (const c of r.chosen ?? []) {
       out.push(`- **${k.name} · ${c.role}**: not a value this kit takes. You asked for \`${c.asked}\`; the nearest of its ${c.of} published ${c.attr.replace('data-', '')} settings is **${c.picked}** (\`${c.got}\`). ${c.why}.`)
     }
@@ -846,7 +864,9 @@ function designMd(routed, kits, values, { name = 'Design system', parts = [], ov
     if (family) lines.push(`    fontFamily: ${yamlStr(family)}`)
     if (label === 'body-md' && has('baseText')) lines.push(`    fontSize: ${yamlStr(values.baseText)}`)
     if (weight) lines.push(`    fontWeight: ${weight}`)
-    if (has('lineHeight')) lines.push(`    lineHeight: ${values.lineHeight}`)
+    // the line height read off the page is the body's: a heading set at 1.65 was
+    // that number copied onto it (decision 216)
+    if (label === 'body-md' && has('lineHeight')) lines.push(`    lineHeight: ${values.lineHeight}`)
     if (has('letterSpacing')) lines.push(`    letterSpacing: ${yamlStr(values.letterSpacing)}`)
     return lines.length ? [`  ${label}:`, ...lines] : []
   }
@@ -918,7 +938,7 @@ function designMd(routed, kits, values, { name = 'Design system', parts = [], ov
       : `${head} Use it for fills and decoration, never as the only thing marking a control apart from its background.`
   })
 
-  const gaps = routed.flatMap((r) => (COMPONENT_GAPS[r.kit] ?? []).map(([part, why]) => [kits[r.kit].name, part, why]))
+  const gaps = routed.flatMap((r) => (COMPONENT_GAPS[r.kit] ?? []).map(([part, why]) => [kits[r.kit].name, part, why, r.kit]))
   const webs = webfonts(values)
 
   /* Elevation is not a mood here, it is a measurement: whether the stack
@@ -963,7 +983,9 @@ ${spacing.length
   ? `Every gap, padding and margin in this stack is a multiple of \`spacing.base\`. Use the
 kit's own spacing utilities rather than a pixel value.`
   : `This stack names no spacing scale. Use the kit's own spacing utilities and keep them
-consistent; do not introduce a scale of your own.`}
+consistent; do not introduce a scale of your own.`}${values.spaceScale && Math.abs(parseFloat(values.spaceScale) - 1) > 0.01
+  ? `\n\nThe spacing was turned to ×${parseFloat(values.spaceScale)} of the kit's own step: every padding, gap and margin is that much ${parseFloat(values.spaceScale) > 1 ? 'roomier' : 'tighter'} than ${stack} ships it.${/tailwind|shadcn|daisy/i.test(routed.map((r) => r.kit).join(' ')) ? ` On Tailwind v4 that is one line in your theme: \`--spacing: calc(0.25rem * ${parseFloat(values.spaceScale)})\`.` : ''}`
+  : ''}
 
 ## Elevation & Depth
 
@@ -990,7 +1012,7 @@ ${gaps.length ? `\n${gaps.map(([, part, why]) => `- **${part}**: ${why}.`).join(
 - **Never add a second UI library.** If something is missing, compose it from the
   components above and the values in this file.
 ${warnings.map((w) => `- ${w}`).join('\n')}
-${gaps.map(([kit, part]) => `- **Do not install a dependency for a ${part}.** ${kit} ships none on purpose; build it from the parts above.`).join('\n')}
+${gaps.map(([kit, part, , id]) => OWN_PACKAGE[`${id}:${part}`] ? `- **For a ${part}, use ${kit}'s own:** ${OWN_PACKAGE[`${id}:${part}`]}, themed by the values above.` : `- **Do not install a dependency for a ${part}.** ${kit} ships none on purpose; build it from the parts above.`).join('\n')}
 - **This project may already contain colours, radii and font sizes that are not in
   this file.** Replace them with the nearest role here. Do not keep a value because
   it is already in the code.
@@ -1019,66 +1041,66 @@ export const SKILL_VOCAB = {
     ladder: 'compose button recipes from utilities and keep exactly one solid brand recipe; every other action steps down to outline or plain text',
     group: 'a flex container with one gap-* step; attached segments are a single rounded container',
     busy: '`animate-pulse` on a neutral block is the loading state; `animate-spin` marks a working control',
-    motion: 'the `transition` utilities with its own ease vars; the only keyframes it ships are `spin`, `ping` and `pulse` — write no others',
-    icons: 'Heroicons (`heroicons`, the 24/outline set) — the companion set from the same authors',
+    motion: 'the `transition` utilities with its own ease vars; the only keyframes it ships are `spin`, `ping` and `pulse`: write no others',
+    icons: 'Heroicons (`heroicons`, the 24/outline set), the companion set from the same authors',
     sheetClasses: [],
   },
   daisyui: {
     ladder: 'one `btn-primary` per view; the rest are `btn-ghost`, `btn-outline` or plain `btn`',
     group: '`join` with `join-item` children when controls are one control; a flex gap when they are neighbours',
     busy: '`loading` inside the control that is working; `skeleton` for content that has not arrived',
-    motion: 'its components carry their own transitions — add none on top',
-    icons: 'daisyUI names no icon set; this system was proofed with Lucide — whichever set you pick, use one',
+    motion: 'its components carry their own transitions, so add none on top',
+    icons: 'daisyUI names no icon set; this system was proofed with Lucide. Whichever set you pick, use one',
     sheetClasses: ['btn', 'btn-primary', 'btn-ghost', 'btn-outline', 'join', 'join-item', 'loading', 'skeleton'],
   },
   shadcn: {
     ladder: 'one Button `default` per view; the rest are `secondary`, `outline` or `ghost`, and destructive actions are `destructive`',
-    group: 'a flex container with one gap-* step — shadcn/ui ships no group wrapper on purpose',
+    group: 'a flex container with one gap-* step: shadcn/ui ships no group wrapper on purpose',
     busy: 'the Skeleton component for content that has not arrived; `animate-pulse` is what it runs on',
     motion: null, // written from kit.animates at generate time — their companion package, read, not typed
-    icons: 'Lucide (`lucide-react`) — the set its own installer adds',
+    icons: 'Lucide (`lucide-react`), the set its own installer adds',
     sheetClasses: [],
   },
   bootstrap: {
     ladder: 'one `btn-primary` per view; the rest are `btn-outline-secondary` or `btn-link`',
     group: '`btn-group` when controls are one control; `btn-toolbar` with gap when they are neighbours',
     busy: '`spinner-border` inside the control that is working; `placeholder` with `placeholder-glow` for content that has not arrived',
-    motion: 'its components carry their own transitions, and `fade` and `collapse` are its words for enter and leave — add no keyframes of yours',
-    icons: 'Bootstrap Icons (`bootstrap-icons`) — the companion set from the same team',
+    motion: 'its components carry their own transitions, and `fade` and `collapse` are its words for enter and leave. Add no keyframes of yours',
+    icons: 'Bootstrap Icons (`bootstrap-icons`), the companion set from the same team',
     sheetClasses: ['btn', 'btn-primary', 'btn-outline-secondary', 'btn-link', 'btn-group', 'btn-toolbar', 'spinner-border', 'placeholder', 'placeholder-glow', 'fade', 'collapse'],
   },
   material: {
     ladder: 'one `md-filled-button` per view; the rest are `md-filled-tonal-button` and `md-text-button`',
     group: 'no group component exists; a flex gap, one step, and the filled one sits last in reading order',
     busy: '`md-circular-progress` inside or beside the control that is working',
-    motion: 'its elements animate themselves to the M3 motion spec, and the package publishes no motion variables to retune — leave motion theirs',
-    icons: 'Material Symbols (`@material-symbols/svg-400`, outlined) — the set the spec names',
+    motion: 'its elements animate themselves to the M3 motion spec, and the package publishes no motion variables to retune. Leave motion theirs',
+    icons: 'Material Symbols (`@material-symbols/svg-400`, outlined), the set the spec names',
     sheetClasses: [],
     elements: ['md-filled-button', 'md-filled-tonal-button', 'md-text-button', 'md-circular-progress'],
   },
   radix: {
     ladder: 'one Button `variant="solid"` per view; the rest are `soft` and `ghost`',
-    group: 'a Flex with one gap step — Radix Themes ships no group wrapper',
+    group: 'a Flex with one gap step: Radix Themes ships no group wrapper',
     busy: 'the Spinner component inside the control that is working; Skeleton for content that has not arrived',
-    motion: 'its components carry their own transitions — add none on top',
-    icons: 'Radix Icons (`@radix-ui/react-icons`) — the companion set from the same team',
+    motion: 'its components carry their own transitions, so add none on top',
+    icons: 'Radix Icons (`@radix-ui/react-icons`), the companion set from the same team',
     sheetClasses: ['rt-Button', 'rt-Flex', 'rt-Spinner', 'rt-Skeleton'],
   },
   mantine: {
     ladder: 'one Button `variant="filled"` per view; the rest are `light`, `subtle` or `default`',
     group: 'the Group component with its own spacing prop; Stack for the vertical case',
     busy: 'the Loader component inside the control that is working; Skeleton for content that has not arrived',
-    motion: 'its components carry their own transitions — add none on top',
-    icons: 'Tabler (`@tabler/icons`) — the set its own docs reach for',
+    motion: 'its components carry their own transitions, so add none on top',
+    icons: 'Tabler (`@tabler/icons`), the set its own docs reach for',
     sheetClasses: [],
     mantineClasses: ['Button', 'Group', 'Stack', 'Loader', 'Skeleton'],
   },
   antd: {
     ladder: 'one Button `type="primary"` per view; the rest are `default` and `type="text"`',
-    group: 'the Space or Flex component with one size step — never margins between siblings',
+    group: 'the Space or Flex component with one size step, never margins between siblings',
     busy: 'the Spin component around what is working; its own `loading` prop on a Button',
-    motion: 'its components move on their own motion tokens — add no CSS transitions on top',
-    icons: "Ant Design's own icons (`@ant-design/icons`) — the only set its components expect",
+    motion: 'its components move on their own motion tokens. Add no CSS transitions on top',
+    icons: "Ant Design's own icons (`@ant-design/icons`), the only set its components expect",
     sheetClasses: [],
     antdClasses: ['ant-btn', 'ant-space', 'ant-flex', 'ant-spin'],
   },
@@ -1086,7 +1108,7 @@ export const SKILL_VOCAB = {
     ladder: 'Open Props ships variables, not components: keep one solid brand treatment and step everything else down to outline or text',
     group: 'a flex container with one gap from its own size scale',
     busy: 'compose it: an element on its own `--animation-*` entry',
-    motion: 'the one kit here that publishes motion itself: `--ease-1` through `--ease-5`, the spring eases and the `--animation-*` set — compose from those and write no keyframes',
+    motion: 'the one kit here that publishes motion itself: `--ease-1` through `--ease-5`, the spring eases and the `--animation-*` set. Compose from those and write no keyframes',
     icons: 'Open Props names no icon set; pick one and use one',
     sheetClasses: [],
   },
@@ -1100,10 +1122,10 @@ const slugOf = (name) => String(name ?? '').trim().toLowerCase()
 const darkLineOf = (id, kit) => {
   const d = DARK[id]
   if (d === null) return `${kit.name} ships the \`dark:\` variant but publishes no dark values; this export carries none for it. Leave dark off rather than inventing half of one.`
-  if (d === 'theme') return `dark is its second theme block in \`theme.css\` — switch by setting \`data-theme\` on \`<html>\`, never by overriding colours.`
-  if (d === 'algorithm') return `dark is \`theme.darkAlgorithm\` over the same seeds in \`antd.theme.ts\` — never a CSS override on top.`
+  if (d === 'theme') return `dark is its second theme block in \`theme.css\`: switch by setting \`data-theme\` on \`<html>\`, never by overriding colours.`
+  if (d === 'algorithm') return `dark is \`theme.darkAlgorithm\` over the same seeds in \`antd.theme.ts\`, never a CSS override on top.`
   if (d.startsWith('@media')) return `dark follows the operating system through ${kit.name}'s own media block in \`theme.css\`.`
-  return `the switch is \`${d.split(',')[0].trim()}\` on the root — their components listen for it; never write a parallel palette.`
+  return `the switch is \`${d.split(',')[0].trim()}\` on the root. Their components listen for it; never write a parallel palette.`
 }
 
 export function skillMd(routed, kits, values, { name = 'Design system' } = {}) {
@@ -1114,7 +1136,7 @@ export function skillMd(routed, kits, values, { name = 'Design system' } = {}) {
     const v = SKILL_VOCAB[r.kit]?.[field]
     if (field === 'motion' && !v && kits[r.kit]?.animates?.npm) {
       const a = kits[r.kit].animates
-      return `- **${kits[r.kit].name}**: motion ships as its own companion, \`${a.npm}\` ${a.version} — use its entrance and exit classes and write no keyframes.`
+      return `- **${kits[r.kit].name}**: motion ships as its own companion, \`${a.npm}\` ${a.version}: use its entrance and exit classes and write no keyframes.`
     }
     return v ? `- **${kits[r.kit].name}**: ${v}.` : null
   }).filter(Boolean).join('\n')
@@ -1124,7 +1146,7 @@ export function skillMd(routed, kits, values, { name = 'Design system' } = {}) {
   const spaceVar = routed.flatMap((r) => Object.entries(r.vars))
     .find(([n]) => /^--spacing$|spacing-md$|^--size-3$/.test(n))
   const distance = spaceVar
-    ? `This stack names a spacing step (\`${spaceVar[0]}\`: ${spaceVar[1]}). Inside a group use one step; between groups, two to three; between sections, four or more. Three distances, kept apart — a screen where every gap is equal has no structure to read.`
+    ? `This stack names a spacing step (\`${spaceVar[0]}\`: ${spaceVar[1]}). Inside a group use one step; between groups, two to three; between sections, four or more. Three distances, kept apart: a screen where every gap is equal has no structure to read.`
     : `This stack names no spacing scale, so pick three distances from the kit's own utilities and hold them: tight inside a group, wider between groups, widest between sections. A screen where every gap is equal has no structure to read.`
 
   /* every OTHER kit's package is a named foreign import — derived from the
@@ -1139,18 +1161,18 @@ export function skillMd(routed, kits, values, { name = 'Design system' } = {}) {
 
   const emptyGaps = routed.flatMap((r) => (COMPONENT_GAPS[r.kit] ?? [])
     .filter(([part]) => part === 'empty')
-    .map(() => `${kits[r.kit].name} ships no empty-state component — compose one from its text styles and one quiet action, and keep it one move: say what is missing, offer the one way to fill it`))
+    .map(() => `${kits[r.kit].name} ships no empty-state component. Compose one from its text styles and one quiet action, and keep it one move: say what is missing, offer the one way to fill it`))
 
   return `---
 name: ${slug}
-description: Use when building or changing any user interface in this project — a screen, a component, a dashboard, a style, a layout. Carries the composition rules, motion, icon and state discipline for ${stack}, on top of the design system in DESIGN.md.
+description: Use when building or changing any user interface in this project: a screen, a component, a dashboard, a style, a layout. Carries the composition rules, motion, icon and state discipline for ${stack}, on top of the design system in DESIGN.md.
 ---
 
-# ${name} — the working skill
+# ${name}, the working skill
 
 This project's design system is ${stack}, themed in \`theme.css\` and documented
 in \`DESIGN.md\`. That file is the contract: read it once per session before any
-UI work. This skill is the other half — not what is true, but what to do.
+UI work. This skill is the other half: not what is true, but what to do.
 
 ## The order of work
 
@@ -1160,7 +1182,7 @@ On any new screen or component, in this order:
    detail) and set their distances first. A screen laid out back-to-front is
    polish on the wrong skeleton.
 2. **The kit's component, or nothing.** Every part you need either exists in
-   ${stack} — then use it, with the variables from \`theme.css\` — or it is named
+   ${stack} (then use it, with the variables from \`theme.css\`) or it is named
    as a gap in \`DESIGN.md\`, with what to compose it from. Never a third source.
 3. **States with the component, not after it.** A data view is not done with its
    happy path: empty, loading and error ship in the same change.
@@ -1194,7 +1216,7 @@ and numbers right-aligned in tables.
 ## Motion
 
 Motion answers an interaction; it is never decoration. Opacity and transform
-only — nothing that moves layout.
+only, nothing that moves layout.
 
 ${perKit('motion')}
 
@@ -1208,7 +1230,7 @@ One set, the kit's own, at one size per context:
 ${perKit('icons')}
 
 Never two sets on one screen. An icon-only control carries an \`aria-label\`,
-and an icon next to a label is decoration — if it adds nothing, drop it.
+and an icon next to a label is decoration: if it adds nothing, drop it.
 
 ## States
 
@@ -1245,7 +1267,7 @@ grep -rn --include='*.ts' --include='*.tsx' --include='*.js' --include='*.jsx' -
 \`\`\`
 
 A second UI library never arrives as a decision; it arrives as one import. This
-project is ${stack} — anything above is a foreign component.
+project is ${stack}. Anything above is a foreign component.
 ` : ''}
 And by eye, one pass: exactly one primary action per view · three distances,
 held · every data view has its empty, loading and error state · dark via the
@@ -1253,7 +1275,7 @@ kit's own switch · focus visible everywhere.
 
 ---
 
-Generated by [UIcockpit](https://uicockpit.com) from ${stack} — the values in
+Made in [UISandbox](https://uisandbox.org) from ${stack}: the values in
 \`theme.css\`, the reasoning in \`DESIGN.md\`, what could not be done in
 \`MANIFEST.md\`. Do not edit by hand; change it where it was made and export
 again.
