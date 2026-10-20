@@ -3496,3 +3496,17 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     Send invites and the toast, and on Expenses a row's menu, clicked
     through in all eight kits; fidelity 100% on all eight, tests and kit
     gates green, hold-outs without regressions.
+
+215. One halo for every card over the editor.
+
+    Alexander: the only branding left was the colour behind Connect your
+    app, while every other overlay showed the page behind it, darkened.
+    Make the three the same: the page still seen, but dark; the colour
+    gradient behind the card; and a 3px rim of the same range around it.
+    So the door, Export, How it works, the privacy card and Step by step
+    share one rule: the scrim (the door's now too, with the kit visible
+    under it rather than hidden), the four colours of the old corona as a
+    glow, and as a 3px gradient border. The glow is a shadow rather than a
+    layer behind the card, because Export clips what lies outside it and a
+    shadow is not clipped. The door also closes now (a cross, Escape, the
+    Connect button again), to the tab of the screen under it.

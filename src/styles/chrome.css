@@ -538,29 +538,29 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
 .landing__sec--quiet p { font-size: 13.5px; }
 .landing code { font-size: 12.5px; background: var(--app-hover); padding: 1px 5px; border-radius: 4px; }
 
-/* The corona behind the door: soft pastel light, the card as the eclipse in
-   front of it. Low and blurred on purpose — a hint of colour on a black-and-
-   white page, not a feature. Slowly breathes; still under reduced motion. */
+/* THE HALO: every card that opens over the editor (the door, Export, How it
+   works, the privacy card, Step by step) lies on the same dark scrim, the page
+   still showing through, with the door's four colours behind it as a glow and
+   around it as a 3px rim. It was the door alone that carried the colour, on a
+   page of its own; now the three a visitor meets first look like one family.
+   The glow is a shadow, not a layer behind: Export clips what lies outside it
+   (overflow: hidden), and a shadow is not clipped. */
 .door { position: relative; width: min(680px, 100%); }
-.door::before {
-  content: ''; position: absolute; inset: -48px -64px; z-index: 0; pointer-events: none; border-radius: 40px;
+:is(.stage__door .door, .privacy, .dialog__backdrop) > .card {
+  border: 3px solid transparent;
   background:
-    radial-gradient(40% 55% at 18% 30%, color-mix(in srgb, #6366f1 34%, transparent), transparent 70%),
-    radial-gradient(38% 50% at 82% 28%, color-mix(in srgb, #22d3ee 30%, transparent), transparent 70%),
-    radial-gradient(42% 52% at 70% 82%, color-mix(in srgb, #f472b6 30%, transparent), transparent 70%),
-    radial-gradient(36% 48% at 25% 85%, color-mix(in srgb, #facc15 26%, transparent), transparent 70%);
-  filter: blur(36px); opacity: .55; animation: corona 14s ease-in-out infinite alternate;
+    linear-gradient(var(--app-surface), var(--app-surface)) padding-box,
+    linear-gradient(135deg, #818cf8, #22d3ee 36%, #f472b6 68%, #facc15) border-box;
+  box-shadow:
+    -56px -40px 120px -28px color-mix(in srgb, #6366f1 55%, transparent),
+    56px -40px 120px -28px color-mix(in srgb, #22d3ee 48%, transparent),
+    56px 48px 120px -28px color-mix(in srgb, #f472b6 48%, transparent),
+    -56px 48px 120px -28px color-mix(in srgb, #facc15 42%, transparent);
 }
-.door > .card { position: relative; z-index: 1; }
-@keyframes corona { from { transform: scale(1) rotate(0deg); } to { transform: scale(1.06) rotate(3deg); } }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .door::before { opacity: .38; } }
-:root[data-theme="dark"] .door::before { opacity: .38; }
-@media (prefers-reduced-motion: reduce) { .door::before { animation: none; } }
 
 /* Small screens: the topbar keeps only the name; the three ways in get short
    labels; the MCP flyout becomes a viewport sheet (anchored right it would
-   leave the screen); the footer keeps to two short lines; the corona stays
-   inside the card's column. */
+   leave the screen); the footer keeps to two short lines. */
 /* The pane is the dialog minus a 236px nav minus its gutters, so two columns
    only fit while the dialog is at its full 920. Below that, one column. */
 @media (max-width: 900px) { .exp__cols { columns: 1; } }
@@ -576,7 +576,6 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
   .mcp__pop { position: fixed; left: 3vw; right: 3vw; top: 54px; width: auto; max-height: calc(100dvh - 70px); overflow-y: auto; }
   .foot { padding: 7px 10px; font-size: 10.5px; gap: 2px 8px; line-height: 1.5; }
   .foot__note, .foot__links a:last-child { display: none; }
-  .door::before { inset: -24px -10px; filter: blur(28px); }
   /* Cards that anchor to a corner of the stage span the viewport instead. */
   .popcard, .verify { left: 8px !important; right: 8px !important; width: auto !important; max-width: none !important; }
   /* Export: one destination per row, gutters in from 26 to 16, tabs wrap. */
@@ -665,10 +664,9 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
 .stage__tab { height: 26px; padding: 0 11px; border-radius: 7px; font-size: 12.5px; font-weight: 500; color: var(--app-fg-muted); display: inline-flex; align-items: center; gap: 5px; }
 .stage__tab:hover { background: var(--app-hover); color: var(--app-fg); }
 .stage__tabs .stage__tab--on, .stage__tabs .stage__tab--on:hover { background: var(--app-fg); color: var(--app-bg); }
-/* The kit stays rendered and measured under the door: hidden, never removed
-   (a display:none frame has no boxes, so the reach meter would read zero). */
-.stage__frame--door .stage__iframe { visibility: hidden; }
-.stage__door { position: absolute; inset: 0; z-index: 40; overflow-y: auto; background: var(--app-bg); display: flex; justify-content: center; }
+/* The kit stays rendered and measured under the door, and visible now,
+   darkened by the scrim like the page under every other card (the halo). */
+.stage__door { position: absolute; inset: 0; z-index: 40; overflow-y: auto; background: var(--app-scrim); display: flex; justify-content: center; }
 .stage__door .intake { padding-top: 28px; padding-bottom: 28px; }
 /* The door alone, without the story around it (that lives on /about). */
 .intake--door { justify-content: flex-start; }
@@ -774,7 +772,7 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
    card is as tall as the story, and the head sticks to the scrim's top. */
 .about-dialog { overflow-y: auto; overscroll-behavior: contain; place-items: start center; padding: 40px 16px; }
 .about-dialog .about-dialog__card { position: relative; width: min(840px, 100%); padding: 0 40px 40px; outline: none; }
-.about-dialog__head { position: sticky; top: -40px; /* the scrim's padding: it sticks at the window's edge, not 40px below it */ z-index: 2; display: flex; align-items: center; justify-content: space-between; width: min(760px, 100%); margin: 0 auto; padding: 28px 0 18px; background: inherit; }
+.about-dialog__head { position: sticky; top: -40px; /* the scrim's padding: it sticks at the window's edge, not 40px below it */ z-index: 2; display: flex; align-items: center; justify-content: space-between; width: min(760px, 100%); margin: 0 auto; padding: 28px 0 18px; background: var(--app-surface); /* not inherit: the card's background carries the halo's rim */ }
 .about-dialog__mark { display: inline-flex; color: var(--app-fg); }
 .about-dialog__close { margin-right: -8px; }
 .about-dialog .landing { margin: 0 auto; width: min(760px, 100%); }

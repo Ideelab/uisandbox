@@ -113,7 +113,6 @@ function Editor() {
   // The stage's tabs. On a kit: its components sheet, its screens, and the
   // door to your own app. `?tab=app` (from /about) opens on the door.
   const [tab, setTab] = useState<StageTab>(() => new URLSearchParams(location.search).get('tab') === 'app' ? 'app' : 'components')
-  const beforeDoor = useRef<StageTab>('components')
   // A shared link's knobs: read before the first load resets them, applied
   // once that load is in (onArchive), then forgotten.
   const sharedCfg = useRef<Config | null>(readHash())
@@ -632,9 +631,10 @@ function Editor() {
   // Three names read; a shuffle's twenty do not. The rest is counted.
   const carryList = (keys: string[]) => { const n = keys.map(knobLabel); return n.length <= 3 ? n.join(', ') : `${n.slice(0, 3).join(', ')} and ${n.length - 3} more` }
   const carryNote = turnedOnKit.length ? `What you turned on ${loaded!.kit!.name} comes with it: ${carryList(turnedOnKit)}. Everything else starts as your code has it.` : undefined
-  // The door opens over the kit and closes back to the tab it was opened from.
-  const openDoor = () => { if (tab !== 'app') beforeDoor.current = tab; setTab('app') }
-  const closeDoor = () => setTab(beforeDoor.current)
+  // The door opens over the kit and closes back to the tab of the screen under
+  // it: read from the screen, so the two can never disagree.
+  const openDoor = () => setTab('app')
+  const closeDoor = () => setTab(loaded && !isSheet(loaded.screen) ? 'screens' : 'components')
   const makeDoor = (standalone = false) => <Door standalone={standalone} onClose={!standalone && loaded?.kit ? closeDoor : undefined} carryNote={standalone ? undefined : carryNote} onArchive={onArchive} onUrl={(u) => void loadFromUrl(`/__repo/?u=${encodeURIComponent(u)}`)} onSample={(p) => void loadFromUrl(p)} busy={busy} error={error} />
   return (
     <div className="app">
