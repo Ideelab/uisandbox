@@ -113,6 +113,7 @@ function Editor() {
   // The stage's tabs. On a kit: its components sheet, its screens, and the
   // door to your own app. `?tab=app` (from /about) opens on the door.
   const [tab, setTab] = useState<StageTab>(() => new URLSearchParams(location.search).get('tab') === 'app' ? 'app' : 'components')
+  const beforeDoor = useRef<StageTab>('components')
   // A shared link's knobs: read before the first load resets them, applied
   // once that load is in (onArchive), then forgotten.
   const sharedCfg = useRef<Config | null>(readHash())
@@ -631,7 +632,10 @@ function Editor() {
   // Three names read; a shuffle's twenty do not. The rest is counted.
   const carryList = (keys: string[]) => { const n = keys.map(knobLabel); return n.length <= 3 ? n.join(', ') : `${n.slice(0, 3).join(', ')} and ${n.length - 3} more` }
   const carryNote = turnedOnKit.length ? `What you turned on ${loaded!.kit!.name} comes with it: ${carryList(turnedOnKit)}. Everything else starts as your code has it.` : undefined
-  const makeDoor = (standalone = false) => <Door standalone={standalone} carryNote={standalone ? undefined : carryNote} onArchive={onArchive} onUrl={(u) => void loadFromUrl(`/__repo/?u=${encodeURIComponent(u)}`)} onSample={(p) => void loadFromUrl(p)} busy={busy} error={error} />
+  // The door opens over the kit and closes back to the tab it was opened from.
+  const openDoor = () => { if (tab !== 'app') beforeDoor.current = tab; setTab('app') }
+  const closeDoor = () => setTab(beforeDoor.current)
+  const makeDoor = (standalone = false) => <Door standalone={standalone} onClose={!standalone && loaded?.kit ? closeDoor : undefined} carryNote={standalone ? undefined : carryNote} onArchive={onArchive} onUrl={(u) => void loadFromUrl(`/__repo/?u=${encodeURIComponent(u)}`)} onSample={(p) => void loadFromUrl(p)} busy={busy} error={error} />
   return (
     <div className="app">
       <header className="app__topbar">
@@ -645,7 +649,7 @@ function Editor() {
               the door (the bookmarklet, the local command, a build) and stays
               lit while the door is open. Gone once your own app is in: Close
               and the Kit menu speak for it then. */}
-          {loaded?.kit && <button type="button" className={`btn btn--secondary btn--sm app__connect ${tab === 'app' ? 'app__connect--on' : ''}`} aria-pressed={tab === 'app'} onClick={() => setTab('app')} title="Connect your app: any screen your browser shows, your dev server, or a build"><Plug size={14} strokeWidth={1.75} /><span className="ebar__txt"> Connect your app</span></button>}
+          {loaded?.kit && <button type="button" className={`btn btn--secondary btn--sm app__connect ${tab === 'app' ? 'app__connect--on' : ''}`} aria-pressed={tab === 'app'} onClick={() => (tab === 'app' ? closeDoor() : openDoor())} title={tab === 'app' ? 'Close and go back to the kit' : 'Connect your app: any screen your browser shows, your dev server, or a build'}><Plug size={14} strokeWidth={1.75} /><span className="ebar__txt"> Connect your app</span></button>}
           {!loaded && <><McpButton /><StarButton /></>}
           {loaded && <>
             <button type="button" className={`btn ${sendTo ? 'btn--secondary' : 'btn--primary'} btn--sm`} onClick={() => setShowExport(true)}><Download size={14} /> Export</button>
@@ -665,7 +669,7 @@ function Editor() {
       {loaded?.kit && (
         <div className="app__intro">
           <h1>Play with your app's design, right in the browser.</h1>
-          <span>This is {loaded.kit.name} as it ships. Turn a knob<span className="app__intro-where"> on the left</span>, then <button type="button" className="app__intro-link" onClick={() => setTab('app')}>try it on your own app</button>.</span>
+          <span>This is {loaded.kit.name} as it ships. Turn a knob<span className="app__intro-where"> on the left</span>, then <button type="button" className="app__intro-link" onClick={openDoor}>try it on your own app</button>.</span>
           <a className="app__intro-link app__intro-how" href="/about" onClick={openAbout}>How it works</a>
         </div>
       )}

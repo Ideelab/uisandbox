@@ -198,7 +198,7 @@ button { background: none; border: 0; padding: 0; cursor: pointer; }
 
 /* === Intake === */
 .intake { flex: 1; overflow-y: auto; padding: 48px 24px 0; display: flex; flex-direction: column; align-items: center; gap: 28px; }
-.intake__card { width: min(640px, 100%); padding: 36px 32px 28px; text-align: center; }
+.intake__card { position: relative; width: min(640px, 100%); padding: 36px 32px 28px; text-align: center; }
 .intake__mark { display: inline-flex; color: var(--app-fg); margin-bottom: 4px; }
 .intake__card h1 { font-size: 22px; letter-spacing: -0.02em; margin: 10px 0 6px; }
 .intake__card p { color: var(--app-fg-muted); margin: 0 auto 18px; max-width: 46ch; }

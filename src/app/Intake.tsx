@@ -15,6 +15,8 @@ interface DoorProps {
   error: string | null
   /** Said when knobs were turned on the kit behind the door: they come along. */
   carryNote?: string
+  /** Over a kit, the door closes back to it: the cross top right, as every card has, and Escape. */
+  onClose?: () => void
   /** No kit stands behind the door (a load failed): offer the kits here too. */
   standalone?: boolean
 }
@@ -44,7 +46,7 @@ const SAMPLES = [
  * the tab either, but "drop your code on a website" is what people hear, and
  * the samples, Share links and agents' `?load=` still need it.
  */
-export function Door({ onArchive, onUrl, onSample, busy, error, carryNote, standalone }: DoorProps) {
+export function Door({ onArchive, onUrl, onSample, busy, error, carryNote, standalone, onClose }: DoorProps) {
   const [way, setWay] = useState<Way>('zip')
   const [more, setMore] = useState<'running' | 'build' | null>(error || standalone ? 'build' : null)
   const [showPrivacy, setShowPrivacy] = useState(false)
@@ -54,6 +56,13 @@ export function Door({ onArchive, onUrl, onSample, busy, error, carryNote, stand
   const [repo, setRepo] = useState('')
   const zipRef = useRef<HTMLInputElement>(null)
   const dirRef = useRef<HTMLInputElement>(null)
+  // Escape closes the door, unless a card opened from it is up: that one closes first.
+  useEffect(() => {
+    if (!onClose || showPrivacy || showSteps) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose, showPrivacy, showSteps])
 
   const takeFiles = async (files: File[]) => {
     setLocalError(null)
@@ -90,6 +99,7 @@ export function Door({ onArchive, onUrl, onSample, busy, error, carryNote, stand
       {showSteps && <CaptureStepsDialog onClose={() => setShowSteps(false)} />}
       <div className="door">
       <div className="card intake__card">
+        {onClose && <button type="button" className="btn btn--ghost btn--icon popcard__x" onClick={onClose} aria-label="Close" title="Back to the kit"><X size={15} /></button>}
 
         {/* A failed load says why first, above every way to try again. */}
         {error && !busy && <div className="intake__error intake__error--top">{error}</div>}
