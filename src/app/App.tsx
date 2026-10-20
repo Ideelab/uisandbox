@@ -23,8 +23,9 @@ import { observeFrame } from '../sandbox/live'
 import { measureCoverage, type Coverage } from '../sandbox/coverage'
 import { nestedDocs } from '../sandbox/verify'
 import { applyScheme } from '../sandbox/scheme'
-import { googleFontsImport, isCustomFont, customFontFamily, SYSTEM_FONT } from '../tokens/fonts'
-import { customFontUrl } from '../tokens/customFonts'
+import { fontCssFor } from './fontCss'
+import { LookGrid, type LookCard } from './LookGrid'
+import { DIRECTIONS, applyDirection, firstRoll, reroll, type LookLocks, type LookRoll } from '../sandbox/directions'
 import { Door, LoadStages } from './Intake'
 import { CaptureDoor } from './CaptureDoor'
 import { captureArchive, readCapture, sanitizeHtml, screenPath, type CapturedScreen } from '../capture/receive'
@@ -150,31 +151,17 @@ function Editor() {
   // identity sheet, the values their own CSS had, and none of the chosen
   // fonts or the chosen scheme. Nothing is reloaded; letting go puts it back.
   const [peek, setPeek] = useState(false)
+  // Pick a look (decision 216): open or not, which brand and type pair each
+  // direction shows, what is locked, and which direction the knobs stand on.
+  const [looksOpen, setLooksOpen] = useState(false)
+  const [roll, setRoll] = useState<LookRoll>(firstRoll)
+  const [locks, setLocks] = useState<LookLocks>({ colour: false, font: false })
+  const [lookOn, setLookOn] = useState<string | null>(null)
+  const looksOpenRef = useRef(looksOpen)
+  looksOpenRef.current = looksOpen
   const peekRef = useRef(peek)
   peekRef.current = peek
-  const fontCss = useMemo(() => {
-    if (!loaded) return ''
-    const base = loaded.report.baseline.cfg
-    const chosen = [cfg.fontDisplay, cfg.fontBody].filter((f, i) => f !== (i === 0 ? base.fontDisplay : base.fontBody) && f !== SYSTEM_FONT)
-    if (!chosen.length) return ''
-    const google = chosen.filter((f) => !isCustomFont(f))
-    const custom = chosen.filter(isCustomFont)
-    const parts: string[] = []
-    if (google.length) parts.push(googleFontsImport(google[0]!, google[1] ?? google[0]!))
-    for (const f of custom) {
-      const url = customFontUrl(f)
-      if (url) parts.push(`@font-face{font-family:'${customFontFamily(f)}';src:url(${url});font-weight:100 900;font-display:swap}`)
-    }
-    // Display font: most apps set ONE family and let headings inherit it, so
-    // there is no heading literal for the sheet to move. The knob therefore
-    // speaks by SELECTOR — the one semantic override that is honest, because
-    // "which face do headings use" is a real question in every app.
-    if (cfg.fontDisplay !== base.fontDisplay) {
-      const stack = String(buildTokens(cfg).vars['--k-font-display'])
-      parts.push(`h1,h2,h3,h4,h5,h6,[class*="title"],[class*="heading"],[class*="hero"],[class*="display"]{font-family:${stack} !important}`)
-    }
-    return parts.join('\n')
-  }, [cfg.fontDisplay, cfg.fontBody, loaded])
+  const fontCss = useMemo(() => (loaded ? fontCssFor(cfg, loaded.report.baseline.cfg) : ''), [cfg.fontDisplay, cfg.fontBody, loaded]) // eslint-disable-line react-hooks/exhaustive-deps
   const coverageRef = useRef<Coverage | null>(null)
   const fontCssRef = useRef(fontCss)
   fontCssRef.current = fontCss
@@ -196,6 +183,26 @@ function Editor() {
     document.title = aboutOpen ? "How UISandbox works · Play with your app's design, right in the browser"
       : loaded && !loaded.kit ? `UISandbox · ${loaded.project.name}` : "UISandbox · Play with your app's design. Right in the browser"
   }, [loaded, aboutOpen])
+  // Each direction on the knobs as they stand, with the dials a look turns
+  // put back to the app's own first, so one look never inherits another's.
+  const lookCards = useMemo<LookCard[]>(() => {
+    if (!loaded || !looksOpen) return []
+    const base = loaded.report.baseline.cfg
+    const reset = Object.fromEntries([...new Set(DIRECTIONS.flatMap((d) => Object.keys(d.sb)))].map((k) => [k, (base.sb as unknown as Record<string, number>)[k]]))
+    const from: Config = { ...cfg, sb: { ...cfg.sb, ...reset } }
+    return DIRECTIONS.map((d) => {
+      const c = applyDirection(from, d, roll[d.id], locks)
+      return { id: d.id, name: d.name, what: d.what, brand: c.cPrimary, key: JSON.stringify([roll[d.id], locks]),
+        sheet: { vars: computeVars(loaded.project.table, loaded.report.baseline, c, buildTokens(c)), fonts: fontCssFor(c, base), dark: c.sb.dark ?? null }, cfg: c }
+    })
+  }, [loaded, looksOpen, cfg, roll, locks])
+  const pickDirection = (id: string) => {
+    const card = lookCards.find((l) => l.id === id) as (LookCard & { cfg: Config }) | undefined
+    if (!card) return
+    dispatch({ type: 'REPLACE', cfg: card.cfg })
+    setLookOn(id)
+    setLooksOpen(false)
+  }
   const changedCount = useMemo(() => {
     if (!loaded) return 0
     const id = loaded.project.table.identityVars()
@@ -581,7 +588,8 @@ function Editor() {
   // where Space means what it always means.
   useEffect(() => {
     const busy = (t: EventTarget | null) => t instanceof HTMLElement && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT|BUTTON|A)$/.test(t.tagName))
-    const down = (e: KeyboardEvent) => { if (e.code === 'Space' && !e.repeat && !busy(e.target) && loadedRef.current) { e.preventDefault(); setPeek(true) } }
+    // (with the looks open, Space shuffles them instead: LookGrid)
+    const down = (e: KeyboardEvent) => { if (e.code === 'Space' && !e.repeat && !busy(e.target) && loadedRef.current && !looksOpenRef.current) { e.preventDefault(); setPeek(true) } }
     const up = (e: KeyboardEvent) => { if (e.code === 'Space') setPeek(false) }
     const off = () => setPeek(false)
     window.addEventListener('keydown', down); window.addEventListener('keyup', up); window.addEventListener('blur', off)
@@ -736,6 +744,9 @@ function Editor() {
               changedCount={changedCount}
               peek={peek}
               onPeek={setPeek}
+              onLooks={() => setLooksOpen((v) => !v)}
+              looks={looksOpen && loaded ? <LookGrid project={loaded.project} screen={loaded.screen} looks={lookCards} current={lookOn} locks={locks} onLocks={setLocks}
+                onShuffle={() => setRoll((r) => reroll(r))} onPick={pickDirection} onClose={() => setLooksOpen(false)} /> : null}
               warningTitle={!thin && !missingFiles.length && flutterWeb ? 'A Flutter web build' : undefined}
               warning={thin ?? (missingFiles.length ? `${missingFiles.length === 1 ? 'A file' : `${missingFiles.length} files`} this page asked for ${missingFiles.length === 1 ? 'is' : 'are'} not in the archive: ${missingFiles.slice(0, 3).join(', ')}${missingFiles.length > 3 ? '…' : ''}. ${loaded.captured ? 'The page was taken along as it rendered; these it asks for here, and the capture did not see.' : 'That usually means source, not the built output: parts of the page cannot run here.'}` : flutterWeb ? `Flutter paints this app into a <canvas>: there is almost no CSS for the knobs to move (${loaded.project.table.entries.length} values found). The 1:1 check and the reach meter still tell the truth about it; a design pass on a Flutter app belongs in its ThemeData.` : null)}
               coverage={coverage}

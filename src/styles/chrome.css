@@ -814,3 +814,23 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
 .peek { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 30; display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border: 0; border-radius: 999px; background: var(--app-fg); color: var(--app-bg); font: inherit; font-size: 12.5px; font-weight: 550; box-shadow: var(--app-shadow-md); cursor: pointer; user-select: none; touch-action: none; }
 .peek kbd { font: inherit; font-size: 11px; padding: 1px 6px; border-radius: 5px; background: color-mix(in srgb, var(--app-bg) 18%, transparent); }
 .peek--on { background: var(--app-bg); color: var(--app-fg); outline: 2px solid var(--app-fg); }
+
+/* Pick a look (decision 216): the screen six times over the frame, two rows
+   of three, each card the real page scaled down. */
+.stage__looks { position: absolute; inset: 0; z-index: 35; overflow-y: auto; background: var(--app-bg); }
+.looks { display: flex; flex-direction: column; gap: 14px; padding: 16px 18px 20px; }
+.looks__bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.looks__title { flex: 1; margin: 0; font-size: 15px; font-weight: 650; }
+.looks__bar kbd { font: inherit; font-size: 11px; padding: 0 5px; border-radius: 4px; background: var(--app-hover); }
+.looks__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 1100px) { .looks__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .looks__grid { grid-template-columns: minmax(0, 1fr); } }
+.looks__card { display: flex; flex-direction: column; gap: 6px; padding: 8px 8px 10px; border: 1px solid var(--app-border); border-radius: 12px; background: var(--app-surface); color: var(--app-fg); font: inherit; text-align: left; cursor: pointer; transition: border-color var(--app-dur) var(--app-ease), box-shadow var(--app-dur) var(--app-ease); }
+.looks__card:hover { border-color: var(--app-fg-muted); box-shadow: var(--app-shadow-md); }
+.looks__card--on { border: 2px solid var(--app-fg); padding: 7px 7px 9px; }
+.looks__shot { position: relative; overflow: hidden; border-radius: 8px; border: 1px solid var(--app-border); background: #fff; }
+.looks__shot iframe { position: absolute; top: 0; left: 0; border: 0; transform-origin: 0 0; pointer-events: none; }
+.looks__name { display: inline-flex; align-items: center; gap: 7px; font-size: 13.5px; font-weight: 650; padding: 0 2px; }
+.looks__dot { width: 10px; height: 10px; border-radius: 99px; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15); }
+.looks__what { font-size: 12px; color: var(--app-fg-muted); padding: 0 2px; }
+.looks__foot { margin: 0; font-size: 12px; color: var(--app-fg-muted); }

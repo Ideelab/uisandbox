@@ -3526,3 +3526,19 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     turned again. Nothing reloads, no second frame: the same identity Check
     1:1 measures against. The pill shows once something has moved. No tool
     in the research offered this on the user's own app.
+
+    Then the looks. Pick a look puts the screen on stage six times over the
+    frame, each a live copy of the same sandboxed page at 1000px, cut at
+    620 where the head, the figures and the first chart are, with one
+    direction's sheet written in: Editorial, Swiss, Calm, Bold, Technical,
+    Soft (sandbox/directions.ts). A direction is a coherent set put through
+    the knobs everything else uses (brand, grey tint, a type pair, corners,
+    spacing, depth, weight), so picking one is a turn Undo takes back and
+    Export carries. Each holds two or three brands and type pairs: Shuffle
+    (or Space) varies within a direction instead of rolling every knob. Keep
+    my colour and Keep my font lock those two. The dials a look turns are
+    put back to the app's own before a direction is applied, so one look
+    never inherits another's. Kept off the tells on purpose, and held there
+    by a test: no Inter, no indigo or violet brand, nothing outside the
+    dials' own range, only fonts the picker can load. The six are a start
+    to be reviewed in the PR, not a verdict.
