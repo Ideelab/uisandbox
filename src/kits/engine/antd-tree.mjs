@@ -210,20 +210,21 @@ const PART = {
     background: 'var(--ant-color-bg-container)', borderBottom: '1px solid var(--ant-color-border-secondary)' } },
     e(Typography.Text, { strong: true, style: { color: 'inherit', display: 'inline-flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap' } },
       /* Ledgeway's mark (decision 212), in their primary */
-      n.mark ? e('svg', { width: 18, height: 18, viewBox: '0 0 16 16', 'aria-hidden': true, style: { flex: 'none', fill: 'var(--ant-color-primary)' } },
+      n.mark ? e('svg', { width: 18, height: 18, viewBox: '0 0 16 16', 'aria-hidden': true, style: { flex: 'none', fill: 'var(--ant-color-primary)', marginInlineEnd: 8 } },
         e('rect', { x: 1, y: 1, width: 6, height: 6, rx: 1.8 }), e('rect', { x: 9, y: 1, width: 6, height: 6, rx: 1.8 }),
         e('rect', { x: 1, y: 9, width: 6, height: 6, rx: 1.8 }), e('rect', { x: 9, y: 9, width: 6, height: 6, rx: 1.8, opacity: 0.55 })) : null,
       text(n.brand)),
     e(Menu, { mode: 'horizontal', defaultSelectedKeys: ['0'], style: { flex: 1, minWidth: 0, borderBottom: 0, background: 'transparent' },
       items: list(n.items).map((t, i) => ({ key: String(i), label: t })) }),
     /* who is signed in, at the bar's end (decision 213) */
-    e('span', { style: { display: 'flex', alignItems: 'center', gap: 8 } }, kids, n.user ? e(Avatar, null, text(n.user.initials)) : null))),
+    e('span', { style: { display: 'flex', alignItems: 'center', gap: 8 } }, kids, n.user ? e(Avatar, { style: { flex: 'none' } }, text(n.user.initials)) : null))),
   sidenav: (n) => e(Menu, { mode: 'inline', defaultSelectedKeys: ['on'], style: { border: 0, background: 'transparent' },
     items: list(n.groups).map((g, gi) => ({ key: 'g' + gi, type: 'group', label: g.title,
       children: list(g.items).map((it, i) => ({
         key: it.on ? 'on' : gi + '-' + i, icon: icon(it.icon),
         label: it.count
-          ? e('span', { style: { display: 'flex', justifyContent: 'space-between', gap: 8 } },
+          /* centred, or the tag stretches to the item's 40px line */
+          ? e('span', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 } },
             e('span', null, it.text), e(Tag, { color: TAG.brand, style: { marginInlineEnd: 0 } }, it.count))
           : it.text,
       })) })) }),

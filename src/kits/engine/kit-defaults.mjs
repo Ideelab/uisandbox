@@ -45,6 +45,10 @@ export const TABLE = {
       /* and the white their cards and dialogs sit on: without it bg-surface
          was transparent, and a dialog over a scrim showed the page through it */
       surface: '--color-white',
+      /* and the text on it: their primary buttons are bg-indigo-600
+         text-white. Without it the kit wrote no brand-foreground and every
+         brand button and avatar set its text in black (decision 213) */
+      onBrand: '--color-white',
       fontBody: '--font-sans', radius: '--radius-md' },
     need: ['brand', 'ink', 'fontBody'] },
   daisyui: { stack: ['tailwind', 'daisyui'],
@@ -90,7 +94,7 @@ export const TABLE = {
     need: ['brand', 'page', 'ink', 'fontBody'] },
 }
 
-const COLOUR_ROLES = new Set(['brand', 'page', 'surface', 'ink', 'inkMuted', 'line', 'success', 'warning', 'danger'])
+const COLOUR_ROLES = new Set(['brand', 'onBrand', 'page', 'surface', 'ink', 'inkMuted', 'line', 'success', 'warning', 'danger'])
 
 /** follow var(--x) and var(--x, fallback) pointers inside one var map */
 function resolve(vars, value, hops = 0) {

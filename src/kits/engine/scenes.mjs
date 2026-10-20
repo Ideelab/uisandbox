@@ -374,7 +374,7 @@ const INVOICES = { p: 'table', cols: ['Number', 'Client', 'Status', 'Due', 'Amou
 const invoiceList = () => ({ p: 'panel', kids: [{ p: 'stack', gap: 3, kids: [
   { p: 'row', between: true, kids: [
     { p: 'segmented', items: ['All', 'Drafts', 'Overdue', 'Paid'], on: 0 },
-    { p: 'row', kids: [{ p: 'button', tone: 'secondary', text: 'Export' }, { p: 'button', tone: 'brand', text: 'New invoice' }] },
+    { p: 'row', kids: [{ p: 'button', tone: 'outline', text: 'Export' }, { p: 'button', tone: 'brand', text: 'New invoice' }] },
   ] },
   INVOICES,
   { p: 'row', between: true, kids: [{ p: 'muted', text: 'Showing 1 to 6 of 214' }, { p: 'pagination', pages: 5, on: 1 }] },
@@ -471,7 +471,7 @@ export const SCREENS = [
     main: { p: 'stack', gap: 4, kids: [
       { p: 'row', between: true, kids: [
         { p: 'heading', level: 2, text: 'Good morning, Maya' },
-        { p: 'row', kids: [{ p: 'button', tone: 'secondary', text: 'Export' }, { p: 'button', tone: 'brand', text: 'New invoice' }] },
+        { p: 'row', kids: [{ p: 'button', tone: 'outline', text: 'Export' }, { p: 'button', tone: 'brand', text: 'New invoice' }] },
       ] },
       { p: 'grid', cols: 4, kids: [
         { p: 'stat', label: 'Revenue this month', value: '€48,210.00' },

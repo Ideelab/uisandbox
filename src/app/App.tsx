@@ -29,7 +29,7 @@ import { Door, LoadStages } from './Intake'
 import { CaptureDoor } from './CaptureDoor'
 import { captureArchive, readCapture, sanitizeHtml, screenPath, type CapturedScreen } from '../capture/receive'
 import { AboutDialog } from './AboutDialog'
-import { Stage, type StageTab } from './Stage'
+import { Stage, isSheet, type StageTab } from './Stage'
 import { ExportDialog } from './ExportDialog'
 import { EngineSelect, LookSelect, SchemeSwitch, SendButton } from './EditorBar'
 import { applyLook, looks } from '../kits/looks'
@@ -455,12 +455,16 @@ function Editor() {
         }
       }
       if (extra?.notes) report.notes.push(...extra.notes)
-      const wanted = extra?.screen ?? new URLSearchParams(location.search).get('screen')
+      // From one kit to the next on a screen, the next opens on that screen:
+      // the same Dashboard in another kit is the comparison worth making, and
+      // every kit build has the same pages.
+      const stay = kit && prev?.kit && tab === 'screens' ? prev.screen.path : null
+      const wanted = extra?.screen ?? stay ?? new URLSearchParams(location.search).get('screen')
       const first = (wanted && project.screens.find((s) => s.path === wanted || s.label === wanted)) || project.screens[0]!
       setLoaded({ project, report, screen: first, archive, kit, source, pendingCarry, captured: extra?.captured })
       // Their own app is what they came for: show it, and what was read from it.
       // A kit opens on its sheet, quietly, unless the visitor asked for the door.
-      if (kit) { setTab(doorFirst.current ? 'app' : 'components'); doorFirst.current = false }
+      if (kit) { setTab(doorFirst.current ? 'app' : isSheet(first) ? 'components' : 'screens'); doorFirst.current = false }
       else { setTab('app'); setShowNotes(true) }
     } catch (err) {
       setError((err as Error).message)

@@ -3396,3 +3396,19 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
 
     Measured: fidelity 100% on all eight, tests green (474, 145, 121), kit
     gates green (101, 18), hold-outs without regressions.
+
+    Then, from Alexander's look at the screens: Bootstrap's Export was its
+    filled btn-secondary where every other kit showed a white button; a
+    page header's Export is an outline button in their own dashboard
+    example (btn-outline-secondary) as in shadcn's, so the screens ask for
+    the outline tone. Ant's buttons touched and its cards sat edge to edge:
+    our layout divs read Ant's spacing variables, which are declared on
+    .antd and not on :root, so every gap was an undefined var; the divs
+    carry .antd now (0px to 8px between the buttons, 16px between cards).
+    Its count tag stretched to the menu item's 40px line and is centred
+    (22px). Tailwind wrote no brand-foreground, so its brand buttons and
+    avatar set their text in black outside the editor; it reads their
+    text-white now, and onBrand counts as a colour role. Avatars no longer
+    shrink beside a search field (Tailwind 22px, Bootstrap 23px, Material
+    29px, all their own size again). And switching kit on a screen stays
+    on that screen, so the same Dashboard can be compared kit to kit.

@@ -46,7 +46,7 @@ interface StageProps {
 export type StageTab = 'components' | 'screens' | 'app'
 
 /** A kit build's components sheet is its index page; every other page is a screen. */
-const isSheet = (s: Screen) => /^(index\.html?)?$/i.test(s.path.replace(/^\//, ''))
+export const isSheet = (s: Screen) => /^(index\.html?)?$/i.test(s.path.replace(/^\//, ''))
 
 const WIDTHS: Array<{ id: string; label: string; w: number | null }> = [
   { id: 'fit', label: 'Fit', w: null },

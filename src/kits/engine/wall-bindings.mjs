@@ -166,7 +166,7 @@ const tailwind = {
   alert:   (n, k) => `<div class="${cls('rounded-lg border p-3 text-sm', TW_TONE[n.tone ?? 'neutral'])}">${n.text != null ? esc(n.text) : k}</div>`,
   stat:    (n) => `<div class="rounded-lg border border-line bg-surface p-4"><div class="text-sm text-ink-muted">${esc(n.label)}</div><div class="text-2xl font-semibold text-ink">${esc(n.value)}</div></div>`,
   table:   (n) => `<table class="w-full text-left text-sm"><thead class="border-b border-line text-xs uppercase text-ink-muted"><tr>${list(n.cols).map((c) => `<th class="py-2 pr-3 font-medium">${esc(c)}</th>`).join('')}</tr></thead><tbody>${list(n.rows).map((r) => `<tr class="border-b border-line">${list(r).map((c) => `<td class="py-2 pr-3 text-ink">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`,
-  avatar:  (n) => `<span class="inline-grid size-8 place-items-center rounded-full bg-brand text-xs font-semibold text-brand-foreground">${esc(n.text)}</span>`,
+  avatar:  (n) => `<span class="inline-grid size-8 shrink-0 place-items-center rounded-full bg-brand text-xs font-semibold text-brand-foreground">${esc(n.text)}</span>`,
   /* the semantic names our package ADDS — the same ones the manifest tells you
      to reference, shown doing their job */
   navbar:  (n, k) => `<header class="flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-line bg-surface px-4 py-3">
@@ -355,7 +355,7 @@ const bootstrap = {
   alert:   (n, k) => `<div class="${cls('alert mb-0', BS_ALERT[n.tone ?? 'neutral'])}" role="alert">${n.text != null ? esc(n.text) : k}</div>`,
   stat:    (n) => `<div class="card"><div class="card-body"><div class="text-body-secondary small">${esc(n.label)}</div><div class="fs-3 fw-semibold">${esc(n.value)}</div></div></div>`,
   table:   (n) => `<table class="table"><thead><tr>${list(n.cols).map((c) => `<th scope="col">${esc(c)}</th>`).join('')}</tr></thead><tbody>${list(n.rows).map((r) => `<tr>${list(r).map((c) => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`,
-  avatar:  (n) => `<span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-primary text-white" style="width:2rem;height:2rem;font-size:.75rem;font-weight:600">${esc(n.text)}</span>`,
+  avatar:  (n) => `<span class="d-inline-flex flex-shrink-0 align-items-center justify-content-center rounded-circle bg-primary text-white" style="width:2rem;height:2rem;font-size:.75rem;font-weight:600">${esc(n.text)}</span>`,
   /* Bootstrap ships .navbar and the whole .card-img-top anatomy. It ships no
      footer component at all, so that one is its own utilities on plain markup —
      and the manifest says so rather than implying a component exists. */
@@ -712,7 +712,7 @@ const material = {
     `<th class="md-typescale-label-medium" style="text-align:left;padding:12px 8px;color:var(--md-sys-color-on-surface-variant)">${esc(c)}</th>`).join('')}</tr></thead><tbody>${
     list(n.rows).map((r) => `<tr>${list(r).map((c) => `<td style="padding:12px 8px;border-top:1px solid var(--md-sys-color-outline-variant)">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`,
   /* nor an avatar */
-  avatar:  (n) => `<span class="md-typescale-label-large" style="display:inline-grid;place-items:center;width:40px;height:40px;border-radius:var(--md-sys-shape-corner-full);background:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container)">${esc(n.text)}</span>`,
+  avatar:  (n) => `<span class="md-typescale-label-large" style="flex:none;display:inline-grid;place-items:center;width:40px;height:40px;border-radius:var(--md-sys-shape-corner-full);background:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container)">${esc(n.text)}</span>`,
   /* Material ships a navigation bar as a custom element. It ships no footer
      and no media card at all — M3 specifies neither — so those two are its own
      tokens on plain markup, and the manifest names both. */
@@ -1209,10 +1209,13 @@ const antd = {
   get _pre() { return ANTD_PRE },
   /* Their layout: Flex and Card are components, so those come pre-rendered
      when a scene asks for them by name — but a stack of ours is a stack of
-     ours, and it is written as their spacing on a plain div. */
-  stack:   (n, k) => `<div style="display:flex;flex-direction:column;gap:calc(var(--ant-margin-xs) * ${Math.max(1, n.gap ?? 3) / 2})">${k}</div>`,
-  row:     (n, k) => `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:calc(var(--ant-margin-xs) * ${Math.max(1, n.gap ?? 2) / 2})${n.between ? ';justify-content:space-between' : ''}">${k}</div>`,
-  grid:    (n, k) => `<div style="display:grid;gap:var(--ant-margin);grid-template-columns:${tracks(n)}">${k}</div>`,
+     ours, and it is written as their spacing on a plain div. The div
+     carries .antd, because their variables are declared there and not on
+     :root: without it every gap was an undefined var, so buttons touched
+     and cards sat edge to edge (decision 213). */
+  stack:   (n, k) => `<div class="antd" style="display:flex;flex-direction:column;gap:calc(var(--ant-margin-xs) * ${Math.max(1, n.gap ?? 3) / 2})">${k}</div>`,
+  row:     (n, k) => `<div class="antd" style="display:flex;flex-wrap:wrap;align-items:center;gap:calc(var(--ant-margin-xs) * ${Math.max(1, n.gap ?? 2) / 2})${n.between ? ';justify-content:space-between' : ''}">${k}</div>`,
+  grid:    (n, k) => `<div class="antd" style="display:grid;gap:var(--ant-margin);grid-template-columns:${tracks(n)}">${k}</div>`,
   /* every part they DO ship — answered by the render, never by a string */
   ...Object.fromEntries([...ANTD_OWNS].map((part) => [part, antHole])),
 
