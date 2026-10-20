@@ -22,6 +22,7 @@ import type { RoleValues } from '../kits/engine/generate.mjs'
 import { kitExport, kitPackage } from '../kits/kitExport'
 import { knobLabel } from '../state/carry'
 import { SendButton, ShareButton } from './EditorBar'
+import { LAYOUT_DONTS, type Tell } from '../sandbox/tells'
 import { pinToBuild, lightDeclarations } from '../kits/pin'
 import type { KitId } from '../kits/engine/detect.mjs'
 import { genReadme } from '../export/genReadme'
@@ -30,6 +31,8 @@ import { zipSync } from '../export/zip'
 interface ExportDialogProps {
   /** Opened by the local server: Send hands it back to the agent or terminal (decision 216). */
   send?: { to: 'agent' | 'terminal'; onSend: () => Promise<{ waiting: number } | null> }
+  /** The tells measured on the screen: the ones no knob reaches go into the prompt as don'ts. */
+  tells?: Tell[]
   /** The stand of their code — the overview names what was turned, from → to. */
   base: Config
   cfg: Config
@@ -146,7 +149,7 @@ const KIT_NAME: Record<KitId, string> = {
   openprops: 'Open Props', radix: 'Radix Themes', shadcn: 'shadcn/ui', tailwind: 'Tailwind',
 }
 
-export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName, shareUrl, files, fontCss, notes, painted, anchors, kit, kitValues, readPageVars, onClose, send }: ExportDialogProps) {
+export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName, shareUrl, files, fontCss, notes, painted, anchors, kit, kitValues, readPageVars, onClose, send, tells = [] }: ExportDialogProps) {
   const [patched, setPatched] = useState<Array<{ path: string; text: string }> | null>(null)
   useEffect(() => { let on = true; void genPatchedFiles(files, table, vars, fontCss).then((p) => { if (on) setPatched(p) }); return () => { on = false } }, [files, table, vars, fontCss])
   const movedCount = useMemo(() => { const id = table.identityVars(); return Object.keys(vars).filter((k) => vars[k] !== id[k]).length }, [table, vars])
@@ -452,6 +455,8 @@ export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName,
     const prompt = [
       `Restyle ${kitDoorName ?? projectName} to the design system below, made in UISandbox.`,
       `Use only its tokens${skill ? ' and the classes SKILL.md names' : ''}. Do not fall back to the defaults, and add no raw colours, one-off sizes or new fonts.`,
+      '', 'Keep the layout from the generic AI look. Avoid:',
+      ...[...tells.filter((t) => !t.knobs).map((t) => t.what.replace(/ \(\d+\)$| on \d+ .*$/, '')), ...LAYOUT_DONTS].map((d) => `- ${d}`),
       '', '--- DESIGN.md ---', design,
       ...(skill ? ['', '--- SKILL.md ---', skill] : []),
     ].join('\n')

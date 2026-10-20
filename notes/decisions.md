@@ -3564,3 +3564,17 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     everything, sits beside it; what was turned stays visible; every other
     format is folded under Other formats. Its title is the step's, Take it
     home, with "exactly what is in the sandbox" kept beside it.
+
+    Then why it looks generic. A chip under the canvas counts the AI tells on
+    this screen, and opens them split by who can fix them: the knobs (the
+    default fonts Inter, Geist, Space Grotesk and Instrument Serif, their
+    variable builds included; an indigo or violet brand; shadcn's own
+    near-black and Geist) or the agent (gradients, frosted glass, coloured
+    left borders, emoji as icons, dark mode with no light one). Measured
+    from computed style only, the way Krebs measured 1,590 Show HN pages,
+    again after a load and after every turn, never while the original shows;
+    on the shadcn kit as it ships it says 2, after Editorial 0. Layout tells
+    are not claimed: on an app screen a row of figures is the point of a
+    dashboard, so they go to the agent as don'ts, in Copy for your AI, with
+    the measured ones no knob reaches. "Show me six ways out" opens the
+    looks.

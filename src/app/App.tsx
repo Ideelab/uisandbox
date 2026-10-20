@@ -25,6 +25,7 @@ import { nestedDocs } from '../sandbox/verify'
 import { applyScheme } from '../sandbox/scheme'
 import { fontCssFor } from './fontCss'
 import { LookGrid, type LookCard } from './LookGrid'
+import { measureTells, type Tell } from '../sandbox/tells'
 import { DIRECTIONS, applyDirection, firstRoll, reroll, type LookLocks, type LookRoll } from '../sandbox/directions'
 import { Door, LoadStages } from './Intake'
 import { CaptureDoor } from './CaptureDoor'
@@ -157,6 +158,9 @@ function Editor() {
   const [roll, setRoll] = useState<LookRoll>(firstRoll)
   const [locks, setLocks] = useState<LookLocks>({ colour: false, font: false })
   const [lookOn, setLookOn] = useState<string | null>(null)
+  // What on this screen reads as the AI look (sandbox/tells.ts), measured
+  // again after a load and after every turn, never while the original shows.
+  const [tells, setTells] = useState<Tell[] | null>(null)
   const looksOpenRef = useRef(looksOpen)
   looksOpenRef.current = looksOpen
   const peekRef = useRef(peek)
@@ -244,6 +248,13 @@ function Editor() {
     }
   }, [])
   useEffect(() => { applyVars() }, [vars, fontCss, cfg.sb.dark, peek, applyVars])
+  const remeasureTells = useCallback(() => {
+    const doc = frameRef.current?.contentDocument
+    const cur = loadedRef.current
+    if (!doc || !cur || peekRef.current) return
+    try { setTells(measureTells(doc, cfgRef.current.cPrimary, { hasScheme: !!cur.project.scheme })) } catch { /* mid-navigation */ }
+  }, [])
+  useEffect(() => { const t = setTimeout(remeasureTells, 450); return () => clearTimeout(t) }, [vars, fontCss, peek, remeasureTells])
   // Opened by the local MCP server (`&sync=<id>`): the knobs flow back to it,
   // so an agent can export/verify what the user turned by hand. Same origin,
   // 127.0.0.1, debounced; nothing else ever receives the state.
@@ -373,6 +384,7 @@ function Editor() {
   }, [])
   const onFrameLoaded = useCallback(() => {
     applyVars()
+    setTimeout(remeasureTells, 600)
     stopObserver.current?.()
     const doc = frameRef.current?.contentDocument
     // A shell with nothing in it is not "your app": say so rather than let a
@@ -763,6 +775,8 @@ function Editor() {
               changedCount={changedCount}
               peek={peek}
               onPeek={setPeek}
+              tells={tells ?? undefined}
+              onLooks={() => { if (tab === 'app') closeDoor(); setLooksOpen(true) }}
               looks={looksOpen && loaded ? <LookGrid project={loaded.project} screen={loaded.screen} looks={lookCards} current={lookOn} locks={locks} onLocks={setLocks}
                 onShuffle={() => setRoll((r) => reroll(r))} onPick={pickDirection} onClose={() => setLooksOpen(false)} /> : null}
               warningTitle={!thin && !missingFiles.length && flutterWeb ? 'A Flutter web build' : undefined}
@@ -811,7 +825,7 @@ function Editor() {
       {(loaded || !error) && <Footer onAbout={(section) => aboutDialog.open(section)} />}
       {aboutDialog.about && <AboutDialog section={aboutDialog.about.section} onClose={aboutDialog.close} />}
       {showExport && loaded && (
-        <ExportDialog cfg={cfg} base={loaded.report.baseline.cfg} table={loaded.project.table} vars={vars} projectName={loaded.project.name} kitDoorName={loaded.kit?.name} shareUrl={shareUrl} files={loaded.project.raw} fontCss={fontCss} notes={loaded.report.notes} painted={coverage?.painted} anchors={coverage?.anchors} kit={coverage ? coverage.kit : undefined} kitValues={coverage?.kitValues} readPageVars={readPageVars} send={sendTo ? { to: sendTo, onSend: sendBack } : undefined} onClose={() => setShowExport(false)} />
+        <ExportDialog cfg={cfg} base={loaded.report.baseline.cfg} table={loaded.project.table} vars={vars} projectName={loaded.project.name} kitDoorName={loaded.kit?.name} shareUrl={shareUrl} files={loaded.project.raw} fontCss={fontCss} notes={loaded.report.notes} painted={coverage?.painted} anchors={coverage?.anchors} kit={coverage ? coverage.kit : undefined} kitValues={coverage?.kitValues} readPageVars={readPageVars} send={sendTo ? { to: sendTo, onSend: sendBack } : undefined} tells={tells ?? []} onClose={() => setShowExport(false)} />
       )}
     </div>
   )
