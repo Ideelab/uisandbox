@@ -3554,3 +3554,13 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     tint, the background, each font alone and every dial are under More,
     which is what Fine-tune was called. Pick a look left the stage bar: the
     step is where it lives.
+
+    Then take it home. Export opens on one thing to do: Send to your agent
+    when the local server opened the sandbox, otherwise Copy for your AI, a
+    prompt that carries DESIGN.md (and SKILL.md on a kit) whole and asks the
+    AI to keep to the tokens and add no raw colours, one-off sizes or new
+    fonts, so it works pasted into Claude Code, Cursor, Codex, Lovable or
+    v0, not only the ones the MCP server reaches. The design system zip, or
+    everything, sits beside it; what was turned stays visible; every other
+    format is folded under Other formats. Its title is the step's, Take it
+    home, with "exactly what is in the sandbox" kept beside it.

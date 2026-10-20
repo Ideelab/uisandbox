@@ -21,13 +21,15 @@ import { roleValues } from '../kits/values'
 import type { RoleValues } from '../kits/engine/generate.mjs'
 import { kitExport, kitPackage } from '../kits/kitExport'
 import { knobLabel } from '../state/carry'
-import { ShareButton } from './EditorBar'
+import { SendButton, ShareButton } from './EditorBar'
 import { pinToBuild, lightDeclarations } from '../kits/pin'
 import type { KitId } from '../kits/engine/detect.mjs'
 import { genReadme } from '../export/genReadme'
 import { zipSync } from '../export/zip'
 
 interface ExportDialogProps {
+  /** Opened by the local server: Send hands it back to the agent or terminal (decision 216). */
+  send?: { to: 'agent' | 'terminal'; onSend: () => Promise<{ waiting: number } | null> }
   /** The stand of their code — the overview names what was turned, from → to. */
   base: Config
   cfg: Config
@@ -144,7 +146,7 @@ const KIT_NAME: Record<KitId, string> = {
   openprops: 'Open Props', radix: 'Radix Themes', shadcn: 'shadcn/ui', tailwind: 'Tailwind',
 }
 
-export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName, shareUrl, files, fontCss, notes, painted, anchors, kit, kitValues, readPageVars, onClose }: ExportDialogProps) {
+export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName, shareUrl, files, fontCss, notes, painted, anchors, kit, kitValues, readPageVars, onClose, send }: ExportDialogProps) {
   const [patched, setPatched] = useState<Array<{ path: string; text: string }> | null>(null)
   useEffect(() => { let on = true; void genPatchedFiles(files, table, vars, fontCss).then((p) => { if (on) setPatched(p) }); return () => { on = false } }, [files, table, vars, fontCss])
   const movedCount = useMemo(() => { const id = table.identityVars(); return Object.keys(vars).filter((k) => vars[k] !== id[k]).length }, [table, vars])
@@ -440,6 +442,22 @@ export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName,
     return () => document.removeEventListener('keydown', onKey)
   }, [onClose])
   const [copied, setCopied] = useState(false)
+  // Take it home (decision 216): one thing to do with it, for a maker whose
+  // next step is their AI. The prompt carries the design system whole, so it
+  // works pasted into any of them, not only the ones the MCP server reaches.
+  const [aiCopied, setAiCopied] = useState(false)
+  const copyForAi = async () => {
+    const design = items.find((i) => i.id === 'design-md')?.make() ?? ''
+    const skill = items.find((i) => i.id === 'skill-md')?.make()
+    const prompt = [
+      `Restyle ${kitDoorName ?? projectName} to the design system below, made in UISandbox.`,
+      `Use only its tokens${skill ? ' and the classes SKILL.md names' : ''}. Do not fall back to the defaults, and add no raw colours, one-off sizes or new fonts.`,
+      '', '--- DESIGN.md ---', design,
+      ...(skill ? ['', '--- SKILL.md ---', skill] : []),
+    ].join('\n')
+    await navigator.clipboard.writeText(prompt)
+    setAiCopied(true); setTimeout(() => setAiCopied(false), 2400)
+  }
   const item = items.find((i) => i.id === active)
   const dest = item ? dests.find((d) => d.ids.includes(item.id)) : undefined
   const text = useMemo(() => item ? item.make() : '', [item])
@@ -478,13 +496,10 @@ export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName,
           {item ? (
             <button type="button" className="btn btn--ghost btn--sm" onClick={() => { setActive('overview'); setCopied(false) }}><ChevronLeft size={14} /> Export</button>
           ) : (
-            <h2>Export: exactly what is in the sandbox</h2>
+            <h2>Take it home <span className="exp__h2sub">exactly what is in the sandbox</span></h2>
           )}
           <span className="stage__spacer" style={{ flex: 1 }} />
           <ShareButton url={shareUrl ?? null} />
-          {kitDoorName
-            ? <button type="button" className="btn btn--primary btn--sm" onClick={downloadKit} disabled={!kitFiles} title={kitFiles ? 'theme.css, DESIGN.md, SKILL.md, tokens.json, install.md and MANIFEST.md' : 'Writing the design system…'}><Download size={13} strokeWidth={2} /> Design system + Skill (.zip)</button>
-            : <button type="button" className="btn btn--secondary btn--sm" onClick={downloadAll}><Download size={13} strokeWidth={2} /> Everything (.zip)</button>}
           <button type="button" className="btn btn--ghost btn--icon" onClick={onClose} aria-label="Close"><X size={15} /></button>
         </div>
         {item ? (
@@ -514,13 +529,25 @@ export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName,
           </div>
         ) : (
           <div className="exp__overview">
+            <div className="exp__home">
+              <div className="exp__homebtns">
+                {send && <SendButton to={send.to} onSend={send.onSend} />}
+                <button type="button" className={`btn ${send ? 'btn--secondary' : 'btn--primary'} exp__homebtn`} onClick={() => void copyForAi()}>
+                  {aiCopied ? <Check size={15} strokeWidth={2} /> : <Copy size={15} strokeWidth={2} />} {aiCopied ? 'Copied. Paste it into your AI' : 'Copy for your AI'}
+                </button>
+                {kitDoorName
+                  ? <button type="button" className="btn btn--secondary exp__homebtn" onClick={downloadKit} disabled={!kitFiles} title={kitFiles ? 'theme.css, DESIGN.md, SKILL.md, tokens.json, install.md and MANIFEST.md' : 'Writing the design system…'}><Download size={15} strokeWidth={2} /> Design system + Skill (.zip)</button>
+                  : <button type="button" className="btn btn--secondary exp__homebtn" onClick={downloadAll}><Download size={15} strokeWidth={2} /> Everything (.zip)</button>}
+              </div>
+              <p className="exp__homenote">For Claude Code, Cursor, Codex, Lovable or v0: the prompt carries DESIGN.md{kitFiles ? ' and SKILL.md' : ''}, and asks it to keep to the tokens.{send ? '' : <> Run <code>npx uisandbox-mcp open</code> in your project and Send hands it to your agent directly.</>}</p>
+            </div>
             <div className="exp__stats">
               <div className="exp__stat"><b>{movedCount}</b><span>of {table.entries.length} values moved</span></div>
               {!kitDoorName && <div className="exp__stat"><b>{patched?.length ?? 0}</b><span>file{(patched?.length ?? 0) === 1 ? '' : 's'} changed</span></div>}
               <div className="exp__stat"><b>{turned.length}</b><span>knob{turned.length === 1 ? '' : 's'} turned</span></div>
             </div>
-            <div className="exp__dest">
-              <h3 className="exp__sec">How do you want to apply it?</h3>
+            <details className="exp__dest exp__more">
+              <summary className="exp__sec">Other formats: your own files, Tailwind or shadcn, tokens, native</summary>
               <div className="exp__destgrid">
                 {dests.map((d) => (
                   <button key={d.title} type="button" className="exp__card" onClick={() => { setActive(d.ids[0]!); setCopied(false) }}>
@@ -535,7 +562,7 @@ export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName,
                   </button>
                 ))}
               </div>
-            </div>
+            </details>
             {turned.length ? (
               <div className="exp__turned">
                 <h3 className="exp__sec">Settings, from {kitDoorName ? 'the kit' : 'your code'} → the sandbox</h3>

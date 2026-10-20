@@ -581,7 +581,7 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
   /* Export: one destination per row, gutters in from 26 to 16, tabs wrap. */
   .exp__destgrid { grid-template-columns: 1fr; }
   .exp__cols { columns: 1; }
-  .exp__stats, .exp__dest, .exp__none, .exp__turned, .exp__how, .exp__head { padding-left: 16px; padding-right: 16px; }
+  .exp__home, .exp__stats, .exp__dest, .exp__none, .exp__turned, .exp__how, .exp__head { padding-left: 16px; padding-right: 16px; }
   .exp__stats { flex-wrap: wrap; }
   .exp__tabs { flex-wrap: wrap; }
 }
@@ -846,3 +846,16 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
 .steps__step--on, .steps__step--on:hover { background: var(--app-fg); color: var(--app-bg); }
 .steps__step--on .steps__n { border-color: transparent; background: var(--app-bg); color: var(--app-fg); }
 @media (max-width: 860px) { .steps__label { display: none; } .steps__step { padding: 0 5px; } }
+
+/* Take it home (decision 216): the one thing to do, then what changed, then
+   the other formats folded. */
+.exp__h2sub { margin-left: 8px; font-size: 12.5px; font-weight: 450; color: var(--app-fg-muted); }
+.exp__home { display: flex; flex-direction: column; gap: 8px; padding: 24px 26px 4px; }
+.exp__homebtns { display: flex; flex-wrap: wrap; gap: 8px; }
+.exp__homebtn { min-height: 40px; padding: 0 16px; font-size: 14px; }
+.exp__homenote { margin: 0; font-size: 12.5px; color: var(--app-fg-muted); line-height: 1.5; }
+.exp__more > summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px; }
+.exp__more > summary::-webkit-details-marker { display: none; }
+.exp__more > summary::before { content: '›'; display: inline-block; transition: transform var(--app-dur) var(--app-ease); }
+.exp__more[open] > summary::before { transform: rotate(90deg); }
+.exp__more[open] > summary { margin-bottom: 10px; }
