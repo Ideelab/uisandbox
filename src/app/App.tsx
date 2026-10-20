@@ -206,7 +206,9 @@ function Editor() {
     const from: Config = { ...cfg, sb: { ...cfg.sb, ...reset } }
     return DIRECTIONS.map((d) => {
       const c = applyDirection(from, d, roll[d.id], locks)
-      return { id: d.id, name: d.name, what: d.what, brand: c.cPrimary, key: JSON.stringify([roll[d.id], locks]),
+      return { id: d.id, name: d.name, what: d.what, brand: c.cPrimary, // the whole of what the card wears: a knob turned while the six are
+        // open (the colour, with it kept) rewrites the sheet, not only a shuffle
+        key: JSON.stringify(c),
         sheet: { vars: computeVars(loaded.project.table, loaded.report.baseline, c, buildTokens(c)), fonts: fontCssFor(c, base), dark: c.sb.dark ?? null }, cfg: c }
     })
   }, [loaded, looksOpen, cfg, roll, locks])

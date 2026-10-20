@@ -3691,3 +3691,7 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     kit's is now kept by default when the six open, so they vary the style
     around it; untouched, they still vary the colour. The locks stay one
     click, and the line under the six says what a look will set.
+    And a colour turned while the six are open reaches them at once: a card
+    rewrote its sheet only on a shuffle or a lock, so Indigo showed as the
+    dots and not on the screens. It keys on everything the card wears now;
+    the frames stay loaded, only the sheet is rewritten.
