@@ -33,6 +33,19 @@ const pagesOf = (n) => Array.from({ length: n.pages ?? 5 }, (_, i) => i + 1)
    skeleton read as text still coming rather than as grey bars */
 const SKEL = [['72%', '38%'], ['58%', '30%'], ['80%', '46%'], ['64%', '34%'], ['70%', '40%']]
 const skelRows = (n) => SKEL.slice(0, n.rows ?? 3)
+/* a grid's columns: equal by default, or the tracks a screen names (2fr 1fr) */
+const tracks = (n) => n.tracks ?? `repeat(${n.cols ?? 2},minmax(0,1fr))`
+/* LEDGEWAY'S MARK (decision 212): four tiles in the kit's own brand colour,
+   the mark UIcockpit's made-up app had. A made-up app needs a made-up logo,
+   and a grid of tiles belongs to no one. */
+const markOf = (paint) => `<svg width="18" height="18" viewBox="0 0 16 16" aria-hidden="true" style="flex:none;fill:${paint}"><rect x="1" y="1" width="6" height="6" rx="1.8"/><rect x="9" y="1" width="6" height="6" rx="1.8"/><rect x="1" y="9" width="6" height="6" rx="1.8"/><rect x="9" y="9" width="6" height="6" rx="1.8" opacity=".55"/></svg>`
+const brandOf = (n, paint) => `<span style="display:inline-flex;align-items:center;gap:8px">${n.mark ? markOf(paint) : ''}${esc(n.brand)}</span>`
+/* A LAYER is what an app puts over itself: a dialog over a scrim in the
+   middle of the window, or a toast in its corner. Fixed to the window, as a
+   running app does it; the scrim is each kit's own. */
+const layerOf = (n, k, scrim = '') => n.at === 'corner'
+  ? `<div data-layer="corner" style="position:fixed;inset:auto 24px 24px auto;z-index:1100;width:min(380px,calc(100vw - 48px))">${k}</div>`
+  : `<div data-layer="center" style="position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:24px">${n.scrim ? scrim : ''}<div style="position:relative;z-index:1;width:min(460px,100%)">${k}</div></div>`
 
 /* ── the icons ────────────────────────────────────────────────────────────
  * Read at build time and HANDED IN — the same hand-in as Mantine's class map,
@@ -132,7 +145,7 @@ const tailwind = {
   _id: 'Tailwind',
   stack:   (n, k) => `<div class="flex flex-col gap-${n.gap ?? 3}">${k}</div>`,
   row:     (n, k) => `<div class="flex flex-wrap items-center gap-${n.gap ?? 2}${n.between ? ' justify-between' : ''}">${k}</div>`,
-  grid:    (n, k) => `<div class="grid gap-3" style="grid-template-columns:repeat(${n.cols ?? 2},minmax(0,1fr))">${k}</div>`,
+  grid:    (n, k) => `<div class="grid gap-3" style="grid-template-columns:${tracks(n)}">${k}</div>`,
   panel:   (n, k) => `<div class="rounded-lg border border-line bg-surface p-4">${k}</div>`,
   divider: () => `<hr class="border-line">`,
   heading: (n, k) => A(n, k, `h${n.level ?? 3}`, `font-heading font-strong tracking-normal text-ink ${n.level === 2 ? 'text-xl' : 'text-base'}`),
@@ -152,7 +165,7 @@ const tailwind = {
   /* the semantic names our package ADDS — the same ones the manifest tells you
      to reference, shown doing their job */
   navbar:  (n, k) => `<header class="flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-line bg-surface px-4 py-3">
-    <span class="font-semibold text-ink">${esc(n.brand)}</span>
+    <span class="font-semibold text-ink">${brandOf(n, 'var(--color-brand)')}</span>
     <nav class="flex flex-wrap gap-4 text-sm text-ink-muted">${list(n.items).map((t) => `<a href="#" class="hover:text-ink ${TW_RING}">${esc(t)}</a>`).join('')}</nav>
     <div class="ml-auto flex items-center gap-2">${k}</div></header>`,
   mediacard: (n) => `<article class="flex flex-col overflow-hidden rounded-lg border border-line bg-surface">
@@ -219,7 +232,7 @@ const daisyui = {
   _id: 'daisyUI',
   stack:   (n, k) => `<div class="flex flex-col gap-${n.gap ?? 3}">${k}</div>`,
   row:     (n, k) => `<div class="flex flex-wrap items-center gap-${n.gap ?? 2}${n.between ? ' justify-between' : ''}">${k}</div>`,
-  grid:    (n, k) => `<div class="grid gap-3" style="grid-template-columns:repeat(${n.cols ?? 2},minmax(0,1fr))">${k}</div>`,
+  grid:    (n, k) => `<div class="grid gap-3" style="grid-template-columns:${tracks(n)}">${k}</div>`,
   panel:   (n, k) => `<div class="card card-border bg-base-100"><div class="card-body">${k}</div></div>`,
   divider: () => `<div class="divider"></div>`,
   heading: (n, k) => A(n, k, `h${n.level ?? 3}`, n.level === 2 ? 'card-title text-xl' : 'card-title text-base'),
@@ -239,7 +252,7 @@ const daisyui = {
   /* daisyUI ships BOTH of these as real components: .navbar with its three
      regions, and .footer with .footer-title. Nothing here is composed by hand. */
   navbar:  (n, k) => `<div class="navbar bg-base-200 border-b border-base-300">
-    <div class="navbar-start"><span class="btn btn-ghost text-lg">${esc(n.brand)}</span>
+    <div class="navbar-start"><span class="btn btn-ghost text-lg">${brandOf(n, 'var(--color-primary)')}</span>
     <ul class="menu menu-horizontal px-1">${list(n.items).map((t) => `<li><a>${esc(t)}</a></li>`).join('')}</ul></div>
     <div class="navbar-end gap-2">${k}</div></div>`,
   mediacard: (n) => `<div class="card bg-base-100 border border-base-300">
@@ -314,7 +327,7 @@ const bootstrap = {
   _id: 'Bootstrap',
   stack:   (n, k) => `<div class="d-flex flex-column gap-${Math.min(n.gap ?? 3, 5)}">${k}</div>`,
   row:     (n, k) => `<div class="d-flex flex-wrap align-items-center gap-${Math.min(n.gap ?? 2, 5)}${n.between ? ' justify-content-between' : ''}">${k}</div>`,
-  grid:    (n, k) => `<div class="d-grid gap-3" style="grid-template-columns:repeat(${n.cols ?? 2},minmax(0,1fr))">${k}</div>`,
+  grid:    (n, k) => `<div class="d-grid gap-3" style="grid-template-columns:${tracks(n)}">${k}</div>`,
   panel:   (n, k) => `<div class="card"><div class="card-body">${k}</div></div>`,
   divider: () => `<hr>`,
   heading: (n, k) => A(n, k, `h${n.level ?? 3}`, n.level === 2 ? 'h4 mb-0' : 'h6 mb-0'),
@@ -342,7 +355,7 @@ const bootstrap = {
      footer component at all, so that one is its own utilities on plain markup —
      and the manifest says so rather than implying a component exists. */
   navbar:  (n, k) => `<nav class="navbar navbar-expand bg-body-tertiary border-bottom px-3">
-    <span class="navbar-brand">${esc(n.brand)}</span>
+    <span class="navbar-brand">${brandOf(n, 'var(--bs-link-color)')}</span>
     <ul class="navbar-nav me-auto">${list(n.items).map((t) => `<li class="nav-item"><a class="nav-link" href="#">${esc(t)}</a></li>`).join('')}</ul>
     <div class="d-flex gap-2">${k}</div></nav>`,
   mediacard: (n) => `<div class="card h-100"><div class="card-img-top d-flex align-items-center justify-content-center bg-body-secondary" style="aspect-ratio:16/9">${PHOTO}</div>
@@ -450,7 +463,7 @@ const shadcn = {
   /* layout is Tailwind's, because shadcn ships none */
   stack:   (n, k) => `<div class="flex flex-col gap-${n.gap ?? 3}">${k}</div>`,
   row:     (n, k) => `<div class="flex flex-wrap items-center gap-${n.gap ?? 2}${n.between ? ' justify-between' : ''}">${k}</div>`,
-  grid:    (n, k) => `<div class="grid gap-3" style="grid-template-columns:repeat(${n.cols ?? 2},minmax(0,1fr))">${k}</div>`,
+  grid:    (n, k) => `<div class="grid gap-3" style="grid-template-columns:${tracks(n)}">${k}</div>`,
   panel:   (n, k) => `<div data-slot="card" class="${sSlot('card')}"><div data-slot="card-content" class="${sSlot('card-content')}">${k}</div></div>`,
   divider: () => `<div data-slot="separator" role="none" data-orientation="horizontal" class="${sSlot('separator')}"></div>`,
   heading: (n, k) => A(n, k, `h${n.level ?? 3}`, n.level === 2 ? 'text-2xl leading-none font-semibold' : 'leading-none font-semibold'),
@@ -535,7 +548,7 @@ const shadcn = {
   tabs:    (n) => `<div data-slot="tabs" data-orientation="horizontal" class="${sSlot('tabs')}"><div role="tablist" data-slot="tabs-list" data-variant="default" data-orientation="horizontal" class="${sCva('tabs', 'tabsListVariants', { variant: 'default' })}">${
     list(n.items).map((t, i) => `<button role="tab" aria-selected="${i === 0}" data-slot="tabs-trigger" data-orientation="horizontal"${i === 0 ? ' data-active' : ''} class="${sSlot('tabs-trigger')}">${esc(t)}</button>`).join('')}</div></div>`,
   navbar:  (n, k) => `<header class="bg-background flex flex-wrap items-center gap-x-6 gap-y-2 border-b px-4 py-3">
-    <span class="text-sm font-semibold">${esc(n.brand)}</span>
+    <span class="text-sm font-semibold">${brandOf(n, 'var(--primary)')}</span>
     <nav data-slot="navigation-menu" class="${sSlot('navigation-menu')}"><ul data-slot="navigation-menu-list" class="${sSlot('navigation-menu-list')}">${
       list(n.items).map((t) => `<li data-slot="navigation-menu-item"><a href="#" data-slot="navigation-menu-link" class="${sSlot('navigation-menu-link')}">${esc(t)}</a></li>`).join('')}</ul></nav>
     <div class="ml-auto flex items-center gap-2">${k}</div></header>`,
@@ -613,7 +626,7 @@ const material = {
   /* layout — Material ships none, so these three are ours and say so */
   stack:   (n, k) => `<div style="display:flex;flex-direction:column;gap:${(n.gap ?? 3) * 4}px">${k}</div>`,
   row:     (n, k) => `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:${(n.gap ?? 2) * 4}px${n.between ? ';justify-content:space-between' : ''}">${k}</div>`,
-  grid:    (n, k) => `<div style="display:grid;gap:12px;grid-template-columns:repeat(${n.cols ?? 2},minmax(0,1fr))">${k}</div>`,
+  grid:    (n, k) => `<div style="display:grid;gap:12px;grid-template-columns:${tracks(n)}">${k}</div>`,
 
   panel:   (n, k) => `<md-outlined-card style="padding:16px">${k}</md-outlined-card>`,
   divider: () => `<md-divider></md-divider>`,
@@ -652,7 +665,7 @@ const material = {
      and no media card at all — M3 specifies neither — so those two are its own
      tokens on plain markup, and the manifest names both. */
   navbar:  (n, k) => `<header class="md-typescale-title-medium" style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 24px;padding:12px 16px;background:var(--md-sys-color-surface-container);color:var(--md-sys-color-on-surface)">
-    <span>${esc(n.brand)}</span>
+    <span>${brandOf(n, 'var(--md-sys-color-primary)')}</span>
     <nav class="md-typescale-label-large" style="display:flex;flex-wrap:wrap;gap:16px;color:var(--md-sys-color-on-surface-variant)">${
       list(n.items).map((t) => `<a href="#" style="color:inherit;text-decoration:none">${esc(t)}</a>`).join('')}</nav>
     <span style="margin-left:auto;display:flex;gap:8px">${k}</span></header>`,
@@ -775,7 +788,7 @@ const radix = {
   _id: 'Radix Themes',
   stack:   (n, k) => `<div class="rt-Flex" style="display:flex;flex-direction:column;gap:var(--space-${Math.min(9, n.gap ?? 3)})">${k}</div>`,
   row:     (n, k) => `<div class="rt-Flex" style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-${Math.min(9, n.gap ?? 2)})${n.between ? ';justify-content:space-between' : ''}">${k}</div>`,
-  grid:    (n, k) => `<div class="rt-Grid" style="display:grid;gap:var(--space-3);grid-template-columns:repeat(${n.cols ?? 2},minmax(0,1fr))">${k}</div>`,
+  grid:    (n, k) => `<div class="rt-Grid" style="display:grid;gap:var(--space-3);grid-template-columns:${tracks(n)}">${k}</div>`,
   panel:   (n, k) => `<div class="rt-reset rt-BaseCard rt-Card rt-r-size-2 rt-variant-surface">${k}</div>`,
   /* their Separator is color="gray" unless told otherwise; bare, it wore the
      accent and followed a brand pick */
@@ -826,7 +839,7 @@ const radix = {
   /* Radix ships neither a navigation bar nor a footer; what it does ship is
      rt-Link, rt-Inset for a card's edge-to-edge media, and the card itself. */
   navbar:  (n, k) => `<header class="rt-Flex" style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2) var(--space-5);padding:var(--space-3) var(--space-4);background:var(--color-panel-solid);border-bottom:1px solid var(--gray-a5)">
-    <span class="rt-Heading rt-r-size-3">${esc(n.brand)}</span>
+    <span class="rt-Heading rt-r-size-3">${brandOf(n, 'var(--accent-9)')}</span>
     <nav style="display:flex;flex-wrap:wrap;gap:var(--space-4)">${
       list(n.items).map((t) => `<a class="rt-reset rt-Text rt-r-size-2 rt-Link rt-underline-auto" href="#" data-accent-color="gray">${esc(t)}</a>`).join('')}</nav>
     <span style="margin-left:auto;display:flex;gap:var(--space-2)">${k}</span></header>`,
@@ -960,7 +973,7 @@ const mantine = {
   _id: 'Mantine',
   stack:   (n, k) => `<div class="${mc('Stack')}" style="--stack-gap:calc(${(n.gap ?? 3) * 0.25}rem * var(--mantine-scale))">${k}</div>`,
   row:     (n, k) => `<div class="${mc('Group')}" style="--group-gap:calc(${(n.gap ?? 2) * 0.25}rem * var(--mantine-scale))${n.between ? ';--group-justify:space-between' : ''}">${k}</div>`,
-  grid:    (n, k) => `<div style="display:grid;gap:var(--mantine-spacing-md);grid-template-columns:repeat(${n.cols ?? 2},minmax(0,1fr))">${k}</div>`,
+  grid:    (n, k) => `<div style="display:grid;gap:var(--mantine-spacing-md);grid-template-columns:${tracks(n)}">${k}</div>`,
   panel:   (n, k) => `<div class="${cls(mc('Paper'), mc('Card'))}" data-with-border="true" data-orientation="vertical" style="--paper-shadow:var(--mantine-shadow-xs);--card-padding:var(--mantine-spacing-lg)">${k}</div>`,
   divider: () => `<div class="${mc('Divider')}"></div>`,
   /* Mantine's Title reads --title-fz/fw/lh, which its React layer fills from
@@ -1021,7 +1034,7 @@ const mantine = {
   /* Mantine's AppShell publishes a header AND a footer class — the only kit
      here that ships both — and Card.section is its edge-to-edge media slot. */
   navbar:  (n, k) => `<header class="${mc('AppShell', 'header')}" style="position:static;display:flex;flex-wrap:wrap;align-items:center;gap:var(--mantine-spacing-xs) var(--mantine-spacing-lg);padding:var(--mantine-spacing-sm) var(--mantine-spacing-md)">
-    <span class="${mc('Title')}" data-order="4" style="--title-fz:var(--mantine-h4-font-size);--title-fw:var(--mantine-h4-font-weight);--title-lh:var(--mantine-h4-line-height)">${esc(n.brand)}</span>
+    <span class="${mc('Title')}" data-order="4" style="--title-fz:var(--mantine-h4-font-size);--title-fw:var(--mantine-h4-font-weight);--title-lh:var(--mantine-h4-line-height)">${brandOf(n, 'var(--mantine-primary-color-filled)')}</span>
     <nav style="display:flex;flex-wrap:wrap;gap:var(--mantine-spacing-md)">${
       list(n.items).map((t) => `<a class="${mc('Anchor')}" href="#">${esc(t)}</a>`).join('')}</nav>
     <span style="margin-left:auto;display:flex;gap:var(--mantine-spacing-xs)">${k}</span></header>`,
@@ -1146,7 +1159,7 @@ const antd = {
      ours, and it is written as their spacing on a plain div. */
   stack:   (n, k) => `<div style="display:flex;flex-direction:column;gap:calc(var(--ant-margin-xs) * ${Math.max(1, n.gap ?? 3) / 2})">${k}</div>`,
   row:     (n, k) => `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:calc(var(--ant-margin-xs) * ${Math.max(1, n.gap ?? 2) / 2})${n.between ? ';justify-content:space-between' : ''}">${k}</div>`,
-  grid:    (n, k) => `<div style="display:grid;gap:var(--ant-margin);grid-template-columns:repeat(${n.cols ?? 2},minmax(0,1fr))">${k}</div>`,
+  grid:    (n, k) => `<div style="display:grid;gap:var(--ant-margin);grid-template-columns:${tracks(n)}">${k}</div>`,
   /* every part they DO ship — answered by the render, never by a string */
   ...Object.fromEntries([...ANTD_OWNS].map((part) => [part, antHole])),
 
@@ -1363,5 +1376,19 @@ Object.assign(mantine, {
     <div class="${mc('Stack')}" style="--stack-gap:var(--mantine-spacing-xs);flex:1"><div class="${mc('Skeleton')}" data-visible="true" data-animate="true" style="--skeleton-height:0.75rem;--skeleton-width:${a}"></div><div class="${mc('Skeleton')}" data-visible="true" data-animate="true" style="--skeleton-height:0.75rem;--skeleton-width:${b}"></div></div></div>`).join('')}</div>`,
   spinner: () => `<span class="${cls(mc('Loader'), mc('Loader', 'ovalLoader'))}" role="status" aria-label="Loading" style="--loader-size:var(--loader-size-sm);--loader-color:var(--mantine-primary-color-filled)"></span>`,
 })
+
+/* ── the layer, each kit's own scrim (decision 212) ────────────────────── */
+tailwind.layer = (n, k) => layerOf(n, k, '<div class="absolute inset-0 bg-ink/40"></div>')
+/* daisyUI's scrim is .modal's own background, and a .modal locks the page */
+daisyui.layer = (n, k) => layerOf(n, k, '<div class="absolute inset-0 bg-black/40"></div>')
+bootstrap.layer = (n, k) => layerOf(n, k, '<div class="modal-backdrop show" style="z-index:0"></div>')
+shadcn.layer = (n, k) => layerOf(n, k, `<div data-slot="dialog-overlay" data-open="" class="${sSlot('dialog-overlay')}" style="z-index:0"></div>`)
+/* M3's scrim is its scrim colour at 32% */
+material.layer = (n, k) => layerOf(n, k, '<div style="position:absolute;inset:0;background:color-mix(in srgb, var(--md-sys-color-scrim) 32%, transparent)"></div>')
+radix.layer = (n, k) => layerOf(n, k, '<div class="rt-BaseDialogOverlay" style="z-index:0"></div>')
+/* their Modal's overlay: black at 60%, the default their Modal passes in */
+mantine.layer = (n, k) => layerOf(n, k, `<div class="${mc('Overlay')}" style="--overlay-bg:rgba(0, 0, 0, 0.6);z-index:0"></div>`)
+/* .antd is where their variables live, so the scrim carries it */
+antd.layer = (n, k) => layerOf(n, k, '<div class="antd" style="position:absolute;inset:0;background:var(--ant-color-bg-mask)"></div>')
 
 export const WALL = { tailwind, daisyui, bootstrap, shadcn, material, radix, mantine, antd }

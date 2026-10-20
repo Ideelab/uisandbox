@@ -325,52 +325,53 @@ export const BOARDS = [
  * `shot: true` keeps them out of the pan strip (the grid is their room), and
  * `caps: true` keeps captions only where they are labels (the kit sheet).
  */
-const overviewScreen = () => ({ p: 'stack', gap: 3, kids: [
-  { p: 'row', between: true, kids: [
-    { p: 'heading', level: 2, text: 'Casework' },
-    { p: 'row', kids: [
-      { p: 'button', tone: 'secondary', text: 'Export' },
-      { p: 'button', tone: 'brand', text: 'New request' },
-    ] },
-  ] },
-  { p: 'grid', cols: 4, kids: [
-    { p: 'stat', label: 'Open requests', value: '128' },
-    { p: 'stat', label: 'Median decision', value: '19 days' },
-    { p: 'stat', label: 'Overdue', value: '7' },
-    { p: 'stat', label: 'Satisfaction', value: '4.4' },
-  ] },
-  { p: 'grid', cols: 2, kids: [
-    { p: 'panel', kids: [{ p: 'stack', gap: 3, kids: [
-      { p: 'heading', text: 'Requests by month' },
-      { p: 'chart', legend: ['Online', 'At the desk'], bars: [
-        { label: 'Apr', a: 82, b: 34 }, { label: 'May', a: 96, b: 30 }, { label: 'Jun', a: 74, b: 41 },
-        { label: 'Jul', a: 110, b: 28 }, { label: 'Aug', a: 91, b: 33 }, { label: 'Sep', a: 124, b: 22 },
-      ] },
-    ] }] },
-    { p: 'panel', kids: [{ p: 'stack', gap: 3, kids: [
-      { p: 'heading', text: 'Recent activity' },
-      { p: 'list', rows: [
-        { icon: 'file-text', title: 'Permit granted', sub: '2026-03918 · K. Boone', meta: 'Today' },
-        { icon: 'credit-card', title: 'Fee paid', sub: '2026-04471 · online', meta: 'Yesterday' },
-        { icon: 'car', title: 'Parking permit renewed', sub: 'Zone C · resident', meta: '11 Sep' },
-      ] },
-    ] }] },
-  ] },
-] })
-
-const screenRail = () => ({ p: 'sidenav', groups: [
-  { title: 'Casework', items: [
-    { icon: 'layout-dashboard', text: 'Overview', on: true },
-    { icon: 'inbox', text: 'Requests', count: '24' },
-    { icon: 'arrow-left-right', text: 'Transfers' },
-    { icon: 'trending-up', text: 'Trends' },
+/* ── LEDGEWAY: one made-up app, walked through ──────────────────────────────
+ * A kit is judged on an app, not on a page of parts (decision 212). So every
+ * screen below is a page of ONE invented invoicing tool, Ledgeway: the same
+ * name, mark, navigation, people and clients on every screen, the way a
+ * person walks through a product. UIcockpit had this once (its Ledger
+ * flagship); the cast here is new and invented, every client and person a
+ * name of ours, no photographs and no real companies.
+ *
+ * The content is not tidy on purpose: a long client name, a seven-figure
+ * amount, an empty column. Invented content that fits every box is how a
+ * kit looks better than it is. */
+const SHELL_TOP = { p: 'navbar', brand: 'Ledgeway', mark: true, items: [], kids: [
+  { p: 'input', placeholder: 'Search invoices and clients' },
+  { p: 'iconrow', items: ['bell'] },
+  { p: 'avatar', text: 'MO' },
+] }
+/* signed out: the bar carries the name and nothing to do yet */
+const BARE_TOP = { p: 'navbar', brand: 'Ledgeway', mark: true, items: [], kids: [] }
+const shellSide = (on) => ({ p: 'sidenav', groups: [
+  { title: 'Workspace', items: [
+    { icon: 'layout-dashboard', text: 'Dashboard', on: on === 'Dashboard' },
+    { icon: 'file-text', text: 'Invoices', count: '3', on: on === 'Invoices' },
+    { icon: 'users', text: 'Clients', on: on === 'Clients' },
+    { icon: 'credit-card', text: 'Payments', on: on === 'Payments' },
+    { icon: 'receipt', text: 'Expenses', on: on === 'Expenses' },
   ] },
   { title: 'Account', items: [
-    { icon: 'user', text: 'Profile' },
-    { icon: 'bell', text: 'Notifications' },
-    { icon: 'shield', text: 'Security' },
+    { icon: 'settings', text: 'Settings', on: on === 'Settings' },
+    { icon: 'life-buoy', text: 'Help' },
   ] },
 ] })
+const INVOICES = { p: 'table', cols: ['Number', 'Client', 'Status', 'Due', 'Amount'], rows: [
+  ['INV-1042', 'Halden & Rowe', 'Overdue', '12 Sep', '€4,820.00'],
+  ['INV-1041', 'Northfield Studio', 'Sent', '28 Sep', '€1,250.00'],
+  ['INV-1040', 'Vandermeer Architecten & Partners', 'Paid', '9 Sep', '€18,374.65'],
+  ['INV-1039', 'Kestrel Logistics', 'Draft', '', '€960.00'],
+  ['INV-1038', 'Brightwater Dental Care', 'Paid', '2 Sep', '€2,105.40'],
+  ['INV-1037', 'Orchard Lane Bakery', 'Sent', '30 Sep', '€312.75'],
+] }
+const invoiceList = () => ({ p: 'panel', kids: [{ p: 'stack', gap: 3, kids: [
+  { p: 'row', between: true, kids: [
+    { p: 'segmented', items: ['All', 'Drafts', 'Overdue', 'Paid'], on: 0 },
+    { p: 'row', kids: [{ p: 'button', tone: 'secondary', text: 'Export' }, { p: 'button', tone: 'brand', text: 'New invoice' }] },
+  ] },
+  INVOICES,
+  { p: 'row', between: true, kids: [{ p: 'muted', text: 'Showing 1 to 6 of 214' }, { p: 'pagination', pages: 5, on: 1 }] },
+] }] })
 
 export const SCREENS = [
   {
@@ -442,153 +443,146 @@ export const SCREENS = [
     ],
   },
   {
-    id: 'overview', label: 'An overview', shot: true,
-    note: 'The screen a tool opens on: numbers, a chart, what just happened.',
-    cols: [
-      { w: 224, cards: [{ id: 'shot-ov-rail', title: '', panel: true, node: screenRail() }] },
-      { w: 856, cards: [{ id: 'shot-ov-main', title: '', panel: false, node: overviewScreen() }] },
-    ],
+    id: 'signin', label: 'Sign in', shot: true, page: { shell: false },
+    note: 'Ledgeway, signed out: one card on the page, a field in error.',
+    main: { p: 'panel', kids: [{ p: 'stack', gap: 3, kids: [
+      { p: 'heading', level: 2, text: 'Sign in to Ledgeway' },
+      { p: 'muted', text: 'Welcome back. Use your work email.' },
+      { p: 'button', tone: 'secondary', text: 'Continue with single sign-on' },
+      { p: 'divider' },
+      { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Email' }, { p: 'input', value: 'maya@okafor-studio', error: 'Enter the whole address, with the part after the dot.' }] },
+      { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Password' }, { p: 'input', value: 'correct-horse', secret: true }] },
+      { p: 'row', between: true, kids: [
+        { p: 'checkbox', on: true, text: 'Keep me signed in' },
+        { p: 'link', text: 'Forgot your password?' },
+      ] },
+      { p: 'button', tone: 'brand', text: 'Sign in' },
+      { p: 'row', kids: [{ p: 'muted', text: 'New to Ledgeway?' }, { p: 'link', text: 'Create an account' }] },
+    ] }] },
   },
   {
-    id: 'work', label: 'List and detail', shot: true,
-    note: 'The screen somebody lives in: a queue on the left, one case on the right.',
-    cols: [
-      { w: 620, cards: [{ id: 'shot-work-list', title: '', panel: true, node: { p: 'stack', gap: 3, kids: [
-        { p: 'row', between: true, kids: [
-          { p: 'heading', text: 'Requests' },
-          { p: 'row', kids: [
-            { p: 'button', tone: 'secondary', text: 'Filter' },
-            { p: 'button', tone: 'brand', text: 'New' },
-          ] },
-        ] },
-        { p: 'table', cols: ['Reference', 'Owner', 'Status', 'Due'], rows: [
-          ['2026-04471', 'M. Visser', 'Under review', '28 Sep'],
-          ['2026-03918', 'K. Boone', 'Granted', 'None'],
-          ['2026-03744', 'A. Yildiz', 'Refused', 'None'],
-          ['2026-03502', 'T. Okonkwo', 'Under review', '4 Oct'],
-          ['2026-03477', 'J. de Wit', 'Waiting', '11 Oct'],
-        ] },
-        { p: 'row', between: true, kids: [
-          { p: 'muted', text: 'Showing 1 to 5 of 128' },
-          { p: 'pagination', pages: 5, on: 1 },
-        ] },
-      ] } }] },
-      { w: 420, cards: [{ id: 'shot-work-case', title: '', panel: true, node: { p: 'stack', gap: 3, kids: [
-        { p: 'row', between: true, kids: [
-          { p: 'heading', text: '2026-04471' },
-          { p: 'badge', tone: 'brand', text: 'Under review' },
-        ] },
-        { p: 'kv', rows: [
-          ['Applicant', 'M. Visser'],
-          ['Category', 'Building work'],
-          ['Received', '2 Sep 2026'],
-          ['Case worker', 'K. Boone'],
-        ] },
-        { p: 'divider' },
-        { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Term used' }, { p: 'progress', value: 64 }] },
-        { p: 'row', between: true, kids: [
-          { p: 'button', tone: 'ghost', text: 'Put on hold' },
-          { p: 'button', tone: 'brand', text: 'Decide' },
-        ] },
-      ] } }] },
-    ],
-  },
-  {
-    id: 'settings', label: 'A form', shot: true,
-    note: 'Settings, the form everybody ships: fields, switches, one save.',
-    cols: [
-      { w: 560, cards: [{ id: 'shot-set-form', title: '', panel: true, node: { p: 'stack', gap: 3, kids: [
-        { p: 'heading', text: 'Settings' },
-        { p: 'tabs', items: ['Profile', 'Notifications', 'Security'] },
-        { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Name' }, { p: 'input', value: 'M. Visser' }] },
-        { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Email' }, { p: 'input', value: 'm.visser@havenstad.example' }] },
-        { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Time zone' }, { p: 'select', options: ['Amsterdam', 'Brussels', 'Lisbon'] }] },
-        { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Send me a digest' }, { p: 'segmented', items: ['Daily', 'Weekly', 'Never'], on: 1 }] },
-        { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Remind me before a due date' }, { p: 'slider', value: 40 }] },
-        { p: 'divider' },
-        { p: 'switch', on: true, text: 'A decision on one of my requests' },
-        { p: 'switch', on: false, text: 'Everything else' },
-        { p: 'row', between: true, kids: [
-          { p: 'button', tone: 'ghost', text: 'Reset' },
-          { p: 'button', tone: 'brand', text: 'Save' },
-        ] },
-      ] } }] },
-      { w: 400, cards: [{ id: 'shot-set-side', title: '', panel: false, node: { p: 'stack', gap: 3, kids: [
-        { p: 'alert', tone: 'success', text: 'Saved. Your changes are live.' },
+    id: 'overview', label: 'Dashboard', shot: true, page: { shell: true, nav: 'Dashboard' },
+    note: 'Ledgeway, the screen it opens on.',
+    main: { p: 'stack', gap: 4, kids: [
+      { p: 'row', between: true, kids: [
+        { p: 'heading', level: 2, text: 'Good morning, Maya' },
+        { p: 'row', kids: [{ p: 'button', tone: 'secondary', text: 'Export' }, { p: 'button', tone: 'brand', text: 'New invoice' }] },
+      ] },
+      { p: 'grid', cols: 4, kids: [
+        { p: 'stat', label: 'Revenue this month', value: '€48,210.00' },
+        { p: 'stat', label: 'Outstanding', value: '€12,940.50' },
+        { p: 'stat', label: 'Overdue', value: '3 invoices' },
+        { p: 'stat', label: 'Paid on time', value: '94%' },
+      ] },
+      { p: 'grid', tracks: '3fr 2fr', kids: [
         { p: 'panel', kids: [{ p: 'stack', gap: 3, kids: [
-          { p: 'heading', text: 'Sessions' },
-          { p: 'list', rows: [
-            { icon: 'shield', title: 'This device', sub: 'Rotterdam · now', meta: 'Active' },
-            { icon: 'user', title: 'Work laptop', sub: 'Last seen 12 Sep', meta: 'Sign out' },
+          { p: 'heading', text: 'Revenue by month' },
+          { p: 'chart', legend: ['Paid', 'Outstanding'], bars: [
+            { label: 'Apr', a: 82, b: 34 }, { label: 'May', a: 96, b: 30 }, { label: 'Jun', a: 74, b: 41 },
+            { label: 'Jul', a: 110, b: 28 }, { label: 'Aug', a: 91, b: 33 }, { label: 'Sep', a: 124, b: 22 },
           ] },
         ] }] },
-      ] } }] },
-    ],
+        { p: 'panel', kids: [{ p: 'stack', gap: 3, kids: [
+          { p: 'heading', text: 'Recent activity' },
+          { p: 'list', rows: [
+            { icon: 'credit-card', title: 'Invoice INV-1040 paid', sub: 'Vandermeer Architecten & Partners', meta: 'Today' },
+            { icon: 'bell', title: 'Reminder sent', sub: 'INV-1042 · Halden & Rowe', meta: 'Yesterday' },
+            { icon: 'users', title: 'New client added', sub: 'Orchard Lane Bakery', meta: '11 Sep' },
+          ] },
+        ] }] },
+      ] },
+    ] },
   },
   {
-    id: 'signin', label: 'Sign in', shot: true,
-    note: 'The screen everybody copies first: fields, one in error, a way in and a way to start.',
-    cols: [
-      { w: 440, cards: [{ id: 'shot-in-form', title: '', panel: true, node: { p: 'stack', gap: 3, kids: [
-        { p: 'heading', level: 2, text: 'Sign in' },
-        { p: 'muted', text: 'Use the email address you applied with.' },
-        { p: 'button', tone: 'secondary', text: 'Continue with DigiD' },
-        { p: 'divider' },
-        { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Email' }, { p: 'input', value: 'm.visser@havenstad', error: 'Enter the whole address, with the part after the dot.' }] },
-        { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Password' }, { p: 'input', value: 'correct-horse', secret: true }] },
-        { p: 'row', between: true, kids: [
-          { p: 'checkbox', on: true, text: 'Keep me signed in' },
-          { p: 'link', text: 'Forgot your password?' },
-        ] },
-        { p: 'button', tone: 'brand', text: 'Sign in' },
-      ] } }] },
-      { w: 400, cards: [{ id: 'shot-in-new', title: '', panel: true, node: { p: 'stack', gap: 3, kids: [
-        { p: 'heading', text: 'New here?' },
-        { p: 'muted', text: 'An account keeps your requests in one place.' },
-        { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Email' }, { p: 'input', placeholder: 'you@example.org' }] },
-        { p: 'checkbox', on: false, text: 'I agree to the terms of use' },
-        { p: 'button', tone: 'brand', text: 'Create account', disabled: true },
-        { p: 'link', text: 'Read the terms of use' },
-      ] } }] },
-    ],
+    id: 'work', label: 'Invoices', shot: true, page: { shell: true, nav: 'Invoices' },
+    note: 'Ledgeway, the list somebody lives in, with one invoice open.',
+    main: { p: 'stack', gap: 4, kids: [
+      { p: 'heading', level: 2, text: 'Invoices' },
+      { p: 'grid', tracks: '2fr 1fr', kids: [
+        invoiceList(),
+        { p: 'panel', kids: [{ p: 'stack', gap: 3, kids: [
+          { p: 'row', kids: [{ p: 'heading', text: 'Invoice INV-1042' }, { p: 'badge', tone: 'danger', text: 'Overdue' }] },
+          { p: 'kv', rows: [
+            ['Client', 'Halden & Rowe'],
+            ['Issued', '12 Aug 2026'],
+            ['Due', '12 Sep 2026'],
+            ['Amount', '€4,820.00'],
+          ] },
+          { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Paid so far' }, { p: 'progress', value: 40 }] },
+          { p: 'row', between: true, kids: [{ p: 'muted', text: 'Payment link' }, { p: 'tooltip', icon: 'copy', label: 'Copy link', text: 'Copy the payment link' }] },
+          { p: 'menu', trigger: 'More', label: 'Invoice INV-1042', items: ['Duplicate', 'Send a reminder', 'Mark as paid'], danger: 'Void invoice' },
+        ] }] },
+      ] },
+    ] },
   },
   {
-    id: 'ontop', label: 'On top', shot: true,
-    note: 'What floats: a menu, a tooltip, a dialog and a toast, where shadow and corners show.',
-    cols: [
-      { w: 520, cards: [{ id: 'shot-top-page', title: '', panel: true, node: { p: 'stack', gap: 3, kids: [
-        { p: 'row', between: true, kids: [
-          { p: 'heading', text: '2026-04471' },
-          { p: 'tooltip', icon: 'copy', label: 'Copy reference', text: 'Copy the reference' },
+    id: 'settings', label: 'Settings', shot: true, page: { shell: true, nav: 'Settings' },
+    note: 'Ledgeway, the form everybody ships.',
+    main: { p: 'stack', gap: 4, kids: [
+      { p: 'heading', level: 2, text: 'Settings' },
+      { p: 'tabs', items: ['Workspace', 'Billing', 'Notifications', 'Members'] },
+      { p: 'grid', tracks: '3fr 2fr', kids: [
+        { p: 'panel', kids: [{ p: 'stack', gap: 3, kids: [
+          { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Company name' }, { p: 'input', value: 'Okafor Design Studio' }] },
+          { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Billing email' }, { p: 'input', value: 'accounts@okafor-studio.example' }] },
+          { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Currency' }, { p: 'select', options: ['EUR, euro', 'USD, US dollar', 'GBP, pound sterling'] }] },
+          { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Payment reminders' }, { p: 'segmented', items: ['Off', 'Gentle', 'Firm'], on: 1 }] },
+          { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Days before the due date' }, { p: 'slider', value: 40 }] },
+          { p: 'divider' },
+          { p: 'switch', on: true, text: 'Email me when an invoice is paid' },
+          { p: 'switch', on: false, text: 'A weekly summary' },
+          { p: 'row', between: true, kids: [{ p: 'button', tone: 'ghost', text: 'Reset' }, { p: 'button', tone: 'brand', text: 'Save changes' }] },
+        ] }] },
+        { p: 'stack', gap: 3, kids: [
+          { p: 'alert', tone: 'success', text: 'Saved. Your changes are live.' },
+          { p: 'panel', kids: [{ p: 'stack', gap: 3, kids: [
+            { p: 'heading', text: 'Danger zone' },
+            { p: 'muted', text: 'Only an owner can delete this workspace and its 214 invoices.' },
+            { p: 'button', tone: 'danger', text: 'Delete workspace', disabled: true },
+          ] }] },
         ] },
-        { p: 'muted', text: 'Building work at Kerkstraat 12, received 2 Sep 2026.' },
-        { p: 'menu', trigger: 'Actions', label: '2026-04471', items: ['Open', 'Assign to me', 'Put on hold'], danger: 'Withdraw' },
-      ] } }] },
-      { w: 460, cards: [{ id: 'shot-top-float', title: '', panel: false, node: { p: 'stack', gap: 4, kids: [
-        { p: 'dialog', title: 'Withdraw this request?', text: '2026-04471 goes back to M. Visser and the case closes. This cannot be undone.', kids: [
+      ] },
+    ] },
+  },
+  {
+    id: 'ontop', label: 'Void an invoice', shot: true, page: { shell: true, nav: 'Invoices' },
+    note: 'Ledgeway, a dialog over the list and a toast in the corner.',
+    main: { p: 'stack', gap: 4, kids: [
+      { p: 'heading', level: 2, text: 'Invoices' },
+      invoiceList(),
+      { p: 'layer', at: 'center', scrim: true, kids: [
+        { p: 'dialog', title: 'Void invoice INV-1042?', text: 'Halden & Rowe can no longer pay it, and it leaves your outstanding total. This cannot be undone.', kids: [
           { p: 'button', tone: 'ghost', text: 'Cancel' },
-          { p: 'button', tone: 'danger', text: 'Withdraw' },
+          { p: 'button', tone: 'danger', text: 'Void invoice' },
         ] },
-        { p: 'toast', title: 'Request withdrawn', text: '2026-04471, just now', action: 'Undo' },
-      ] } }] },
-    ],
+      ] },
+      { p: 'layer', at: 'corner', kids: [
+        { p: 'toast', title: 'Invoice INV-1041 sent', text: 'To Northfield Studio, just now', action: 'Undo' },
+      ] },
+    ] },
   },
   {
-    id: 'states', label: 'Loading and empty', shot: true,
-    note: 'The two screens nobody designs until they ship: while it loads, and when there is nothing.',
-    cols: [
-      { w: 520, cards: [{ id: 'shot-st-load', title: '', panel: true, node: { p: 'stack', gap: 3, kids: [
-        { p: 'row', between: true, kids: [
-          { p: 'heading', text: 'Requests' },
-          { p: 'row', kids: [{ p: 'spinner' }, { p: 'muted', text: 'Loading the latest' }] },
-        ] },
-        { p: 'skeleton', rows: 4 },
-        { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Uploading plans.pdf' }, { p: 'progress', value: 72 }] },
-      ] } }] },
-      { w: 440, cards: [{ id: 'shot-st-empty', title: '', panel: true, node: { p: 'empty', icon: 'inbox', title: 'No requests match', text: 'Nothing fits this filter. Try another, or clear the search.', kids: [
-        { p: 'button', tone: 'secondary', text: 'Clear filters' },
-      ] } }] },
-    ],
+    id: 'states', label: 'Expenses', shot: true, page: { shell: true, nav: 'Expenses' },
+    note: 'Ledgeway, while it loads and when there is nothing yet.',
+    main: { p: 'stack', gap: 4, kids: [
+      { p: 'row', between: true, kids: [
+        { p: 'heading', level: 2, text: 'Expenses' },
+        { p: 'button', tone: 'brand', text: 'Add an expense' },
+      ] },
+      { p: 'grid', tracks: '1fr 1fr', kids: [
+        { p: 'panel', kids: [{ p: 'stack', gap: 3, kids: [
+          { p: 'row', between: true, kids: [
+            { p: 'heading', text: 'Receipts' },
+            { p: 'row', kids: [{ p: 'spinner' }, { p: 'muted', text: 'Reading your receipts' }] },
+          ] },
+          { p: 'skeleton', rows: 4 },
+          { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Uploading receipt-0412.pdf' }, { p: 'progress', value: 72 }] },
+        ] }] },
+        { p: 'panel', kids: [{ p: 'empty', icon: 'inbox', title: 'No expenses in September', text: 'Add one by hand, or drop a receipt and Ledgeway reads it for you.', kids: [
+          { p: 'button', tone: 'secondary', text: 'Add an expense' },
+        ] }] },
+      ] },
+    ] },
   },
 ]
 
@@ -610,8 +604,15 @@ export const nodeOf = (card) => (card.panel ? { p: 'panel', kids: [card.node] } 
  * a card can never be on the wall and missing from the count — and counted on
  * exactly the markup the wall shows, not on an unwrapped version of it.
  */
-export const SCENES = [...BOARDS, ...SCREENS].flatMap((b) => b.cols.flatMap((c) => c.cards.map((card) =>
-  ({ ...card, board: b.id, node: nodeOf(card) }))))
+/* A page screen (decision 212) is three cards to everything that counts or
+   tests: its top bar, its side bar and its content, each rendered whole. */
+const pageCards = (b) => [
+  ...(b.page.shell ? [{ id: `${b.id}-top`, title: '', node: SHELL_TOP }, { id: `${b.id}-side`, title: '', node: shellSide(b.page.nav) }] : [{ id: `${b.id}-top`, title: '', node: BARE_TOP }]),
+  { id: `${b.id}-main`, title: '', node: b.main },
+]
+export const SCENES = [...BOARDS, ...SCREENS].flatMap((b) => b.page
+  ? pageCards(b).map((card) => ({ ...card, board: b.id }))
+  : b.cols.flatMap((c) => c.cards.map((card) => ({ ...card, board: b.id, node: nodeOf(card) }))))
 
 /**
  * Every icon a card names, walked out of the cards themselves.
@@ -658,8 +659,15 @@ export const safeJson = (value) => JSON.stringify(value).split('</scr' + 'ipt').
  * counted. Everything of OURS in this document is four class names and a
  * hairline — the kits are the only things on the page allowed to have a look.
  */
-export const wallMarkup = (bind, boards = BOARDS) => `<main id="strip">${boards.map((b) =>
-  `<section class="board" id="b_${b.id}" data-board="${b.id}"${b.shot ? ' data-shot' : ''}${b.dark ? ' data-screen-dark' : ''}${b.caps ? '' : b.shot ? ' data-nocaps' : ''}>
+/* A page screen is the app itself: a shell (top bar, side bar, content) or a
+   bare page with one thing in its middle, the way a sign-in sits. No board
+   caption: the screen's name is the picker's. */
+const pageMarkup = (b, bind) => b.page.shell
+  ? `<div data-shell><div data-shell-top>${render(SHELL_TOP, bind)}</div><aside data-shell-side>${render(shellSide(b.page.nav), bind)}</aside><div data-shell-main>${render(b.main, bind)}</div></div>`
+  : `<div data-bare-page><div data-shell-top>${render(BARE_TOP, bind)}</div><div data-bare><div data-bare-box>${render(b.main, bind)}</div></div></div>`
+export const wallMarkup = (bind, boards = BOARDS) => `<main id="strip">${boards.map((b) => b.page
+  ? `<section class="board" id="b_${b.id}" data-board="${b.id}" data-shot data-page>${pageMarkup(b, bind)}</section>`
+  : `<section class="board" id="b_${b.id}" data-board="${b.id}"${b.shot ? ' data-shot' : ''}${b.dark ? ' data-screen-dark' : ''}${b.caps ? '' : b.shot ? ' data-nocaps' : ''}>
     <header class="board__top"><h2 class="board__name">${b.label}</h2><p class="board__note">${b.note}</p></header>
     <div class="board__cols">${b.shot ? '<div class="shotbox">' : ''}${b.cols.map((c) => `<div class="col" style="width:${c.w}px">${c.cards.map((card) =>
       `<figure class="card" data-card="${card.id}"><figcaption class="cap">${card.title}</figcaption>${render(nodeOf(card), bind)}</figure>`).join('')}</div>`).join('')}${b.shot ? '</div>' : ''}</div>
@@ -697,6 +705,31 @@ body{margin:0;overflow:hidden}
 .col{flex:none;display:flex;flex-direction:column;gap:20px;min-width:0}
 .card{margin:0;display:flex;flex-direction:column;gap:8px;cursor:auto}
 .cap{margin:0;font-size:10px;letter-spacing:.1em;text-transform:uppercase;opacity:.42;font-weight:600}
+/* ── A PAGE IS THE APP (decision 212) ─────────────────────────────────────
+ * The shell is ours, the way a layout is ours everywhere on this wall: a top
+ * bar across, a side bar, the content. Everything inside it is the kit. What
+ * floats (a layer) is fixed to the window, as a modal and a toast are in a
+ * running app. On a phone the side bar goes and the content takes the width. */
+.board[data-page]{flex:1 1 auto;width:100%;min-width:0;padding:0;gap:0;border:0}
+[data-shell]{display:grid;grid-template-columns:240px minmax(0,1fr);grid-template-rows:auto 1fr;min-height:100vh;width:100%}
+[data-shell-top]{grid-column:1/-1;min-width:0}
+[data-shell-side]{padding:16px 12px;border-inline-end:1px solid rgb(128 128 128 / .18);min-width:0}
+[data-shell-main]{display:flex;flex-direction:column;gap:20px;padding:28px 32px 40px;min-width:0;max-width:1240px}
+[data-bare-page]{display:flex;flex-direction:column;min-height:100vh;width:100%}
+[data-bare]{flex:1;display:grid;place-items:center;padding:32px 16px 64px}
+[data-bare-box]{width:min(420px,100%)}
+@media (max-width:1100px){[data-shell-main] [style*="grid-template-columns:repeat(4"]{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media (max-width:760px){
+  [data-shell]{grid-template-columns:minmax(0,1fr)}
+  [data-shell-side]{display:none}
+  [data-shell-main]{padding:16px}
+  [data-shell-main] [style*="grid-template-columns"]{grid-template-columns:minmax(0,1fr)!important}
+  /* a table keeps its columns and scrolls inside its own box, the way an
+     app's table does on a phone; display:block on the table itself emptied
+     Radix's, whose rows are laid out as a table */
+  [data-shell-main] table{min-width:600px}
+  [data-shell-main] :has(> table){overflow-x:auto;max-width:100%}
+}
 
 /* ── ONE CARD, ACROSS EVERY FRAME AT ONCE ─────────────────────────────────
  * The compare grid asks six frames to show the SAME card and hide the rest.

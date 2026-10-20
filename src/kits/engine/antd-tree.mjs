@@ -180,11 +180,22 @@ const PART = {
   tabs: (n) => e(Tabs, { defaultActiveKey: '0',
     items: list(n.items).map((t, i) => ({ key: String(i), label: t })) }),
 
-  navbar: (n, kids) => e(Layout.Header, { style: { display: 'flex', alignItems: 'center', gap: 24 } },
-    e(Typography.Text, { strong: true, style: { color: 'inherit' } }, text(n.brand)),
-    e(Menu, { theme: 'dark', mode: 'horizontal', defaultSelectedKeys: ['0'], style: { flex: 1, minWidth: 0 },
+  /* inside a Layout: their header rules are written as .ant-layout
+     .ant-layout-header, so a bare Header had no height, no padding and no
+     colour of its own */
+  /* the light header of their own sider layouts (colorBgContainer and a
+     hairline), which reads on every page; their default header is navy */
+  navbar: (n, kids) => e(Layout, null, e(Layout.Header, { style: { display: 'flex', alignItems: 'center', gap: 24, padding: '0 24px',
+    background: 'var(--ant-color-bg-container)', borderBottom: '1px solid var(--ant-color-border-secondary)' } },
+    e(Typography.Text, { strong: true, style: { color: 'inherit', display: 'inline-flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap' } },
+      /* Ledgeway's mark (decision 212), in their primary */
+      n.mark ? e('svg', { width: 18, height: 18, viewBox: '0 0 16 16', 'aria-hidden': true, style: { flex: 'none', fill: 'var(--ant-color-primary)' } },
+        e('rect', { x: 1, y: 1, width: 6, height: 6, rx: 1.8 }), e('rect', { x: 9, y: 1, width: 6, height: 6, rx: 1.8 }),
+        e('rect', { x: 1, y: 9, width: 6, height: 6, rx: 1.8 }), e('rect', { x: 9, y: 9, width: 6, height: 6, rx: 1.8, opacity: 0.55 })) : null,
+      text(n.brand)),
+    e(Menu, { mode: 'horizontal', defaultSelectedKeys: ['0'], style: { flex: 1, minWidth: 0, borderBottom: 0, background: 'transparent' },
       items: list(n.items).map((t, i) => ({ key: String(i), label: t })) }),
-    e('span', { style: { display: 'flex', gap: 8 } }, kids)),
+    e('span', { style: { display: 'flex', gap: 8 } }, kids))),
   sidenav: (n) => e(Menu, { mode: 'inline', defaultSelectedKeys: ['on'], style: { border: 0, background: 'transparent' },
     items: list(n.groups).map((g, gi) => ({ key: 'g' + gi, type: 'group', label: g.title,
       children: list(g.items).map((it, i) => ({

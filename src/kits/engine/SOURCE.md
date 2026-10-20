@@ -109,6 +109,11 @@ table with its decision.
 | `icon-sets.mjs` | chevron-left, chevron-right, x and loader-circle in every set | 211 |
 | `kit-defaults.mjs`, `kit-defaults.test.mjs` | Tailwind's status colours, read from red-600, green-600, amber-500 | 211 |
 | `generate.mjs` | the new gaps named | 211 |
+| `scenes.mjs` | the screens are Ledgeway's pages: a shell, a bare sign-in page, no captions, phone rules | 212 |
+| `parts.mjs`, `wall-bindings.mjs` | the layer part with each kit's scrim; grid tracks; the mark in every navbar | 212 |
+| `antd-tree.mjs` | the mark; the header inside a Layout, light | 212 |
+| `icon-sets.mjs` | users, receipt and settings in every set | 212 |
+| `kit-defaults.mjs`, `kit-defaults.test.mjs` | Tailwind's surface, read from white | 212 |
 | `kits/shadcn.json`, `kits/antd.json`, `kits/antd.render.*`, `kits/material.elements.json` | refetched and re-rendered for the new parts | 211 |
 | `scenes.mjs` | the fallback font on :where(html), not #strip: a kit's own body font reaches its wall | 207 |
 | `kit-defaults.mjs` | each default read from the variable the build writes it into (daisyUI radius, Ant Design ink and muted ink); TABLE exported | 207 |

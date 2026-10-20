@@ -21,6 +21,7 @@ export const PARTS = [
   'navbar', 'sidenav', 'breadcrumb', 'menu', 'mediacard', 'footer',  // organisms
   'link', 'pagination', 'segmented',                                 // the screens' controls
   'dialog', 'tooltip', 'toast', 'skeleton', 'spinner',               //   and what floats or waits
+  'layer',                                                           // what an app puts over itself
   'elevation', 'swatches', 'typespec', 'shapes',                     // foundation specimens
 ]
 

@@ -3290,3 +3290,45 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     of the old screen are out. About.tsx and Landing are removed; the
     roadmap's "/about as the launch page" is answered by this: the editor
     with this dialog is the launch page.
+
+212. The screens are one app, Ledgeway, walked through.
+
+    Alexander: every screen should look like a real screen, each one
+    standing on its own, as if you walk through an application; an overview
+    needs no caption when it has a navigation on the left, a header and data.
+    So the kit screens are now pages of one made-up invoicing tool, Ledgeway
+    (his pick, a variant on UIcockpit's Ledger flagship, whose name is also a
+    real company's): Sign in, Dashboard, Invoices, Settings, Void an invoice
+    and Expenses. A shell carries all but the first: a top bar with the
+    mark, a search field, notifications and an avatar; a side bar whose
+    active item is the screen; the content. Sign in is one card on a page
+    under a bar with the name. No board captions: the screen's name is the
+    picker's. On a phone the side bar goes, grids fold to one column and a
+    table scrolls inside its own box.
+
+    The mark is UIcockpit's four tiles, one lighter, in each kit's own brand
+    variable, so the brand knob moves it (measured on shadcn: #171717 to
+    Jade). The cast is new and invented: clients such as Halden & Rowe and
+    Vandermeer Architecten & Partners, Maya Okafor as the user, initials for
+    avatars. Ledger's was Tailwind's demo data (Tuple, SavvyCal, Reform, real
+    companies) with randomuser.me photographs, which would also have been a
+    request leaving the tab. The content is not tidy on purpose: a long
+    client name, a five-figure amount, an empty Due.
+
+    One new part, the layer: what an app puts over itself, fixed to the
+    window as in a running app. In the middle, a dialog over each kit's own
+    scrim (shadcn's dialog-overlay, Bootstrap's modal-backdrop, Radix's
+    BaseDialogOverlay, Mantine's Overlay at its Modal's 60%, Ant's
+    colorBgMask, M3's scrim at 32%); in the corner, a toast. A grid can name
+    its tracks (2fr 1fr). Every navbar carries the mark when a screen asks.
+
+    Found on the way: the Tailwind kit had no surface colour either (a
+    dialog over a scrim showed the page through it); it reads white now.
+    Ant's header needs a Layout around it for its own rules, and is the
+    light header of their sider layouts. A payment-link tooltip moved off
+    the title row, where the narrow detail panel made it overlap.
+
+    Measured: fidelity 100% on all eight, tests and kit gates green,
+    hold-outs ok on all eight kit builds, Check 1:1 on Void an invoice in
+    shadcn: 189 elements, 0 differences. Every screen photographed in all
+    eight kits at 1280 and 390 and looked at.

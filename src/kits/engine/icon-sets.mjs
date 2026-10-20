@@ -44,6 +44,7 @@ export const KIT_ICON_SETS = {
  * reports it. */
 export const TRANSLATIONS = {
   heroicons: {
+    'users': 'users', 'receipt': 'receipt-percent', 'settings': 'cog-6-tooth',
     'chevron-left': 'chevron-left', 'chevron-right': 'chevron-right', 'x': 'x-mark', 'loader-circle': 'arrow-path',
     'archive': 'archive-box', 'arrow-left-right': 'arrows-right-left', 'bell': 'bell',
     'car': 'truck', 'check': 'check', 'chevron-down': 'chevron-down',
@@ -55,6 +56,7 @@ export const TRANSLATIONS = {
     'user': 'user',
   },
   'bootstrap-icons': {
+    'users': 'people', 'receipt': 'receipt', 'settings': 'gear',
     'chevron-left': 'chevron-left', 'chevron-right': 'chevron-right', 'x': 'x-lg', 'loader-circle': 'arrow-repeat',
     'archive': 'archive', 'arrow-left-right': 'arrow-left-right', 'bell': 'bell',
     'car': 'car-front', 'check': 'check-lg', 'chevron-down': 'chevron-down',
@@ -66,6 +68,7 @@ export const TRANSLATIONS = {
     'user': 'person',
   },
   'material-symbols': {
+    'users': 'group', 'receipt': 'receipt_long', 'settings': 'settings',
     'chevron-left': 'chevron_left', 'chevron-right': 'chevron_right', 'x': 'close', 'loader-circle': 'progress_activity',
     'archive': 'archive', 'arrow-left-right': 'swap_horiz', 'bell': 'notifications',
     'car': 'directions_car', 'check': 'check', 'chevron-down': 'keyboard_arrow_down',
@@ -77,6 +80,7 @@ export const TRANSLATIONS = {
     'user': 'person',
   },
   'radix-icons': {
+    'users': 'person', 'receipt': 'reader', 'settings': 'gear',
     'chevron-left': 'chevron-left', 'chevron-right': 'chevron-right', 'x': 'cross-2', 'loader-circle': 'reload',
     'archive': 'archive', 'arrow-left-right': 'width', 'bell': 'bell',
     'car': null, 'check': 'check', 'chevron-down': 'chevron-down',
@@ -88,6 +92,7 @@ export const TRANSLATIONS = {
     'user': 'person',
   },
   tabler: {
+    'users': 'users', 'receipt': 'receipt', 'settings': 'settings',
     'chevron-left': 'chevron-left', 'chevron-right': 'chevron-right', 'x': 'x', 'loader-circle': 'loader-2',
     'archive': 'archive', 'arrow-left-right': 'arrows-left-right', 'bell': 'bell',
     'car': 'car', 'check': 'check', 'chevron-down': 'chevron-down',
@@ -99,6 +104,7 @@ export const TRANSLATIONS = {
     'user': 'user',
   },
   'antd-icons': {
+    'users': 'TeamOutlined', 'receipt': 'AccountBookOutlined', 'settings': 'SettingOutlined',
     'chevron-left': 'LeftOutlined', 'chevron-right': 'RightOutlined', 'x': 'CloseOutlined', 'loader-circle': 'LoadingOutlined',
     'archive': 'ContainerOutlined', 'arrow-left-right': 'SwapOutlined', 'bell': 'BellOutlined',
     'car': 'CarOutlined', 'check': 'CheckOutlined', 'chevron-down': 'DownOutlined',
