@@ -266,11 +266,32 @@ function findLengths(m: string, kind: Kind, opts: { skipPill?: boolean } = {}): 
   return s
 }
 
-/** Unitless numbers (`1.5`) and lengths, never `normal`. */
+/* A shadow that reads a variable of THEIRS (Tailwind v4:
+   `--tw-shadow: 0 1px 2px 0 var(--tw-shadow-color, #0000000d)`) cannot become
+   one variable of ours: ours live on :root, where `--tw-shadow-color` set by a
+   `shadow-red-500` on the element would be lost. So the whole value was left
+   alone and Elevation moved nothing on a Tailwind v4 page (decision 216).
+   Its lengths are tokenised one by one instead, as shadows: the dial scales
+   each, the colour and its variable stay where they are. */
+const FOREIGN_VAR = /var\(\s*--(?!us-v)/i
+function shadowLengths(value: string): Splice[] {
+  const s: Splice[] = []
+  for (const x of value.matchAll(/(?<![\w.#-])(-?\d*\.?\d+)(px|rem|em)(?![\w%])/g)) {
+    if (parseFloat(x[1]!) === 0) continue
+    s.push({ start: x.index, end: x.index + x[0].length, kind: 'shadow', raw: x[0] })
+  }
+  return s
+}
+
+/** Unitless numbers (`1.5`) and lengths, never `normal`. Never a divisor:
+ *  Tailwind v4 writes `--text-sm--line-height: calc(1.25 / .875)`, and the
+ *  dial moved both numbers, so the ratio stayed put (20px became 20.0018px,
+ *  decision 216). The numerator is the line height. */
 function findLineHeights(m: string): Splice[] {
   const s: Splice[] = []
   for (const x of m.matchAll(/(?<![\w.#-])(\d*\.?\d+)(px|rem|em|%)?(?![\w%])/g)) {
     if (x[2] === '%') continue
+    if (/\/\s*$/.test(m.slice(0, x.index))) continue
     const n = parseFloat(x[1]!)
     if (n <= 0) continue
     s.push({ start: x.index, end: x.index + x[0].length, kind: 'line-height', raw: x[0] })
@@ -412,6 +433,7 @@ export function splicesFor(prop: string, value: string): Splice[] {
     // Order mirrors the real `box-shadow` branch: inner colours first, then
     // the whole value, whose registered text already carries their var()s.
     if (/shadow|elevation/i.test(prop) && isShadowShape(bare)) {
+      if (FOREIGN_VAR.test(value)) return [...s, ...shadowLengths(value)]
       return [...s, { start: 0, end: value.length, kind: 'shadow', raw: value }]
     }
     if (s.length) return s
@@ -470,6 +492,7 @@ export function splicesFor(prop: string, value: string): Splice[] {
     // custom property) — so elevation can rescale the geometry while the brand
     // still turns the colour of a focus ring.
     const inner = findColors(value, m, true)
+    if (FOREIGN_VAR.test(value)) return [...inner, ...shadowLengths(value)]
     return [...inner, { start: 0, end: value.length, kind: 'shadow', raw: value }]
   }
   if (COLOR_PROP.test(prop) || /^(mask|mask-image|-webkit-mask|-webkit-mask-image|list-style|list-style-image|content)$/.test(prop)) return [...svgs, ...(HAS_GRADIENT.test(m) ? findAngles(m) : []), ...findColors(value, m, true)]

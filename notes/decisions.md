@@ -3598,3 +3598,51 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     for the full-size view, its sheet rewritten on every step, and the six
     stay loaded under it, so both ways are instant. The title reads "The
     kit, six ways", not "Your The kit".
+
+    Then every knob, measured. Alexander turned Colour in dark mode and saw
+    nothing, and a reload flashed his colour before the dark scheme took it
+    away. A script turned each knob alone on the Dashboard, in light and in
+    dark, and read what moved. Four did not, all for reasons in the engine:
+
+    - Colour in dark. shadcn's dark `--primary` is #e5e5e5, the same literal
+      as its light `--border` and `--input`, so the three shared one
+      variable, read as a grey. A colour written straight into a property
+      that names the brand now gets a variable of its own (table.ts), and a
+      grey brand's twin in the dark scope takes the pick itself (mapping.ts);
+      by delta it came out #f3f3f3. One test changed with it: a grey brand
+      that is also body text is admitted now, since the text keeps its own
+      variable and turning the brand no longer reaches it.
+    - Line height. Tailwind v4 writes `calc(1.25 / .875)`, and both numbers
+      were tokenised, so the ratio stayed put (20px to 20.0018px). The
+      divisor is skipped now: 20px to 25px at ×1.25.
+    - Elevation. Tailwind v4's `--tw-shadow` reads `var(--tw-shadow-color, …)`,
+      so it was rightly never hoisted to :root as one value, and so nothing
+      scaled. Its lengths are tokenised one by one now, as shadows; the
+      colour variable stays where it was. One test changed with it, to say
+      exactly that: never the whole shadow, its lengths yes.
+    - Grey tint. A pure grey took the tint only as a delta of chroma, 0.0007
+      on shadcn; it takes half the tint now, in the brand's hue.
+
+    Still not moving, and left: Background in dark (it is the light page's
+    colour, by design) and Border tone on shadcn's translucent dark border.
+
+    And the hand-off, which Alexander read: DESIGN.md said primary #e5e5e5
+    (the dark grey, now the brand), depth "100% of its published strength"
+    with Elevation at ×0.5 (the dial is passed now), nothing about the
+    spacing he turned (it says ×1.2 now, and the one Tailwind v4 line), and
+    gave the heading the body's line height of 1.65 (no longer). SKILL.md
+    told a shadcn project not to install a chart or a toast, which shadcn
+    ships itself (OWN_PACKAGE names its own), signed itself UIcockpit, and
+    carried dashes the copy rule forbids. The prompt now carries theme.css,
+    the file every other part points at, says "this app, built on shadcn/ui",
+    and no longer tells a dashboard to drop its row of figures.
+
+    Then the font. Alexander chose Figtree and the prompt said Geist: DESIGN.md
+    named Figtree, theme.css still wrote init's `--font-sans: 'Geist Variable'`
+    in `@theme`, because shadcn's fonts "inherit the base" and on a shadcn
+    export no base is written. The emitter now puts the chosen family there.
+    And the export passes a family the Type knob chose as `'Figtree',
+    sans-serif`, the form the engine reads as a webfont, so DESIGN.md says
+    where to fetch it; the page's own `Figtree, sans-serif` read as a system
+    stack, and an agent told to add no new fonts would have fallen back to
+    sans-serif. Checked on all nine kits: every one carries the chosen two.

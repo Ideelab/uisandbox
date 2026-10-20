@@ -18,6 +18,7 @@ import { genAgentsBlock } from '../export/genAgents'
 import { genDtcg } from '../export/genDtcg'
 import { measure } from '../export/measured'
 import { roleValues } from '../kits/values'
+import { isCustomFont, SYSTEM_FONT } from '../tokens/fonts'
 import type { RoleValues } from '../kits/engine/generate.mjs'
 import { kitExport, kitPackage } from '../kits/kitExport'
 import { knobLabel } from '../state/carry'
@@ -149,6 +150,20 @@ const KIT_NAME: Record<KitId, string> = {
   openprops: 'Open Props', radix: 'Radix Themes', shadcn: 'shadcn/ui', tailwind: 'Tailwind',
 }
 
+/** A family the Type knob chose, in the form the engine writes a webfont:
+ *  `'Figtree', sans-serif`. The page computes it as `Figtree, sans-serif`,
+ *  which the engine reads as a system stack, so DESIGN.md never said where
+ *  Figtree comes from and an agent told to add no new fonts fell back to
+ *  sans-serif (decision 216). An uploaded font has no address to give. */
+function chosenFonts(cfg: Config, base: Config, rv: RoleValues): RoleValues {
+  const out: RoleValues = {}
+  const as = (f: string, measured: unknown) => `'${f}', ${String(measured ?? '').split(',').slice(1).join(',').trim() || 'sans-serif'}`
+  const web = (f: string, was: string) => f !== was && f !== SYSTEM_FONT && !isCustomFont(f)
+  if (web(cfg.fontBody, base.fontBody)) out.fontBody = as(cfg.fontBody, rv.fontBody)
+  if (web(cfg.fontDisplay, base.fontDisplay)) out.fontHeading = as(cfg.fontDisplay, rv.fontHeading)
+  return out
+}
+
 export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName, shareUrl, files, fontCss, notes, painted, anchors, kit, kitValues, readPageVars, onClose, send, tells = [] }: ExportDialogProps) {
   const [patched, setPatched] = useState<Array<{ path: string; text: string }> | null>(null)
   useEffect(() => { let on = true; void genPatchedFiles(files, table, vars, fontCss).then((p) => { if (on) setPatched(p) }); return () => { on = false } }, [files, table, vars, fontCss])
@@ -173,7 +188,10 @@ export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName,
     // it has none for. No family centre goes in for status: a centre is the
     // most-used member, which on AdminLTE was a syntax-highlight green, and a
     // kit default named in MANIFEST.md beats a guess.
-    const values = { ...roleValues(m), ...kitValues }
+    // and the two dials DESIGN.md describes as turned: depth said "100% of
+    // its published strength" with Elevation at ×0.5 (decision 216)
+    const rv = { ...roleValues(m), ...kitValues }
+    const values = { ...rv, ...chosenFonts(cfg, base, rv), elevation: String(cfg.sb.shadow ?? 1), spaceScale: String(cfg.sb.space ?? 1) }
     void kitExport(kit, values, projectName, { overview }).then((f) => {
       // A build's own variables win; the engine's derivation only fills what
       // the build does not define.
@@ -181,7 +199,7 @@ export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName,
       if (on) setKitFiles(kitPackage(f))
     }).catch((e: unknown) => { if (on) { setKitFiles(null); setKitError(e instanceof Error ? e.message : String(e)) } })
     return () => { on = false }
-  }, [kit, kitValues, readPageVars, table, vars, cfg, projectName, kitDoorName, painted, anchors, movedCount])
+  }, [kit, kitValues, readPageVars, table, vars, cfg, base, projectName, kitDoorName, painted, anchors, movedCount])
   const skillPath = kitFiles ? Object.keys(kitFiles).find((k) => k.endsWith('/SKILL.md')) : undefined
 
   const items = useMemo<Item[]>(() => [
@@ -452,11 +470,19 @@ export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName,
   const copyForAi = async () => {
     const design = items.find((i) => i.id === 'design-md')?.make() ?? ''
     const skill = items.find((i) => i.id === 'skill-md')?.make()
+    // theme.css first: it is the part an agent pastes; DESIGN.md and SKILL.md
+    // keep pointing at it, and without it the prompt named a file it lacked
+    const theme = kitFiles?.['theme.css']
+    // the measured tells no knob reaches, in the same words as the standing
+    // don'ts and without repeating them
+    const MEASURED: Record<string, string> = { gradients: 'gradients as decoration', 'dark-only': 'a dark mode with no light one' }
+    const donts = [...new Set([...tells.filter((t) => !t.knobs && MEASURED[t.id]).map((t) => MEASURED[t.id]!), ...LAYOUT_DONTS])]
     const prompt = [
-      `Restyle ${kitDoorName ?? projectName} to the design system below, made in UISandbox.`,
-      `Use only its tokens${skill ? ' and the classes SKILL.md names' : ''}. Do not fall back to the defaults, and add no raw colours, one-off sizes or new fonts.`,
-      '', 'Keep the layout from the generic AI look. Avoid:',
-      ...[...tells.filter((t) => !t.knobs).map((t) => t.what.replace(/ \(\d+\)$| on \d+ .*$/, '')), ...LAYOUT_DONTS].map((d) => `- ${d}`),
+      kitDoorName ? `Restyle this app, built on ${kitDoorName}, to the design system below. It was made in UISandbox.` : `Restyle ${projectName} to the design system below. It was made in UISandbox from this app's own build.`,
+      `Use only its tokens${skill ? ' and the components SKILL.md names' : ''}. Do not fall back to the defaults, and add no raw colours, one-off sizes or new fonts.`,
+      '', 'Keep the layout clear of the generic AI look. Avoid:',
+      ...donts.map((d) => `- ${d}`),
+      ...(theme ? ['', '--- theme.css (put this in your global stylesheet) ---', theme] : []),
       '', '--- DESIGN.md ---', design,
       ...(skill ? ['', '--- SKILL.md ---', skill] : []),
     ].join('\n')

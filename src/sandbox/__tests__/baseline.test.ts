@@ -66,9 +66,17 @@ describe('a grey brand (shadcn/ui: --primary is #171717)', () => {
     const t = sheet(`:root{--text-primary:#0f172a;--bg-primary:#ffffff;--accent-primary:#ec008c}a{color:var(--accent-primary)}.cta{background:var(--accent-primary)}body{color:var(--text-primary)}`)
     expect(brandDeclared(t)).toBe('#ec008c')
   })
-  it('is not admitted when the same grey is also body text', () => {
+  /* Decision 216: a literal written into a brand-named property has its own
+     variable now, so the same grey as body text no longer shares one with
+     it. The brand is admitted, and turning it leaves the body text alone. */
+  it('is admitted on its own variable when the same grey is also body text, and the text stays a neutral', () => {
     const t = sheet(`:root{--primary:#171717}.btn{background:var(--primary)}body{color:#171717}`)
-    expect(brandDeclared(t)).toBe(null)
-    expect(familiesOf(t, '#171717').of.get(t.find('color', '#171717')!.id)).toBe('neutral')
+    expect(brandDeclared(t)).toBe('#171717')
+    const fams = familiesOf(t, '#171717')
+    const own = t.entries.find((e) => e.sites.some((x) => x.prop === '--primary'))!
+    const text = t.entries.find((e) => e.sites.some((x) => x.prop === 'color'))!
+    expect(own.id).not.toBe(text.id)
+    expect(fams.of.get(own.id)).toBe('brand')
+    expect(fams.of.get(text.id)).toBe('neutral')
   })
 })

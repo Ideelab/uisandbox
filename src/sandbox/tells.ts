@@ -67,7 +67,7 @@ export function measureTells(doc: Document, brand: string, opts: { hasScheme?: b
 export const LAYOUT_DONTS = [
   'a centred hero with a small badge above the headline',
   'three or four identical cards, each with an icon in a tinted square on top',
-  'numbered 1-2-3 steps and a row of big stats as filler',
+  'numbered 1-2-3 steps on a landing page (a row of figures is fine where the figures are the point)',
   'coloured left borders, glows and frosted glass as decoration',
   'emoji as icons',
 ]

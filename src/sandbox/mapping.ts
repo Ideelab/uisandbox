@@ -80,6 +80,9 @@ export interface Families {
   canvasId?: number
 }
 const NEUTRAL_CHROMA = 0.035
+/** A selector that only applies in a dark scheme: the class, the attribute or
+ *  the media query a kit or an app switches its dark palette on. */
+const DARK_SCOPE = /(^|[\s,(])(\.dark\b|\.theme-dark\b|\[data-theme=["']?dark|\[data-mode=["']?dark|\[data-(mantine-)?color-scheme=["']?dark|\[data-bs-theme=["']?dark)|prefers-color-scheme:\s*dark/i
 /** A property that NAMES the brand (`--bs-primary`, `--ifm-color-primary`,
  *  `--brand-500`), never its on-colour (`--on-primary`). */
 export const BRAND_NAME = /^(?:--)?(?![\w-]*\bon[_-]?primary)(?:[\w.-]*?[-_.])?(primary|brand)(?:[-_]?(color|colour|base|default|500|600|main|hex))?$/i
@@ -168,7 +171,10 @@ export function familiesOf(table: SubstitutionTable, brandHex: string, opts: { p
     const c = parseCssColor(e.value)
     if (!c || c.a === 0) { of.set(e.id, 'keep'); continue }
     if (c.C < NEUTRAL_CHROMA) {
-      if (brand && brand.C < NEUTRAL_CHROMA && sameRgb(c, brand) && greyBrandEntry(e)) { of.set(e.id, 'brand'); continue }
+      // the declared grey brand, or the same brand-named property in the dark
+      // scheme (shadcn's dark --primary is #e5e5e5): Brand reaches both
+      // (decision 216; table.ts gives such a literal a variable of its own)
+      if (brand && brand.C < NEUTRAL_CHROMA && greyBrandEntry(e) && (sameRgb(c, brand) || e.sites.every((st) => DARK_SCOPE.test(st.selector ?? '')))) { of.set(e.id, 'brand'); continue }
       // A pale tint NAMED for a role (`--bs-success-bg-subtle: #d1e7dd`) is that
       // role's, not a grey: the alert background must follow the Success picker.
       const st = STATUS.find(([, lo, hi]) => inHue(c.H, lo, hi))
@@ -305,8 +311,11 @@ function mapNeutral(c: Okla, e: Entry, base: Vars, now: Vars, sb: Dials): Okla {
     if (dC !== 0 || dH !== 0) {
       // Half the engine's tint delta: their greys carry their own tint already,
       // and adding ours in full doubles it.
-      C = clamp(C + dC * 0.5, 0, 0.05)
-      // A pure grey has no hue to rotate: it takes the tint's hue outright.
+      // A pure grey has no tint to add to, and no hue to rotate: it takes half
+      // the tint itself, in the tint's hue. By the delta alone a pure-grey kit
+      // (shadcn's) moved by 0.0007 chroma, and Grey tint showed nothing
+      // (decision 216).
+      C = c.C < 0.004 ? clamp(nTint.C * 0.5, 0, 0.05) : clamp(C + dC * 0.5, 0, 0.05)
       H = c.C < 0.004 ? nTint.H : (((H + dH) % 360) + 360) % 360
     }
   }
@@ -322,6 +331,9 @@ function mapNeutral(c: Okla, e: Entry, base: Vars, now: Vars, sb: Dials): Okla {
 
 function mapShadow(value: string, x: number): string {
   if (x === 1) return value
+  // one length of a shadow that reads their variable (rewrite.ts shadowLengths)
+  const one = /^(-?\d*\.?\d+)(px|rem|em)$/.exec(value.trim())
+  if (one) return x <= 0 ? `0${one[2]}` : `${Math.round(parseFloat(one[1]!) * Math.sqrt(x) * 100) / 100}${one[2]}`
   if (x <= 0) return 'none'
   // Geometry grows with the square root, alpha linearly — a "deeper" shadow is
   // mostly darker and a little wider, which is what elevation looks like.
@@ -417,7 +429,11 @@ function mapColor(c: Okla, fam: Family, e: Entry | null, base: Vars, now: Vars, 
     // contrast rules: mapped through that, a crimson pick on a cyan brand came
     // out pink (#1eaedb → #ff737d), and the centre never became the pick.
     const b = fams.centre.brand ?? parseCssColor(str(base['--k-primary'])), n = parseCssColor(brandPick) ?? parseCssColor(str(now['--k-primary']))
-    mapped = b && n ? mapByDelta(c, b, n) : c
+    // A grey brand's dark twin (shadcn's dark --primary, #e5e5e5 against
+    // #171717) is the brand in the other scheme, not a lighter member of it:
+    // by delta it came out #f3f3f3. It takes the pick itself (decision 216).
+    const darkTwin = !!e && !!b && b.C < NEUTRAL_CHROMA && greyBrandEntry(e) && e.sites.every((st) => DARK_SCOPE.test(st.selector ?? ''))
+    mapped = b && n ? (darkTwin ? { ...n, a: c.a } : mapByDelta(c, b, n)) : c
   } else {
     const pick = sb[FAMILY_DIAL[fam]!] as string | undefined
     const centre = fams.centre[fam]

@@ -281,7 +281,9 @@ export function SandboxPanel({ cfg, tokens, base, families, scheme, codeFonts = 
   // Type as a pair (decision 216): a maker picks a heading and text face that
   // belong together, not two fonts from two lists. The pairs are the looks'
   // own, plus the app's; each font alone stays under More.
-  const pairs: Array<[string, string]> = ([[base.fontDisplay, base.fontBody]] as Array<[string, string]>).concat(DIRECTIONS.flatMap((d) => d.fonts))
+  // Inter as well: the looks keep off it (it is the default the tells name),
+  // but a maker who wants it should not have to dig for it under More.
+  const pairs: Array<[string, string]> = ([[base.fontDisplay, base.fontBody], ['Inter', 'Inter']] as Array<[string, string]>).concat(DIRECTIONS.flatMap((d) => d.fonts))
     .filter((p, i, a) => a.findIndex((q) => q[0] === p[0] && q[1] === p[1]) === i)
   const pairName = (d: string, b: string) => (d === b ? d : `${d} + ${b}`).replace(/Custom: /g, '')
   rows.push({
