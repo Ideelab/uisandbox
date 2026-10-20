@@ -872,3 +872,17 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
 .door__try { display: block; margin: 6px auto 0; border: 0; background: none; font: inherit; font-size: 13px; color: var(--app-fg-muted); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .door__try:hover { color: var(--app-fg); }
 .intake__card .door__others { margin: 26px 0 8px; font-size: 11px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; color: var(--app-fg-muted); text-align: left; }
+
+/* One look at full size, in the looks' own room (decision 216). */
+.looks:has(.looks__focus) { height: 100%; box-sizing: border-box; }
+.looks__grid[hidden] { display: none; }
+.looks__focus { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; }
+.looks__focusbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.looks__focusnav { flex: 1; display: flex; align-items: center; justify-content: center; gap: 10px; min-width: 0; }
+.looks__focusnav .looks__what, .looks__count { font-size: 12.5px; color: var(--app-fg-muted); }
+.looks__count { font-variant-numeric: tabular-nums; }
+.looks__pick { min-height: 34px; padding: 0 16px; }
+.looks__stage { flex: 1; min-height: 420px; border-radius: 10px; overflow: hidden; border: 1px solid var(--app-border); background: #fff; }
+.looks__stage iframe { width: 100%; height: 100%; border: 0; display: block; }
+.looks__picked { margin-left: 6px; padding: 1px 7px; border-radius: 99px; background: var(--app-fg); color: var(--app-bg); font-size: 10.5px; font-weight: 600; }
+@media (max-width: 760px) { .looks__focusnav .looks__what { display: none; } }

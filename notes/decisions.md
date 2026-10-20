@@ -3589,3 +3589,12 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     Measured, over the six: tests green (483, 145, 121), kit gates green
     (101, 18), each step tried in the browser at 1440 and the top bar at
     375. The kits were not rebuilt: nothing in this PR changes their pages.
+
+    Then, from Alexander on the preview: clicking a look made it the choice
+    at once, with no closer look. Now a look opens at full size in the same
+    room as the six, the bar above it kept (the title, the locks, Shuffle):
+    step to the previous or next one (the arrows, or ← and →), back to All
+    six (or Escape), and only Pick this one makes it the choice. One frame
+    for the full-size view, its sheet rewritten on every step, and the six
+    stay loaded under it, so both ways are instant. The title reads "The
+    kit, six ways", not "Your The kit".
