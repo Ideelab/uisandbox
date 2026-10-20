@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type RefObject } from 'react'
-import { ExternalLink, Info, RefreshCw, ShieldCheck, Star, X, Palette } from 'lucide-react'
+import { ExternalLink, Info, RefreshCw, ShieldCheck, Star, X } from 'lucide-react'
 import { ScreenPicker } from './ScreenPicker'
 import type { SandboxProject, Screen } from '../sandbox/project'
 import { identitySid, rawSid, sandboxUrl } from '../sandbox/host'
@@ -30,9 +30,8 @@ interface StageProps {
   /** The tabs (merge phase 3). On a kit: its components sheet, its screens,
    *  and "Your app", whose empty state is the door. */
   tab?: StageTab
-  /** Pick a look: the grid over the frame, and what opens it (decision 216). */
+  /** Pick a look: the grid over the frame; step 2 in the top bar opens it (decision 216). */
   looks?: React.ReactNode
-  onLooks?: () => void
   /** Held: the frame shows the original values (decision 216). */
   peek?: boolean
   onPeek?: (on: boolean) => void
@@ -79,7 +78,7 @@ function reportUrl(project: SandboxProject, detail: string): string {
   return `https://github.com/Ideelab/uisandbox/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}&labels=build-report`
 }
 
-export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, pinnable, changedCount, peek, onPeek, looks, onLooks, warning, warningTitle, coverage, notes, tab = 'app', onTab, kitName, door, barExtra, onToggleNotes, notesOpen, notesLabel }: StageProps) {
+export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, pinnable, changedCount, peek, onPeek, looks, warning, warningTitle, coverage, notes, tab = 'app', onTab, kitName, door, barExtra, onToggleNotes, notesOpen, notesLabel }: StageProps) {
   const [showCov, setShowCov] = useState(false)
   const [width, setWidth] = useState<string>('fit')
   const [verify, setVerify] = useState<VerifyResult | { busy: true } | null>(null)
@@ -148,7 +147,6 @@ export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, pi
           </div>
         )}
         {(!kitName || tab === 'screens') && <ScreenPicker screens={others} current={screen} onPick={onScreen} onPin={onPin} pinnable={pinnable} named={!!kitName} />}
-        {!atDoor && onLooks && <button type="button" className={`btn btn--sm ${looks ? 'btn--primary' : 'btn--secondary'} stage__looks-btn`} aria-pressed={!!looks} onClick={onLooks} title="Your screen in six directions, side by side"><Palette size={14} strokeWidth={1.75} /> Pick a look</button>}
         {!atDoor && <>
         <div className="seg" role="group" aria-label="Viewport width">
           {WIDTHS.map((x) => (

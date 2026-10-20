@@ -834,3 +834,15 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
 .looks__dot { width: 10px; height: 10px; border-radius: 99px; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15); }
 .looks__what { font-size: 12px; color: var(--app-fg-muted); padding: 0 2px; }
 .looks__foot { margin: 0; font-size: 12px; color: var(--app-fg-muted); }
+
+/* The four steps (decision 216): centred in the top bar, numbered, the one
+   you are on dark, the ones behind you ticked. On a phone only the numbers. */
+.steps { flex: 1; display: flex; justify-content: center; align-items: center; gap: 2px; min-width: 0; }
+.steps__step { display: inline-flex; align-items: center; gap: 7px; height: 30px; padding: 0 11px 0 6px; border: 0; border-radius: 999px; background: none; color: var(--app-fg-muted); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+.steps__step:hover { background: var(--app-hover); color: var(--app-fg); }
+.steps__n { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 99px; border: 1px solid var(--app-border); font-size: 11px; font-weight: 650; }
+.steps__step--done { color: var(--app-fg); }
+.steps__step--done .steps__n { border-color: var(--app-fg); }
+.steps__step--on, .steps__step--on:hover { background: var(--app-fg); color: var(--app-bg); }
+.steps__step--on .steps__n { border-color: transparent; background: var(--app-bg); color: var(--app-fg); }
+@media (max-width: 860px) { .steps__label { display: none; } .steps__step { padding: 0 5px; } }

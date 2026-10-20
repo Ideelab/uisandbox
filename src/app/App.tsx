@@ -1,6 +1,6 @@
 import DOOR from '../kits/door.json'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Download, PanelLeftOpen, X, BookOpen, Plug } from 'lucide-react'
+import { Check, Download, PanelLeftOpen, X, BookOpen } from 'lucide-react'
 import { SandboxPanel } from '../panel/SandboxPanel'
 import type { Config } from '../tokens/types'
 import { useConfig } from '../state/useConfig'
@@ -458,6 +458,7 @@ function Editor() {
       liveFirst.current = false
       // A fresh project is a fresh start: no history, no hash from the last one.
       reset(report.baseline.cfg)
+      setLookOn(null)
       // A shared link's knobs, once; else what was turned on the kit before.
       let pendingCarry: Loaded['pendingCarry']
       if (sharedCfg.current) { dispatch({ type: 'REPLACE', cfg: sharedCfg.current }); sharedCfg.current = null }
@@ -657,6 +658,18 @@ function Editor() {
   // Three names read; a shuffle's twenty do not. The rest is counted.
   const carryList = (keys: string[]) => { const n = keys.map(knobLabel); return n.length <= 3 ? n.join(', ') : `${n.slice(0, 3).join(', ')} and ${n.length - 3} more` }
   const carryNote = turnedOnKit.length ? `What you turned on ${loaded!.kit!.name} comes with it: ${carryList(turnedOnKit)}. Everything else starts as your code has it.` : undefined
+  // The four steps (decision 216), each opening what it names. Opening one
+  // closes the others: one card over the canvas at a time.
+  const step = tab === 'app' && loaded?.kit ? 1 : looksOpen ? 2 : showExport ? 4 : 3
+  const steps: Array<{ n: number; label: string; title: string; on: boolean; done: boolean; go: () => void }> = [
+    { n: 1, label: 'Your app', title: loaded?.kit ? 'Connect your app: any screen your browser shows, your dev server, or a build' : 'Your app is in',
+      on: step === 1, done: !!loaded && !loaded.kit, go: () => { if (loaded?.kit) { setLooksOpen(false); tab === 'app' ? closeDoor() : openDoor() } } },
+    { n: 2, label: lookOn ? DIRECTIONS.find((d) => d.id === lookOn)?.name ?? 'Pick a look' : 'Pick a look', title: 'Your screen in six directions, side by side',
+      on: step === 2, done: !!lookOn, go: () => { if (tab === 'app') closeDoor(); setLooksOpen((v) => !v) } },
+    { n: 3, label: 'Tune', title: 'The knobs on the left, on your screen', on: step === 3, done: changedCount > 0,
+      go: () => { if (tab === 'app') closeDoor(); setLooksOpen(false); setShowExport(false) } },
+    { n: 4, label: 'Take it home', title: 'To your agent, or as code', on: step === 4, done: false, go: () => { setLooksOpen(false); setShowExport(true) } },
+  ]
   // The door opens over the kit and closes back to the tab of the screen under
   // it: read from the screen, so the two can never disagree.
   const openDoor = () => setTab('app')
@@ -672,13 +685,19 @@ function Editor() {
         {/* Beside the name, where "Design System Generator" stood (it lives in
             the footer): the one link a newcomer looks for first. */}
         <a className="app__how" href="/about" title="How it works" onClick={openAbout}><BookOpen size={14} /> <span>How it works</span></a>
-        <span className="app__spacer" />
+        {/* The four steps (decision 216): where a maker is, and the way on.
+            Each opens what it names: the door, the looks, the canvas, Export.
+            Your app replaces the Connect button that stood here. */}
+        {loaded ? (
+          <nav className="steps" aria-label="Steps">
+            {steps.map((st) => (
+              <button key={st.n} type="button" className={`steps__step ${st.on ? 'steps__step--on' : ''} ${st.done ? 'steps__step--done' : ''}`} aria-current={st.on ? 'step' : undefined} onClick={st.go} title={st.title}>
+                <span className="steps__n">{st.done && !st.on ? <Check size={11} strokeWidth={3} /> : st.n}</span><span className="steps__label">{st.label}</span>
+              </button>
+            ))}
+          </nav>
+        ) : <span className="app__spacer" />}
         <div className="app__group">
-          {/* The site's main action, beside Export, which follows it: it opens
-              the door (the bookmarklet, the local command, a build) and stays
-              lit while the door is open. Gone once your own app is in: Close
-              and the Kit menu speak for it then. */}
-          {loaded?.kit && <button type="button" className={`btn btn--secondary btn--sm app__connect ${tab === 'app' ? 'app__connect--on' : ''}`} aria-pressed={tab === 'app'} onClick={() => (tab === 'app' ? closeDoor() : openDoor())} title={tab === 'app' ? 'Close and go back to the kit' : 'Connect your app: any screen your browser shows, your dev server, or a build'}><Plug size={14} strokeWidth={1.75} /><span className="ebar__txt"> Connect your app</span></button>}
           {!loaded && <><McpButton /><StarButton /></>}
           {loaded && <>
             <button type="button" className={`btn ${sendTo ? 'btn--secondary' : 'btn--primary'} btn--sm`} onClick={() => setShowExport(true)}><Download size={14} /> Export</button>
@@ -721,7 +740,7 @@ function Editor() {
                 dispatch={dispatch}
                 onCollapse={() => setPanelOpen(false)}
                 onRandomize={() => dispatch({ type: 'REPLACE', cfg: shuffle(cfg, loaded.report.baseline, Math.random, { kit: !!loaded.kit }) })}
-                onReset={() => dispatch({ type: 'REPLACE', cfg: loaded.report.baseline.cfg })}
+                onReset={() => { dispatch({ type: 'REPLACE', cfg: loaded.report.baseline.cfg }); setLookOn(null) }}
                 history={{ undo, redo, canUndo, canRedo }}
                 radiiOnScreen={coverage ? coverage.radii.total : undefined}
                 kitName={loaded.kit?.name}
@@ -744,7 +763,6 @@ function Editor() {
               changedCount={changedCount}
               peek={peek}
               onPeek={setPeek}
-              onLooks={() => setLooksOpen((v) => !v)}
               looks={looksOpen && loaded ? <LookGrid project={loaded.project} screen={loaded.screen} looks={lookCards} current={lookOn} locks={locks} onLocks={setLocks}
                 onShuffle={() => setRoll((r) => reroll(r))} onPick={pickDirection} onClose={() => setLooksOpen(false)} /> : null}
               warningTitle={!thin && !missingFiles.length && flutterWeb ? 'A Flutter web build' : undefined}

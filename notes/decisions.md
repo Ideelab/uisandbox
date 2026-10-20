@@ -3542,3 +3542,15 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     by a test: no Inter, no indigo or violet brand, nothing outside the
     dials' own range, only fonts the picker can load. The six are a start
     to be reviewed in the PR, not a verdict.
+
+    Then the steps and the plain knobs. The top bar carries the four steps,
+    Your app, Pick a look (the look's name once one is picked), Tune and
+    Take it home, numbered, the one you are on dark, the ones behind you
+    ticked; each opens what it names (the door, the looks, the canvas,
+    Export) and closes the others, and Your app takes the place of the
+    Connect button. The knobs lead with a maker's words: Colour, Type,
+    Shape, Space, and their own Dark mode. Type is a pair now, heading and
+    text face together, from the app's own and the looks' pairs; the grey
+    tint, the background, each font alone and every dial are under More,
+    which is what Fine-tune was called. Pick a look left the stage bar: the
+    step is where it lives.
