@@ -30,6 +30,9 @@ interface StageProps {
   /** The tabs (merge phase 3). On a kit: its components sheet, its screens,
    *  and "Your app", whose empty state is the door. */
   tab?: StageTab
+  /** Held: the frame shows the original values (decision 216). */
+  peek?: boolean
+  onPeek?: (on: boolean) => void
   onTab?: (t: StageTab) => void
   /** Set when the stage shows a kit build of ours, not somebody's app. */
   kitName?: string
@@ -73,7 +76,7 @@ function reportUrl(project: SandboxProject, detail: string): string {
   return `https://github.com/Ideelab/uisandbox/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}&labels=build-report`
 }
 
-export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, pinnable, changedCount, warning, warningTitle, coverage, notes, tab = 'app', onTab, kitName, door, barExtra, onToggleNotes, notesOpen, notesLabel }: StageProps) {
+export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, pinnable, changedCount, peek, onPeek, warning, warningTitle, coverage, notes, tab = 'app', onTab, kitName, door, barExtra, onToggleNotes, notesOpen, notesLabel }: StageProps) {
   const [showCov, setShowCov] = useState(false)
   const [width, setWidth] = useState<string>('fit')
   const [verify, setVerify] = useState<VerifyResult | { busy: true } | null>(null)
@@ -163,6 +166,16 @@ export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, pi
             it: the knobs, the reach and the export keep working while a
             visitor decides what to bring. */}
         {atDoor && <div className="stage__door">{door}</div>}
+        {/* Hold to see your original: the comparison a maker actually wants,
+            their screen now against their screen restyled, on the same page. */}
+        {!atDoor && onPeek && changedCount > 0 && (
+          <button type="button" className={`peek ${peek ? 'peek--on' : ''}`} aria-pressed={!!peek}
+            onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); onPeek(true) }}
+            onPointerUp={() => onPeek(false)} onPointerCancel={() => onPeek(false)} onLostPointerCapture={() => onPeek(false)}
+            onKeyDown={(e) => { if (e.key === 'Enter') onPeek(true) }} onKeyUp={(e) => { if (e.key === 'Enter') onPeek(false) }}>
+            {peek ? 'Your original' : 'Hold to see your original'} <kbd>Space</kbd>
+          </button>
+        )}
         <iframe
           key={project.id}
           name={`us:${project.id}`}

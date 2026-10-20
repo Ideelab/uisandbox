@@ -3510,3 +3510,19 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     layer behind the card, because Export clips what lies outside it and a
     shadow is not clipped. The door also closes now (a cross, Escape, the
     Connect button again), to the tab of the screen under it.
+
+216. The editor walks a maker from their app to their agent.
+
+    From the research (reports/, kept out of the repo): the key user is the
+    solo builder shipping a shadcn or Tailwind app from Cursor, Claude Code or
+    Codex, who sees that it looks like every AI app and cannot name the few
+    foundation choices that fix it. Alexander approved a flow sketched as a
+    canvas (bring your app, why it looks generic, pick a look, tune, before
+    and after, take it home), to be built on a branch and merged by PR.
+
+    First, before and after. Hold Space, or the pill at the foot of the
+    canvas, and the frame gets the identity sheet (the values the app's own
+    CSS had), no chosen fonts and the app's own scheme; let go and it is
+    turned again. Nothing reloads, no second frame: the same identity Check
+    1:1 measures against. The pill shows once something has moved. No tool
+    in the research offered this on the user's own app.

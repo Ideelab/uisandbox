@@ -146,6 +146,12 @@ function Editor() {
   )
   const varsRef = useRef(vars)
   varsRef.current = vars
+  // Hold to see your original (decision 216): while held, the frame gets the
+  // identity sheet, the values their own CSS had, and none of the chosen
+  // fonts or the chosen scheme. Nothing is reloaded; letting go puts it back.
+  const [peek, setPeek] = useState(false)
+  const peekRef = useRef(peek)
+  peekRef.current = peek
   const fontCss = useMemo(() => {
     if (!loaded) return ''
     const base = loaded.report.baseline.cfg
@@ -205,13 +211,15 @@ function Editor() {
     // renders every story inside iframe.html): the sheet applies to each.
     for (const doc of [top, ...nestedDocs(top)]) applyTo(doc)
     function applyTo(doc: Document) {
+    const cur = loadedRef.current
+    const original = peekRef.current && cur
     let el = doc.getElementById('us-vars')
     if (!el) {
       el = doc.createElement('style')
       el.id = 'us-vars'
       ;(doc.head ?? doc.documentElement).prepend(el)
     }
-    const css = varsStyleTag(varsRef.current)
+    const css = varsStyleTag(original ? cur.project.table.identityVars() : varsRef.current)
     const inner = css.slice(css.indexOf('>') + 1, css.lastIndexOf('<'))
     if (el.textContent !== inner) el.textContent = inner
     // A font the knob chose has to LOAD in their document: Google Fonts by
@@ -222,14 +230,13 @@ function Editor() {
       fonts.id = 'us-fonts'
       el.after(fonts)
     }
-    const fcss = fontCssRef.current
+    const fcss = original ? '' : fontCssRef.current
     if (fonts.textContent !== fcss) fonts.textContent = fcss
     // Their dark mode, switched on their own hooks (sandbox/scheme.ts).
-    const cur = loadedRef.current
-    if (cur) { try { applyScheme(doc, cur.project.scheme, cfgRef.current.sb.dark ?? null) } catch { /* mid-navigation */ } }
+    if (cur) { try { applyScheme(doc, cur.project.scheme, (original ? cur.report.baseline.cfg.sb.dark : cfgRef.current.sb.dark) ?? null) } catch { /* mid-navigation */ } }
     }
   }, [])
-  useEffect(() => { applyVars() }, [vars, fontCss, cfg.sb.dark, applyVars])
+  useEffect(() => { applyVars() }, [vars, fontCss, cfg.sb.dark, peek, applyVars])
   // Opened by the local MCP server (`&sync=<id>`): the knobs flow back to it,
   // so an agent can export/verify what the user turned by hand. Same origin,
   // 127.0.0.1, debounced; nothing else ever receives the state.
@@ -570,6 +577,17 @@ function Editor() {
     return () => clearTimeout(t)
   }, [])
 
+  // Space, held, shows the original; not while typing or on a focused control,
+  // where Space means what it always means.
+  useEffect(() => {
+    const busy = (t: EventTarget | null) => t instanceof HTMLElement && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT|BUTTON|A)$/.test(t.tagName))
+    const down = (e: KeyboardEvent) => { if (e.code === 'Space' && !e.repeat && !busy(e.target) && loadedRef.current) { e.preventDefault(); setPeek(true) } }
+    const up = (e: KeyboardEvent) => { if (e.code === 'Space') setPeek(false) }
+    const off = () => setPeek(false)
+    window.addEventListener('keydown', down); window.addEventListener('keyup', up); window.addEventListener('blur', off)
+    return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); window.removeEventListener('blur', off) }
+  }, [])
+
   // Keyboard: ⌘Z / ⇧⌘Z for the knobs.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -716,6 +734,8 @@ function Editor() {
               onPin={pinCurrent}
               pinnable={unlistedRoute}
               changedCount={changedCount}
+              peek={peek}
+              onPeek={setPeek}
               warningTitle={!thin && !missingFiles.length && flutterWeb ? 'A Flutter web build' : undefined}
               warning={thin ?? (missingFiles.length ? `${missingFiles.length === 1 ? 'A file' : `${missingFiles.length} files`} this page asked for ${missingFiles.length === 1 ? 'is' : 'are'} not in the archive: ${missingFiles.slice(0, 3).join(', ')}${missingFiles.length > 3 ? '…' : ''}. ${loaded.captured ? 'The page was taken along as it rendered; these it asks for here, and the capture did not see.' : 'That usually means source, not the built output: parts of the page cannot run here.'}` : flutterWeb ? `Flutter paints this app into a <canvas>: there is almost no CSS for the knobs to move (${loaded.project.table.entries.length} values found). The 1:1 check and the reach meter still tell the truth about it; a design pass on a Flutter app belongs in its ThemeData.` : null)}
               coverage={coverage}
