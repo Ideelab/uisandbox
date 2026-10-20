@@ -3652,3 +3652,8 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     It does not: the prompt already carries SKILL.md. What the zip adds is
     that the files stay in the repo, so later screens keep the look. Each
     button now says when it is the one; the note keeps the tools and the MCP line.
+
+    Deploy is by hand, not on push: decision 103 said "deploy on push", and
+    after the merge of the new flow (b67c3fe) the site stayed on the old build
+    for ten minutes with no build check on the commit. It went live with
+    `pnpm build && npx wrangler deploy` from the repo root (version 5703f070).
