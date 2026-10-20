@@ -545,7 +545,7 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
    page of its own; now the three a visitor meets first look like one family.
    The glow is a shadow, not a layer behind: Export clips what lies outside it
    (overflow: hidden), and a shadow is not clipped. */
-.door { position: relative; width: min(680px, 100%); }
+.door { position: relative; width: min(900px, 100%); }
 :is(.stage__door .door, .privacy, .dialog__backdrop) > .card {
   border: 3px solid transparent;
   background:
@@ -886,3 +886,26 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
 .looks__stage iframe { width: 100%; height: 100%; border: 0; display: block; }
 .looks__picked { margin-left: 6px; padding: 1px 7px; border-radius: 99px; background: var(--app-fg); color: var(--app-bg); font-size: 10.5px; font-weight: 600; }
 @media (max-width: 760px) { .looks__focusnav .looks__what { display: none; } }
+
+/* The door, landscape like Take it home (decision 216): a head bar, the one
+   way on the left, the other ways on the right; one column on a phone. */
+.intake__card.door__card { width: 100%; padding: 0; text-align: left; overflow: hidden; }
+.door__bar { display: flex; align-items: center; gap: 10px; padding: 14px 18px 14px 22px; border-bottom: 1px solid var(--app-border); }
+.door__bar h2 { flex: 1; margin: 0; font-size: 15px; font-weight: 650; }
+.door__grid { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 26px; padding: 22px 24px 24px; align-items: start; }
+.door__main { margin: 0; }
+.intake__card .door__side .door__others { margin: 2px 0 8px; }
+.door__side .door__try { margin: 14px 0 0; }
+@media (max-width: 760px) { .door__grid { grid-template-columns: minmax(0, 1fr); gap: 18px; padding: 18px 16px 20px; } }
+
+/* How it works (decision 216): four steps at a glance, the rest folded. */
+.steps4 { margin: 14px 0 0; padding: 0; list-style: none; counter-reset: s4; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.steps4 li { counter-increment: s4; position: relative; padding: 14px 14px 14px 50px; border: 1px solid var(--app-border); border-radius: 12px; font-size: 14px; line-height: 1.5; color: var(--app-fg-muted); }
+.steps4 li b { display: block; color: var(--app-fg); font-size: 14.5px; }
+.steps4 li::before { content: counter(s4); position: absolute; left: 14px; top: 14px; width: 24px; height: 24px; border-radius: 99px; display: grid; place-items: center; background: var(--app-fg); color: var(--app-bg); font-size: 12px; font-weight: 650; }
+.steps4__note { margin: 12px 0 0; font-size: 13px; color: var(--app-fg-muted); }
+@media (max-width: 640px) { .steps4 { grid-template-columns: minmax(0, 1fr); } }
+.about__more > summary { cursor: pointer; list-style: none; margin: 8px 0 0; padding: 12px 0; border-top: 1px solid var(--app-border); font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.about__more > summary::-webkit-details-marker { display: none; }
+.about__more > summary::before { content: '›'; display: inline-block; transition: transform var(--app-dur) var(--app-ease); }
+.about__more[open] > summary::before { transform: rotate(90deg); }

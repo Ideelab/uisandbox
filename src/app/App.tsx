@@ -666,10 +666,6 @@ function Editor() {
   // baseline; "Custom" once something was turned on top of a look.
   const lookNow = !loaded || encode(cfg) === encode(loaded.report.baseline.cfg) ? null : lookApplied && encode(lookApplied.cfg) === encode(cfg) ? lookApplied.id : lookApplied ? '' : null
   const hasScheme = !!loaded && (loaded.project.scheme.media || loaded.project.scheme.hooks.length > 0)
-  const turnedOnKit = loaded?.kit ? differingKeys(loaded.report.baseline.cfg, cfg).filter(isShownKnob) : []
-  // Three names read; a shuffle's twenty do not. The rest is counted.
-  const carryList = (keys: string[]) => { const n = keys.map(knobLabel); return n.length <= 3 ? n.join(', ') : `${n.slice(0, 3).join(', ')} and ${n.length - 3} more` }
-  const carryNote = turnedOnKit.length ? `What you turned on ${loaded!.kit!.name} comes with it: ${carryList(turnedOnKit)}. Everything else starts as your code has it.` : undefined
   // The four steps (decision 216), each opening what it names. Opening one
   // closes the others: one card over the canvas at a time.
   const step = tab === 'app' && loaded?.kit ? 1 : looksOpen ? 2 : showExport ? 4 : 3
@@ -689,7 +685,7 @@ function Editor() {
   // One card at a time: Export or How it works, opened from the top bar or
   // the footer the door leaves uncovered, closes the door under it.
   useEffect(() => { if ((showExport || aboutOpen) && tab === 'app' && loaded?.kit) closeDoor() }, [showExport, aboutOpen]) // eslint-disable-line react-hooks/exhaustive-deps
-  const makeDoor = (standalone = false) => <Door standalone={standalone} onClose={!standalone && loaded?.kit ? closeDoor : undefined} carryNote={standalone ? undefined : carryNote} onArchive={onArchive} onUrl={(u) => void loadFromUrl(`/__repo/?u=${encodeURIComponent(u)}`)} onSample={(p) => void loadFromUrl(p)} busy={busy} error={error} />
+  const makeDoor = (standalone = false) => <Door standalone={standalone} onClose={!standalone && loaded?.kit ? closeDoor : undefined} onArchive={onArchive} onUrl={(u) => void loadFromUrl(`/__repo/?u=${encodeURIComponent(u)}`)} onSample={(p) => void loadFromUrl(p)} busy={busy} error={error} />
   return (
     <div className="app">
       <header className="app__topbar">

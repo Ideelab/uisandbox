@@ -13,8 +13,6 @@ interface DoorProps {
   onSample?: (path: string) => void
   busy: Progress | null
   error: string | null
-  /** Said when knobs were turned on the kit behind the door: they come along. */
-  carryNote?: string
   /** Over a kit, the door closes back to it: the cross top right, as every card has, and Escape. */
   onClose?: () => void
   /** No kit stands behind the door (a load failed): offer the kits here too. */
@@ -46,7 +44,7 @@ const SAMPLES = [
  * the tab either, but "drop your code on a website" is what people hear, and
  * the samples, Share links and agents' `?load=` still need it.
  */
-export function Door({ onArchive, onUrl, onSample, busy, error, carryNote, standalone, onClose }: DoorProps) {
+export function Door({ onArchive, onUrl, onSample, busy, error, standalone, onClose }: DoorProps) {
   const [way, setWay] = useState<Way>('zip')
   const [more, setMore] = useState<'local' | 'running' | 'build' | null>(error || standalone ? 'build' : null)
   const [showPrivacy, setShowPrivacy] = useState(false)
@@ -98,8 +96,12 @@ export function Door({ onArchive, onUrl, onSample, busy, error, carryNote, stand
       {showPrivacy && <PrivacyCard onClose={() => setShowPrivacy(false)} />}
       {showSteps && <CaptureStepsDialog onClose={() => setShowSteps(false)} />}
       <div className="door">
-      <div className="card intake__card">
-        {onClose && <button type="button" className="btn btn--ghost btn--icon popcard__x" onClick={onClose} aria-label="Close" title="Back to the kit"><X size={15} /></button>}
+      <div className="card intake__card door__card">
+        {/* A head like Take it home's: the step's name and the cross (decision 216) */}
+        <div className="door__bar">
+          <h2>Bring your app</h2>
+          {onClose && <button type="button" className="btn btn--ghost btn--icon" onClick={onClose} aria-label="Close" title="Back to the kit"><X size={15} /></button>}
+        </div>
 
         {/* A failed load says why first, above every way to try again. */}
         {error && !busy && <div className="intake__error intake__error--top">{error}</div>}
@@ -107,20 +109,16 @@ export function Door({ onArchive, onUrl, onSample, busy, error, carryNote, stand
           <LoadStages busy={busy} />
         ) : (
           <>
-            {carryNote && <p className="intake__carry">{carryNote}</p>}
-            {/* One way first (decision 216): what this is for, then the
-                bookmarklet, then the other ways folded under it. */}
-            <div className="door__head">
-              <h2>Make your app look like yours</h2>
-              <p>Bring one screen. We show why it looks like every AI app, and six ways out.</p>
-            </div>
-            <section className="way way--main way--capture">
-              <h3><Bookmark size={16} strokeWidth={1.75} /> Any screen your browser shows, here in one click</h3>
-              <p>Drag <b>Take this screen along</b> to your bookmarks bar, open your app (live, on staging, on localhost, behind a login) and click it on each screen you want. Your browser copies the page as you see it into a UISandbox tab. Nothing goes to a server.</p>
+            {/* Landscape, as Take it home is (decision 216): the one way on the
+                left, the others folded on the right. */}
+            <div className="door__grid">
+            <section className="way way--main way--capture door__main">
+              <h3><Bookmark size={16} strokeWidth={1.75} /> Any screen, in one click</h3>
+              <p>Drag <b>Take this screen along</b> to your bookmarks bar, open your app (live, staging, localhost, behind a login) and click it. Your browser copies the screen into this tab. Nothing goes to a server.</p>
               <div className="way__chip"><BookmarkletChip /></div>
-              <p className="way__fine">A snapshot of what you see: the knobs and the export work on it; to click through the app itself, bring its build. <a href="/?capture=1" onClick={(e) => { if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return; e.preventDefault(); setShowSteps(true) }}>Step by step</a></p>
+              <p className="way__fine"><a href="/?capture=1" onClick={(e) => { if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return; e.preventDefault(); setShowSteps(true) }}>Step by step</a></p>
             </section>
-            {onClose && <button type="button" className="door__try" onClick={onClose}>No app at hand? Try it on the kit first</button>}
+            <div className="door__side">
             <p className="door__others">Other ways in</p>
             {fold('local', 'Run it on your machine', 'One line in your project: your live app or its build, served from 127.0.0.1', <Laptop size={15} strokeWidth={1.75} />)}
             {more === 'local' && <section className="way__body way--next">
@@ -205,6 +203,9 @@ export function Door({ onArchive, onUrl, onSample, busy, error, carryNote, stand
               </div>}
             </>)}
             </div>}
+            {onClose && <button type="button" className="door__try" onClick={onClose}>No app at hand? Try it on the kit first</button>}
+            </div>
+            </div>
             <input ref={zipRef} type="file" accept=".zip,application/zip" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) void takeFiles([f]); e.target.value = '' }} />
             <input ref={dirRef} type="file" hidden {...({ webkitdirectory: '', directory: '' } as Record<string, string>)} onChange={(e) => { const fs = Array.from(e.target.files ?? []); if (fs.length) void takeFiles(fs); e.target.value = '' }} />
           </>
