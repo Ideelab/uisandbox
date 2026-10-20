@@ -28,6 +28,7 @@ export const ANTD_OWNS = new Set([
   'badge', 'alert', 'stat', 'progress', 'table', 'list', 'kv', 'avatar', 'empty', 'tabs',
   'navbar', 'sidenav', 'breadcrumb', 'menu', 'mediacard', 'footer',
   'link', 'pagination', 'segmented', 'dialog', 'tooltip', 'toast', 'skeleton', 'spinner',
+  'field', 'fields',
 ])
 
 /**

@@ -22,6 +22,7 @@ export const PARTS = [
   'link', 'pagination', 'segmented',                                 // the screens' controls
   'dialog', 'tooltip', 'toast', 'skeleton', 'spinner',               //   and what floats or waits
   'layer',                                                           // what an app puts over itself
+  'field', 'fields',                                                 // a form, as the kit composes one
   'elevation', 'swatches', 'typespec', 'shapes',                     // foundation specimens
 ]
 
@@ -48,7 +49,7 @@ export const TONES = ['neutral', 'brand', 'success', 'warning', 'danger']
  * with a reference to nothing and a blank tool, with one line in the console
  * about a constant nobody had heard of.
  */
-export const BINDING_ICONS = ['chevron-down', 'check', 'chevron-left', 'chevron-right', 'x', 'loader-circle']
+export const BINDING_ICONS = ['chevron-down', 'check', 'chevron-left', 'chevron-right', 'x', 'loader-circle', 'panel-left', 'ellipsis-vertical']
 
 export const esc = (s) => String(s ?? '').replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]))
 export const list = (v) => (Array.isArray(v) ? v : [])

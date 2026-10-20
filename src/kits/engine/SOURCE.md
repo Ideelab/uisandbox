@@ -114,6 +114,10 @@ table with its decision.
 | `antd-tree.mjs` | the mark; the header inside a Layout, light | 212 |
 | `icon-sets.mjs` | users, receipt and settings in every set | 212 |
 | `kit-defaults.mjs`, `kit-defaults.test.mjs` | Tailwind's surface, read from white | 212 |
+| `wall-bindings.mjs` | shadcn's classes merged by tailwind-merge, as their cn() does; field, fields and a titled panel in every kit, shadcn's in their Field and Card anatomy; a kit's frame, shadcn's their Sidebar, SiteHeader and inset; a stat as their SectionCards card; the avatar at a top bar's end | 213 |
+| `scenes.mjs` | the shell's nodes carry the user and the page's title; a side frame; Sign in, Settings and the dashboard's cards in fields and titled panels | 213 |
+| `parts.mjs`, `icon-sets.mjs` | field and fields; panel-left and ellipsis-vertical in every set | 213 |
+| `antd-tree.mjs`, `antd-nodes.mjs` | field and fields as their Form.Item; a panel's title and link; the avatar at the header's end | 213 |
 | `kits/shadcn.json`, `kits/antd.json`, `kits/antd.render.*`, `kits/material.elements.json` | refetched and re-rendered for the new parts | 211 |
 | `scenes.mjs` | the fallback font on :where(html), not #strip: a kit's own body font reaches its wall | 207 |
 | `kit-defaults.mjs` | each default read from the variable the build writes it into (daisyUI radius, Ant Design ink and muted ink); TABLE exported | 207 |

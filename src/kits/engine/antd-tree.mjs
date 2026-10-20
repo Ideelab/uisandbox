@@ -65,7 +65,7 @@ const {
   ConfigProvider, Button, Input, Select, Checkbox, Radio, Switch, Slider, Tag, Alert, Statistic,
   Progress, Table, List, Descriptions, Avatar, Empty, Tabs, Layout, Menu, Breadcrumb, Dropdown,
   Card, Typography, Flex, Space, Divider,
-  Pagination, Segmented, Tooltip, Modal, notification, Skeleton, Spin,
+  Pagination, Segmented, Tooltip, Modal, notification, Skeleton, Spin, Form,
 } = antd
 
 const e = React.createElement
@@ -110,7 +110,7 @@ function drawIcons(root) {
 
 /* Their tones, by their own names. `danger` is a property of a Button and a
    colour of a Tag, so the two tables are not the same table. */
-const BTN = { brand: { type: 'primary' }, secondary: { type: 'default' },
+const BTN = { brand: { type: 'primary' }, secondary: { type: 'default' }, outline: { type: 'default' },
   ghost: { type: 'text' }, danger: { type: 'primary', danger: true } }
 const TAG = { neutral: 'default', brand: 'processing', success: 'success', warning: 'warning', danger: 'error' }
 const ALERT = { neutral: 'info', brand: 'info', success: 'success', warning: 'warning', danger: 'error' }
@@ -130,7 +130,28 @@ const PART = {
      a Card that rendered its own children swallowed a whole card of shapes and
      left an empty box. So it renders with a marker in it and the wall puts the
      children back. */
-  panel: () => e(Card, null, e('div', { 'data-antd-kids': '' })),
+  /* a card that names a title carries it as their Title and a secondary
+     Paragraph over the content (decision 213) */
+  panel: (n) => e(Card, null,
+    n.title ? e('div', { style: { marginBottom: 24 } },
+      e('div', { style: { display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 16 } },
+        e(Typography.Title, { level: 4, style: { margin: 0 } }, text(n.title)),
+        n.link ? e(Typography.Link, { href: '#' }, text(n.link)) : null),
+      n.text ? e(Typography.Paragraph, { type: 'secondary', style: { margin: '4px 0 0' } }, text(n.text)) : null) : null,
+    e('div', { 'data-antd-kids': '' })),
+  /* their Form, vertical: Form.Item puts the label over the control and the
+     error under it (validateStatus and help), at their own spacing */
+  fields: (n, kids) => e(Form, { layout: 'vertical', component: 'div', requiredMark: false }, kids),
+  field: (n) => {
+    const bad = list(n.kids).find((c) => c?.error)
+    const label = n.label ? (n.link
+      ? e('span', { style: { display: 'flex', width: '100%', justifyContent: 'space-between' } }, text(n.label), e(Typography.Link, { href: '#' }, text(n.link)))
+      : text(n.label)) : undefined
+    return e(Form.Item, { label, validateStatus: bad ? 'error' : undefined, help: bad ? text(bad.error) : undefined,
+      extra: n.hint ? e('span', null, text(n.hint), n.hintLink ? e(React.Fragment, null, ' ', e(Typography.Link, { href: '#' }, text(n.hintLink))) : null) : undefined,
+      style: { marginBottom: 0 } },
+      ...list(n.kids).map((c, i) => element(c && c.error ? { ...c, error: undefined } : c, i)))
+  },
   divider: () => e(Divider, { style: { margin: 0 } }),
 
   heading: (n) => e(Typography.Title, { level: n.level === 2 ? 3 : 5, style: { margin: 0 } }, text(n.text)),
@@ -195,7 +216,8 @@ const PART = {
       text(n.brand)),
     e(Menu, { mode: 'horizontal', defaultSelectedKeys: ['0'], style: { flex: 1, minWidth: 0, borderBottom: 0, background: 'transparent' },
       items: list(n.items).map((t, i) => ({ key: String(i), label: t })) }),
-    e('span', { style: { display: 'flex', gap: 8 } }, kids))),
+    /* who is signed in, at the bar's end (decision 213) */
+    e('span', { style: { display: 'flex', alignItems: 'center', gap: 8 } }, kids, n.user ? e(Avatar, null, text(n.user.initials)) : null))),
   sidenav: (n) => e(Menu, { mode: 'inline', defaultSelectedKeys: ['on'], style: { border: 0, background: 'transparent' },
     items: list(n.groups).map((g, gi) => ({ key: 'g' + gi, type: 'group', label: g.title,
       children: list(g.items).map((it, i) => ({

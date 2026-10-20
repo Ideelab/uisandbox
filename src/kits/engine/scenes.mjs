@@ -336,14 +336,21 @@ export const BOARDS = [
  * The content is not tidy on purpose: a long client name, a seven-figure
  * amount, an empty column. Invented content that fits every box is how a
  * kit looks better than it is. */
-const SHELL_TOP = { p: 'navbar', brand: 'Ledgeway', mark: true, items: [], kids: [
+/* Who is signed in, and the page's name. Both belong to the shell, not to
+   one bar: a kit whose own app frame is a top bar shows Maya's avatar at its
+   end and leaves the title to the page; a kit whose frame is a full-height
+   sidebar (shadcn's, from their dashboard-01 block) puts the name and mark
+   at the sidebar's top, Maya at its foot, and the title in a slim header
+   over the content (decision 213). The nodes are the same for every kit, so
+   what is counted is what is shown. */
+const USER = { initials: 'MO', name: 'Maya Okafor', email: 'maya@okafor-studio.com' }
+const shellTop = (title) => ({ p: 'navbar', brand: 'Ledgeway', mark: true, title, user: USER, items: [], kids: [
   { p: 'input', placeholder: 'Search invoices and clients' },
   { p: 'iconrow', items: ['bell'] },
-  { p: 'avatar', text: 'MO' },
-] }
+] })
 /* signed out: the bar carries the name and nothing to do yet */
 const BARE_TOP = { p: 'navbar', brand: 'Ledgeway', mark: true, items: [], kids: [] }
-const shellSide = (on) => ({ p: 'sidenav', groups: [
+const shellSide = (on) => ({ p: 'sidenav', brand: 'Ledgeway', mark: true, user: USER, groups: [
   { title: 'Workspace', items: [
     { icon: 'layout-dashboard', text: 'Dashboard', on: on === 'Dashboard' },
     { icon: 'file-text', text: 'Invoices', count: '3', on: on === 'Invoices' },
@@ -445,19 +452,17 @@ export const SCREENS = [
   {
     id: 'signin', label: 'Sign in', shot: true, page: { shell: false },
     note: 'Ledgeway, signed out: one card on the page, a field in error.',
-    main: { p: 'panel', kids: [{ p: 'stack', gap: 3, kids: [
-      { p: 'heading', level: 2, text: 'Sign in to Ledgeway' },
-      { p: 'muted', text: 'Welcome back. Use your work email.' },
-      { p: 'button', tone: 'secondary', text: 'Continue with single sign-on' },
-      { p: 'divider' },
-      { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Email' }, { p: 'input', value: 'maya@okafor-studio', error: 'Enter the whole address, with the part after the dot.' }] },
-      { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Password' }, { p: 'input', value: 'correct-horse', secret: true }] },
-      { p: 'row', between: true, kids: [
-        { p: 'checkbox', on: true, text: 'Keep me signed in' },
-        { p: 'link', text: 'Forgot your password?' },
+    /* composed the way a login form is (shadcn's login-01, decision 213): a
+       card with its own title, fields in a group, the link in the password
+       label row, the second way in under the first */
+    main: { p: 'panel', title: 'Sign in to Ledgeway', text: 'Welcome back. Use your work email.', kids: [{ p: 'fields', kids: [
+      { p: 'field', label: 'Email', kids: [{ p: 'input', value: 'maya@okafor-studio', error: 'Enter the whole address, with the part after the dot.' }] },
+      { p: 'field', label: 'Password', link: 'Forgot your password?', kids: [{ p: 'input', value: 'correct-horse', secret: true }] },
+      { p: 'checkbox', on: true, text: 'Keep me signed in' },
+      { p: 'field', hint: 'New to Ledgeway?', hintLink: 'Create an account', kids: [
+        { p: 'button', tone: 'brand', text: 'Sign in' },
+        { p: 'button', tone: 'outline', text: 'Continue with single sign-on' },
       ] },
-      { p: 'button', tone: 'brand', text: 'Sign in' },
-      { p: 'row', kids: [{ p: 'muted', text: 'New to Ledgeway?' }, { p: 'link', text: 'Create an account' }] },
     ] }] },
   },
   {
@@ -475,21 +480,19 @@ export const SCREENS = [
         { p: 'stat', label: 'Paid on time', value: '94%' },
       ] },
       { p: 'grid', tracks: '3fr 2fr', kids: [
-        { p: 'panel', kids: [{ p: 'stack', gap: 3, kids: [
-          { p: 'heading', text: 'Revenue by month' },
+        { p: 'panel', title: 'Revenue by month', text: 'Paid and outstanding, April to September', kids: [
           { p: 'chart', legend: ['Paid', 'Outstanding'], bars: [
             { label: 'Apr', a: 82, b: 34 }, { label: 'May', a: 96, b: 30 }, { label: 'Jun', a: 74, b: 41 },
             { label: 'Jul', a: 110, b: 28 }, { label: 'Aug', a: 91, b: 33 }, { label: 'Sep', a: 124, b: 22 },
           ] },
-        ] }] },
-        { p: 'panel', kids: [{ p: 'stack', gap: 3, kids: [
-          { p: 'heading', text: 'Recent activity' },
+        ] },
+        { p: 'panel', title: 'Recent activity', text: 'Payments, reminders and new clients', link: 'View all', kids: [
           { p: 'list', rows: [
             { icon: 'credit-card', title: 'Invoice INV-1040 paid', sub: 'Vandermeer Architecten & Partners', meta: 'Today' },
             { icon: 'bell', title: 'Reminder sent', sub: 'INV-1042 · Halden & Rowe', meta: 'Yesterday' },
             { icon: 'users', title: 'New client added', sub: 'Orchard Lane Bakery', meta: '11 Sep' },
           ] },
-        ] }] },
+        ] },
       ] },
     ] },
   },
@@ -508,6 +511,7 @@ export const SCREENS = [
             ['Due', '12 Sep 2026'],
             ['Amount', '€4,820.00'],
           ] },
+          { p: 'link', text: 'Download the PDF' },
           { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Paid so far' }, { p: 'progress', value: 40 }] },
           { p: 'row', between: true, kids: [{ p: 'muted', text: 'Payment link' }, { p: 'tooltip', icon: 'copy', label: 'Copy link', text: 'Copy the payment link' }] },
           { p: 'menu', trigger: 'More', label: 'Invoice INV-1042', items: ['Duplicate', 'Send a reminder', 'Mark as paid'], danger: 'Void invoice' },
@@ -522,12 +526,12 @@ export const SCREENS = [
       { p: 'heading', level: 2, text: 'Settings' },
       { p: 'tabs', items: ['Workspace', 'Billing', 'Notifications', 'Members'] },
       { p: 'grid', tracks: '3fr 2fr', kids: [
-        { p: 'panel', kids: [{ p: 'stack', gap: 3, kids: [
-          { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Company name' }, { p: 'input', value: 'Okafor Design Studio' }] },
-          { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Billing email' }, { p: 'input', value: 'accounts@okafor-studio.example' }] },
-          { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Currency' }, { p: 'select', options: ['EUR, euro', 'USD, US dollar', 'GBP, pound sterling'] }] },
-          { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Payment reminders' }, { p: 'segmented', items: ['Off', 'Gentle', 'Firm'], on: 1 }] },
-          { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Days before the due date' }, { p: 'slider', value: 40 }] },
+        { p: 'panel', title: 'Workspace', text: 'How Ledgeway signs and sends your invoices.', kids: [{ p: 'fields', kids: [
+          { p: 'field', label: 'Company name', kids: [{ p: 'input', value: 'Okafor Design Studio' }] },
+          { p: 'field', label: 'Billing email', hint: 'Clients reply to this address.', kids: [{ p: 'input', value: 'accounts@okafor-studio.example' }] },
+          { p: 'field', label: 'Currency', kids: [{ p: 'select', options: ['EUR, euro', 'USD, US dollar', 'GBP, pound sterling'] }] },
+          { p: 'field', label: 'Payment reminders', kids: [{ p: 'segmented', items: ['Off', 'Gentle', 'Firm'], on: 1 }] },
+          { p: 'field', label: 'Days before the due date', kids: [{ p: 'slider', value: 40 }] },
           { p: 'divider' },
           { p: 'switch', on: true, text: 'Email me when an invoice is paid' },
           { p: 'switch', on: false, text: 'A weekly summary' },
@@ -535,11 +539,9 @@ export const SCREENS = [
         ] }] },
         { p: 'stack', gap: 3, kids: [
           { p: 'alert', tone: 'success', text: 'Saved. Your changes are live.' },
-          { p: 'panel', kids: [{ p: 'stack', gap: 3, kids: [
-            { p: 'heading', text: 'Danger zone' },
-            { p: 'muted', text: 'Only an owner can delete this workspace and its 214 invoices.' },
+          { p: 'panel', title: 'Danger zone', text: 'Only an owner can delete this workspace and its 214 invoices.', kids: [
             { p: 'button', tone: 'danger', text: 'Delete workspace', disabled: true },
-          ] }] },
+          ] },
         ] },
       ] },
     ] },
@@ -604,10 +606,11 @@ export const nodeOf = (card) => (card.panel ? { p: 'panel', kids: [card.node] } 
  * a card can never be on the wall and missing from the count — and counted on
  * exactly the markup the wall shows, not on an unwrapped version of it.
  */
+const titleOf = (b) => b.page.title ?? b.page.nav
 /* A page screen (decision 212) is three cards to everything that counts or
    tests: its top bar, its side bar and its content, each rendered whole. */
 const pageCards = (b) => [
-  ...(b.page.shell ? [{ id: `${b.id}-top`, title: '', node: SHELL_TOP }, { id: `${b.id}-side`, title: '', node: shellSide(b.page.nav) }] : [{ id: `${b.id}-top`, title: '', node: BARE_TOP }]),
+  ...(b.page.shell ? [{ id: `${b.id}-top`, title: '', node: shellTop(titleOf(b)) }, { id: `${b.id}-side`, title: '', node: shellSide(b.page.nav) }] : [{ id: `${b.id}-top`, title: '', node: BARE_TOP }]),
   { id: `${b.id}-main`, title: '', node: b.main },
 ]
 export const SCENES = [...BOARDS, ...SCREENS].flatMap((b) => b.page
@@ -663,7 +666,11 @@ export const safeJson = (value) => JSON.stringify(value).split('</scr' + 'ipt').
    bare page with one thing in its middle, the way a sign-in sits. No board
    caption: the screen's name is the picker's. */
 const pageMarkup = (b, bind) => b.page.shell
-  ? `<div data-shell><div data-shell-top>${render(SHELL_TOP, bind)}</div><aside data-shell-side>${render(shellSide(b.page.nav), bind)}</aside><div data-shell-main>${render(b.main, bind)}</div></div>`
+  ? bind._frame?.side
+    /* the sidebar runs the full height and the bar sits over the content,
+       both inside the kit's own wrapper and inset (decision 213) */
+    ? `<div data-shell data-frame="side" class="${bind._frame.wrap ?? ''}"><aside data-shell-side>${render(shellSide(b.page.nav), bind)}</aside><div data-shell-body class="${bind._frame.body ?? ''}"><div data-shell-top>${render(shellTop(titleOf(b)), bind)}</div><div data-shell-main>${render(b.main, bind)}</div></div></div>`
+    : `<div data-shell><div data-shell-top>${render(shellTop(titleOf(b)), bind)}</div><aside data-shell-side>${render(shellSide(b.page.nav), bind)}</aside><div data-shell-main>${render(b.main, bind)}</div></div>`
   : `<div data-bare-page><div data-shell-top>${render(BARE_TOP, bind)}</div><div data-bare><div data-bare-box>${render(b.main, bind)}</div></div></div>`
 export const wallMarkup = (bind, boards = BOARDS) => `<main id="strip">${boards.map((b) => b.page
   ? `<section class="board" id="b_${b.id}" data-board="${b.id}" data-shot data-page>${pageMarkup(b, bind)}</section>`
@@ -715,14 +722,18 @@ body{margin:0;overflow:hidden}
 [data-shell-top]{grid-column:1/-1;min-width:0}
 [data-shell-side]{padding:16px 12px;border-inline-end:1px solid rgb(128 128 128 / .18);min-width:0}
 [data-shell-main]{display:flex;flex-direction:column;gap:20px;padding:28px 32px 40px;min-width:0;max-width:1240px}
+[data-shell][data-frame=side]{display:flex;align-items:flex-start}
+[data-frame=side]>[data-shell-side]{flex:none;padding:0;border:0;position:sticky;top:0;height:100vh}
+[data-frame=side]>[data-shell-body]{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;align-self:stretch}
+[data-frame=side] [data-shell-main]{padding:24px;gap:24px}
 [data-bare-page]{display:flex;flex-direction:column;min-height:100vh;width:100%}
 [data-bare]{flex:1;display:grid;place-items:center;padding:32px 16px 64px}
-[data-bare-box]{width:min(420px,100%)}
+[data-bare-box]{width:min(384px,100%)}
 @media (max-width:1100px){[data-shell-main] [style*="grid-template-columns:repeat(4"]{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
 @media (max-width:760px){
   [data-shell]{grid-template-columns:minmax(0,1fr)}
   [data-shell-side]{display:none}
-  [data-shell-main]{padding:16px}
+  [data-shell-main],[data-frame=side] [data-shell-main]{padding:16px}
   [data-shell-main] [style*="grid-template-columns"]{grid-template-columns:minmax(0,1fr)!important}
   /* a table keeps its columns and scrolls inside its own box, the way an
      app's table does on a phone; display:block on the table itself emptied

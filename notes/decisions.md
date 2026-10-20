@@ -3332,3 +3332,67 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     hold-outs ok on all eight kit builds, Check 1:1 on Void an invoice in
     shadcn: 189 elements, 0 differences. Every screen photographed in all
     eight kits at 1280 and 390 and looked at.
+
+213. shadcn, measured against its own blocks.
+
+    Alexander: the last 15% of a design system is its finesse (vertical
+    rhythm, padding, greys, type weight and size, the distance from a label
+    to its field), and our screens should be indistinguishable from the
+    kit's own examples; if that cannot be done, better to build one top
+    system of our own. The method, on shadcn first: build their own blocks
+    with their own CLI into an empty Vite app (base-nova, as init installs
+    it: login-01 and dashboard-01), render theirs and ours at 1280 in the
+    same browser, and compare every element's box, size, weight, line
+    height and colour.
+
+    Before, on Sign in: the title 24px/600 against their 16px/500, title to
+    description 12px against 4, label to input 4 against 8, field to field
+    12 against 20, a label's line 14px against 19.25, the password link a
+    32px button against a text-sm link, the card 420 wide against 384. The
+    cause was anatomy, not values: they build a form from Field, FieldGroup,
+    FieldLabel and FieldDescription, and a card from CardHeader, CardTitle
+    and CardDescription; we had a stack of a label and an input. So two
+    parts, field and fields, and a panel that can name a title, a line under
+    it and a link. shadcn answers them in that anatomy, Ant in its
+    Form.Item, the other six in their own label, link and stack until each
+    is measured.
+
+    And their cn(): they merge classes with tailwind-merge, so a variant's
+    border-border replaces the base's border-transparent and a FieldLabel's
+    leading-snug replaces its Label's leading-none. We joined them and let
+    the stylesheet's order choose: the outline button had no border, a field
+    label weighed 400. sCva and the label merge as theirs do now
+    (tailwind-merge 3, a dev dependency of the build). A checkbox with its
+    text is their horizontal Field.
+
+    After: Sign in sits on login-01's pixels for every box measured (title
+    y16, description y42, label y78, input y105, the password link in the
+    label row, the buttons 40 apart, the line under them 8 below), with the
+    same weights and colours (rgb 10,10,10 is their oklch 0.145).
+
+    The dashboard showed that the larger difference was the frame. Every
+    dashboard and sidebar block of theirs opens on a sidebar the full height
+    of the window, the name at its top and the user at its foot, with the
+    page as an inset under a 48px header that carries its name; ours had a
+    bar across the top. A kit now chooses its frame. shadcn's is the side
+    one, in their Sidebar (collapsible none, their default 16rem):
+    SidebarHeader with the name as dashboard-01 sets it, NavUser in the
+    footer, their SiteHeader with the trigger, a separator and the title,
+    the inset's peer rules written out. The shell's nodes carry the user and
+    the page's title for every kit, so what is counted is still what is
+    shown; a kit with a top bar shows the avatar at its end, as before.
+    Against dashboard-01: the name, the menu items (32px, padding 8), the
+    group label (12/500/16), the header (48), the trigger (28 at y18) and
+    the title (16/500 at y20) on the same pixels; only the width differs,
+    their default 16rem against the 18rem dashboard-01 sets. A stat is
+    their SectionCards card (the brand at 5% fading up, the figure 2xl
+    semibold, 3xl from 250px), a page title their tasks example's, a
+    heading in a card their CardTitle, and the signed-out page has
+    login-02's name row, with no rule under it.
+
+    Next: the same for the other seven, each against its own examples. Seen
+    on the way and left for Ant's turn: its grid sets no gap between cards,
+    and its count tag sits too tall in the menu.
+
+    Measured: fidelity 100% on all eight, tests green (474, 145, 121), kit
+    gates green (101, 18), hold-outs without regressions.

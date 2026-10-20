@@ -18,6 +18,11 @@
 import { esc, list, PHOTO } from './parts.mjs'
 import { ANTD_OWNS } from './antd-nodes.mjs'
 import { MAP, ROLES } from './roles.mjs'
+/* shadcn composes its classes with cn(), which is tailwind-merge: a variant's
+   border-border replaces the base's border-transparent, a FieldLabel's
+   leading-snug replaces its Label's leading-none. Joining them without it
+   left both, and the stylesheet's order picked the wrong one (decision 213). */
+import { twMerge } from 'tailwind-merge'
 
 const cls = (...c) => c.filter(Boolean).join(' ')
 const A = (n, k, tag, c, extra = '') => `<${tag} class="${c}"${extra}>${n.text != null ? esc(n.text) : k}</${tag}>`
@@ -129,7 +134,7 @@ export const bars = (n) => {
  * palette — while the generated theme dutifully wrote --color-success and
  * friends. So the three semantic knobs wrote variables nothing on the wall
  * read, and turning them changed not one pixel here. Counted, not noticed. */
-const TW_BTN = { brand: 'bg-brand text-brand-foreground hover:opacity-90', secondary: 'bg-surface text-ink border border-line',
+const TW_BTN = { brand: 'bg-brand text-brand-foreground hover:opacity-90', secondary: 'bg-surface text-ink border border-line', outline: 'bg-surface text-ink border border-line',
   ghost: 'text-ink hover:bg-surface', danger: 'bg-danger text-white' }
 const TW_TONE = { neutral: 'bg-surface text-ink border-line', brand: 'bg-brand/10 text-brand border-brand/25',
   success: 'bg-success/10 text-success border-success/25', warning: 'bg-warning/10 text-warning border-warning/25',
@@ -225,7 +230,7 @@ const tailwind = {
 }
 
 /* ── daisyUI ─────────────────────────────────────────────────────────────── */
-const DA_BTN = { brand: 'btn-primary', secondary: '', ghost: 'btn-ghost', danger: 'btn-error' }
+const DA_BTN = { brand: 'btn-primary', secondary: '', outline: 'btn-outline', ghost: 'btn-ghost', danger: 'btn-error' }
 const DA_TONE = { neutral: 'badge-neutral', brand: 'badge-primary', success: 'badge-success', warning: 'badge-warning', danger: 'badge-error' }
 const DA_ALERT = { neutral: '', brand: 'alert-info', success: 'alert-success', warning: 'alert-warning', danger: 'alert-error' }
 const daisyui = {
@@ -314,7 +319,7 @@ const daisyui = {
 }
 
 /* ── Bootstrap ───────────────────────────────────────────────────────────── */
-const BS_BTN = { brand: 'btn-primary', secondary: 'btn-secondary', ghost: 'btn-link', danger: 'btn-danger' }
+const BS_BTN = { brand: 'btn-primary', secondary: 'btn-secondary', outline: 'btn-outline-secondary', ghost: 'btn-link', danger: 'btn-danger' }
 const BS_TONE = { neutral: 'text-bg-secondary', brand: 'text-bg-primary', success: 'text-bg-success', warning: 'text-bg-warning', danger: 'text-bg-danger' }
 const BS_ALERT = { neutral: 'alert-secondary', brand: 'alert-primary', success: 'alert-success', warning: 'alert-warning', danger: 'alert-danger' }
 /* Bootstrap's docs pair every check with an id and a label[for], and put
@@ -452,24 +457,52 @@ const sSlot = (name) => SC_SLOT[name] ?? `shadcn-missing-${name}`
 const sCva = (part, which, pick = {}) => {
   const c = SC[part]?.cva?.[which]
   if (!c) return `shadcn-missing-${which}`
-  return [c.base, ...Object.entries(pick).map(([g, k]) => c.variants?.[g]?.[k]).filter(Boolean)].join(' ')
+  return twMerge(c.base, ...Object.entries(pick).map(([g, k]) => c.variants?.[g]?.[k]).filter(Boolean))
 }
 /* our tones, in their variant names — the only mapping in here, because they
    ship no success or warning and we will not invent one for them */
-const SC_BTN = { brand: 'default', secondary: 'secondary', ghost: 'ghost', danger: 'destructive' }
+const SC_BTN = { brand: 'default', secondary: 'secondary', outline: 'outline', ghost: 'ghost', danger: 'destructive' }
 const SC_BADGE = { neutral: 'secondary', brand: 'default', success: 'default', warning: 'secondary', danger: 'destructive' }
 const shadcn = {
   _id: 'shadcn/ui',
+  /* their app frame is a sidebar (SidebarProvider, Sidebar, SidebarInset),
+     not a bar across the top: every one of their dashboard and sidebar
+     blocks opens on it. The wrapper and inset are their slots, the inset's
+     peer-data-[variant=inset] rules written out because our sidebar is
+     their collapsible="none" one and has no peer to read (decision 213). */
+  /* a getter: their slots are handed in after this table is made */
+  get _frame() { return { side: true, wrap: twMerge(sSlot('sidebar-wrapper'), 'bg-sidebar'), body: twMerge(sSlot('sidebar-inset'), 'md:m-2 md:ml-0 md:rounded-xl md:shadow-sm') } },
   /* layout is Tailwind's, because shadcn ships none */
   stack:   (n, k) => `<div class="flex flex-col gap-${n.gap ?? 3}">${k}</div>`,
   row:     (n, k) => `<div class="flex flex-wrap items-center gap-${n.gap ?? 2}${n.between ? ' justify-between' : ''}">${k}</div>`,
-  grid:    (n, k) => `<div class="grid gap-3" style="grid-template-columns:${tracks(n)}">${k}</div>`,
-  panel:   (n, k) => `<div data-slot="card" class="${sSlot('card')}"><div data-slot="card-content" class="${sSlot('card-content')}">${k}</div></div>`,
+  /* gap-4, the gap their blocks set between cards (dashboard-01's SectionCards) */
+  grid:    (n, k) => `<div class="grid gap-4" style="grid-template-columns:${tracks(n)}">${k}</div>`,
+  /* their Card is header, content and footer; a card that names a title
+     gets their CardHeader with CardTitle and CardDescription (decision 213) */
+  panel:   (n, k) => `<div data-slot="card" class="${sSlot('card')}">${n.title ? `<div data-slot="card-header" class="${sSlot('card-header')}"><div data-slot="card-title" class="${sSlot('card-title')}">${esc(n.title)}</div>${n.text ? `<div data-slot="card-description" class="${sSlot('card-description')}">${esc(n.text)}</div>` : ''}${
+    /* a link in the head is their CardAction */
+    n.link ? `<div data-slot="card-action" class="${sSlot('card-action')}">${shadcn.link({ text: n.link })}</div>` : ''}</div>` : ''}<div data-slot="card-content" class="${sSlot('card-content')}">${k}</div></div>`,
   divider: () => `<div data-slot="separator" role="none" data-orientation="horizontal" class="${sSlot('separator')}"></div>`,
-  heading: (n, k) => A(n, k, `h${n.level ?? 3}`, n.level === 2 ? 'text-2xl leading-none font-semibold' : 'leading-none font-semibold'),
+  /* a page's title as their tasks example sets it; a heading inside a card
+     as their CardTitle does (decision 213) */
+  heading: (n, k) => A(n, k, `h${n.level ?? 3}`, n.level === 2 ? 'text-2xl font-semibold tracking-tight' : sSlot('card-title')),
   text:    (n, k) => A(n, k, 'p', 'text-sm'),
   muted:   (n, k) => A(n, k, 'p', 'text-muted-foreground text-sm'),
   label:   (n, k) => A(n, k, 'label', sSlot('label'), ' data-slot="label"'),
+  /* a link as their blocks write one: text-sm, the ink colour, underlined on
+     hover, not a button in link clothing */
+  link:    (n, k) => A(n, k, 'a', 'text-sm underline-offset-4 hover:underline', ' href="#"'),
+  /* Field and FieldGroup, their form anatomy: label 8px over the control,
+     fields 20px apart, the error and the description inside the field */
+  field:   (n, k) => {
+    const bad = list(n.kids).some((c) => c?.error)
+    /* FieldLabel is their Label with the field's classes merged over it */
+    const label = n.label ? `<label data-slot="field-label" class="${twMerge(sSlot('label'), sSlot('field-label'))}">${esc(n.label)}</label>` : ''
+    const head = n.link ? `<div class="flex items-center">${label}<a href="#" class="ml-auto inline-block text-sm underline-offset-4 hover:underline">${esc(n.link)}</a></div>` : label
+    const hint = n.hint ? `<p data-slot="field-description" class="${sSlot('field-description')}${n.label ? '' : ' text-center'}">${esc(n.hint)}${n.hintLink ? ` <a href="#">${esc(n.hintLink)}</a>` : ''}</p>` : ''
+    return `<div role="group" data-slot="field" data-orientation="vertical"${bad ? ' data-invalid="true"' : ''} class="${sCva('field', 'fieldVariants', { orientation: 'vertical' })}">${head}${k}${hint}</div>`
+  },
+  fields:  (n, k) => `<div data-slot="field-group" class="${sSlot('field-group')}">${k}</div>`,
   button:  (n, k) => {
     const variant = SC_BTN[n.tone ?? 'brand']
     return A(n, k, 'button', sCva('button', 'buttonVariants', { variant, size: 'default' }),
@@ -498,8 +531,8 @@ const shadcn = {
     }</div></div>`,
   /* their checkbox, radio and switch are Base UI primitives whose classes key
      on data-checked — so the checked state here is theirs, not a drawing of it */
-  checkbox: (n) => `<label class="${sSlot('label')}" data-slot="label"><button type="button" role="checkbox" aria-checked="${!!n.on}" data-slot="checkbox" ${bState(n.on)} class="${sSlot('checkbox')}">${
-    n.on ? `<span data-slot="checkbox-indicator" data-checked class="${sSlot('checkbox-indicator')}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="size-3.5"><path d="M20 6 9 17l-5-5"/></svg></span>` : ''}</button>${esc(n.text ?? '')}</label>`,
+  checkbox: (n) => `<div role="group" data-slot="field" data-orientation="horizontal" class="${sCva('field', 'fieldVariants', { orientation: 'horizontal' })}"><button type="button" role="checkbox" aria-checked="${!!n.on}" data-slot="checkbox" ${bState(n.on)} class="${sSlot('checkbox')}">${
+    n.on ? `<span data-slot="checkbox-indicator" data-checked class="${sSlot('checkbox-indicator')}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="size-3.5"><path d="M20 6 9 17l-5-5"/></svg></span>` : ''}</button><label data-slot="field-label" class="${twMerge(sSlot('label'), sSlot('field-label'), 'font-normal')}">${esc(n.text ?? '')}</label></div>`,
   radio:   (n) => `<div role="radiogroup" data-slot="radio-group" class="${sSlot('radio-group')}">${list(n.items).map((t, i) => {
     const on = i === (n.on ?? 0)
     /* their indicator holds a dot: in base-nova the chosen radio fills with
@@ -523,7 +556,9 @@ const shadcn = {
   progress: (n) => `<div data-slot="progress" role="progressbar" aria-valuenow="${n.value ?? 60}" class="${sSlot('progress')}"><div data-slot="progress-track" class="${sSlot('progress-track')}"><div data-slot="progress-indicator" class="${sSlot('progress-indicator')}" style="width:${n.value ?? 60}%"></div></div></div>`,
   badge:   (n, k) => A(n, k, 'span', sCva('badge', 'badgeVariants', { variant: SC_BADGE[n.tone ?? 'neutral'] }), ` data-slot="badge"`),
   alert:   (n, k) => `<div role="alert" data-slot="alert" class="${sCva('alert', 'alertVariants', { variant: n.tone === 'danger' ? 'destructive' : 'default' })}"><div data-slot="alert-description" class="${sSlot('alert-description')}">${n.text != null ? esc(n.text) : k}</div></div>`,
-  stat:    (n) => `<div data-slot="card" class="${sSlot('card')}"><div data-slot="card-header" class="${sSlot('card-header')}"><div data-slot="card-description" class="${sSlot('card-description')}">${esc(n.label)}</div><div data-slot="card-title" class="${sSlot('card-title')} text-2xl tabular-nums">${esc(n.value)}</div></div></div>`,
+  /* dashboard-01's SectionCards: a card in the brand at 5%, fading up, the
+     figure at text-2xl semibold, 3xl once the card is 250px wide */
+  stat:    (n) => `<div data-slot="card" class="${twMerge(sSlot('card'), '@container/card bg-linear-to-t from-primary/5 to-card shadow-xs dark:bg-card')}"><div data-slot="card-header" class="${sSlot('card-header')}"><div data-slot="card-description" class="${sSlot('card-description')}">${esc(n.label)}</div><div data-slot="card-title" class="${twMerge(sSlot('card-title'), 'text-2xl font-semibold tabular-nums @[250px]/card:text-3xl')}">${esc(n.value)}</div></div></div>`,
   table:   (n) => `<div data-slot="table-container" class="${sSlot('table-container')}"><table data-slot="table" class="${sSlot('table')}"><thead data-slot="table-header" class="${sSlot('table-header')}"><tr data-slot="table-row" class="${sSlot('table-row')}">${
     list(n.cols).map((c) => `<th data-slot="table-head" class="${sSlot('table-head')}">${esc(c)}</th>`).join('')}</tr></thead><tbody data-slot="table-body" class="${sSlot('table-body')}">${
     list(n.rows).map((r) => `<tr data-slot="table-row" class="${sSlot('table-row')}">${list(r).map((c) => `<td data-slot="table-cell" class="${sSlot('table-cell')}">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`,
@@ -547,16 +582,33 @@ const shadcn = {
     <div data-slot="empty-content" class="${sSlot('empty-content')}">${k}</div></div>`,
   tabs:    (n) => `<div data-slot="tabs" data-orientation="horizontal" class="${sSlot('tabs')}"><div role="tablist" data-slot="tabs-list" data-variant="default" data-orientation="horizontal" class="${sCva('tabs', 'tabsListVariants', { variant: 'default' })}">${
     list(n.items).map((t, i) => `<button role="tab" aria-selected="${i === 0}" data-slot="tabs-trigger" data-orientation="horizontal"${i === 0 ? ' data-active' : ''} class="${sSlot('tabs-trigger')}">${esc(t)}</button>`).join('')}</div></div>`,
-  navbar:  (n, k) => `<header class="bg-background flex flex-wrap items-center gap-x-6 gap-y-2 border-b px-4 py-3">
+  /* on a page, dashboard-01's SiteHeader: 48px, the sidebar trigger, a
+     vertical separator, the page's name at text-base medium. The name and
+     mark are the sidebar's then, and so is Maya. */
+  navbar:  (n, k) => n.title ? `<header class="flex h-12 shrink-0 items-center gap-2 border-b"><div class="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
+    <button type="button" data-slot="sidebar-trigger" data-sidebar="trigger" data-variant="ghost" data-size="icon-sm" class="${twMerge(sCva('button', 'buttonVariants', { variant: 'ghost', size: 'icon-sm' }), '-ml-1')}">${ico('panel-left')}<span class="sr-only">Toggle Sidebar</span></button>
+    <div data-slot="separator" role="none" data-orientation="vertical" class="${twMerge(sSlot('separator'), 'mx-2 h-4 data-vertical:self-auto')}"></div>
+    <h1 class="text-base font-medium">${esc(n.title)}</h1>
+    <div class="ml-auto flex items-center gap-2">${k}</div></div></header>`
+    /* a bar with only the name, over a signed-out page: login-02's, the
+       name and mark on their own at p-6, no rule under them */
+    : !list(n.items).length && !k ? `<div class="flex justify-center gap-2 p-6 md:justify-start md:p-10"><a href="#" class="flex items-center gap-2 font-medium">${markOf('var(--primary)')}${esc(n.brand)}</a></div>`
+    : `<header class="bg-background flex flex-wrap items-center gap-x-6 gap-y-2 border-b px-4 py-3">
     <span class="text-sm font-semibold">${brandOf(n, 'var(--primary)')}</span>
     <nav data-slot="navigation-menu" class="${sSlot('navigation-menu')}"><ul data-slot="navigation-menu-list" class="${sSlot('navigation-menu-list')}">${
       list(n.items).map((t) => `<li data-slot="navigation-menu-item"><a href="#" data-slot="navigation-menu-link" class="${sSlot('navigation-menu-link')}">${esc(t)}</a></li>`).join('')}</ul></nav>
     <div class="ml-auto flex items-center gap-2">${k}</div></header>`,
-  sidenav: (n) => `<div data-slot="sidebar-content" class="${sSlot('sidebar-content')} bg-sidebar text-sidebar-foreground rounded-lg p-2">${list(n.groups).map((g) => `<div data-slot="sidebar-group" class="${sSlot('sidebar-group')}">
-    <div data-slot="sidebar-group-label" class="${sSlot('sidebar-group-label')}">${esc(g.title)}</div>
-    <div data-slot="sidebar-group-content" class="${sSlot('sidebar-group-content')}"><ul data-slot="sidebar-menu" class="${sSlot('sidebar-menu')}">${
-      list(g.items).map((it) => `<li data-slot="sidebar-menu-item" class="${sSlot('sidebar-menu-item')}"><a href="#" data-slot="sidebar-menu-button" data-size="default" data-active="${!!it.on}" class="${sCva('sidebar', 'sidebarMenuButtonVariants', { variant: 'default', size: 'default' })}">${ico(it.icon)}<span>${esc(it.text)}</span></a>${
-        it.count ? `<div data-slot="sidebar-menu-badge" class="${sSlot('sidebar-menu-badge')}">${esc(it.count)}</div>` : ''}</li>`).join('')}</ul></div></div>`).join('')}</div>`,
+  /* on a page, their Sidebar (collapsible="none", 16rem, their default):
+     at p-2, the room their inset variant's container keeps around it;
+     SidebarHeader with the name as dashboard-01 sets it (a menu button at
+     p-1.5, text-base semibold), the groups, and NavUser in SidebarFooter */
+  sidenav: (n) => n.brand ? `<div data-slot="sidebar" class="${twMerge(sSlot('sidebar'), 'p-2')}" style="--sidebar-width:16rem">
+    <div data-slot="sidebar-header" data-sidebar="header" class="${sSlot('sidebar-header')}"><ul data-slot="sidebar-menu" class="${sSlot('sidebar-menu')}"><li data-slot="sidebar-menu-item" class="${sSlot('sidebar-menu-item')}"><a href="#" data-slot="sidebar-menu-button" data-size="default" class="${twMerge(sCva('sidebar', 'sidebarMenuButtonVariants', { variant: 'default', size: 'default' }), 'p-1.5')}">${markOf('var(--primary)').replace('<svg', '<svg class="size-5!"')}<span class="text-base font-semibold">${esc(n.brand)}</span></a></li></ul></div>
+    <div data-slot="sidebar-content" data-sidebar="content" class="${sSlot('sidebar-content')}">${scGroups(n)}</div>
+    ${n.user ? `<div data-slot="sidebar-footer" data-sidebar="footer" class="${sSlot('sidebar-footer')}"><ul data-slot="sidebar-menu" class="${sSlot('sidebar-menu')}"><li data-slot="sidebar-menu-item" class="${sSlot('sidebar-menu-item')}"><a href="#" data-slot="sidebar-menu-button" data-size="lg" class="${sCva('sidebar', 'sidebarMenuButtonVariants', { variant: 'default', size: 'lg' })}">
+      <span data-slot="avatar" class="${twMerge(sSlot('avatar'), 'size-8 rounded-lg grayscale')}"><span data-slot="avatar-fallback" class="${twMerge(sSlot('avatar-fallback'), 'rounded-lg')}">${esc(n.user.initials)}</span></span>
+      <div class="grid flex-1 text-left text-sm leading-tight"><span class="truncate font-medium">${esc(n.user.name)}</span><span class="truncate text-xs text-foreground/70">${esc(n.user.email)}</span></div>${ico('ellipsis-vertical', 16, 'ml-auto size-4')}</a></li></ul></div>` : ''}</div>`
+    : `<div data-slot="sidebar-content" class="${sSlot('sidebar-content')} bg-sidebar text-sidebar-foreground rounded-lg p-2">${scGroups(n)}</div>`,
   breadcrumb: (n) => `<nav aria-label="breadcrumb" data-slot="breadcrumb"><ol data-slot="breadcrumb-list" class="${sSlot('breadcrumb-list')}">${
     list(n.items).map((t, i, a) => `${i ? `<li role="presentation" data-slot="breadcrumb-separator" class="${sSlot('breadcrumb-separator')}">/</li>` : ''}<li data-slot="breadcrumb-item" class="${sSlot('breadcrumb-item')}">${
       i === a.length - 1 ? `<span role="link" aria-current="page" data-slot="breadcrumb-page" class="${sSlot('breadcrumb-page')}">${esc(t)}</span>`
@@ -608,7 +660,7 @@ const shadcn = {
  * spacing: Material publishes colour and shape tokens and no spacing scale, and
  * ships no layout components, so the gaps between things are ours. That is
  * declared rather than hidden; see gaps() below. */
-const MD_BTN = { brand: 'md-filled-button', secondary: 'md-filled-tonal-button', ghost: 'md-text-button', danger: 'md-filled-button' }
+const MD_BTN = { brand: 'md-filled-button', secondary: 'md-filled-tonal-button', outline: 'md-outlined-button', ghost: 'md-text-button', danger: 'md-filled-button' }
 const MD_CHIP = { neutral: 'md-assist-chip', brand: 'md-suggestion-chip', success: 'md-assist-chip', warning: 'md-assist-chip', danger: 'md-assist-chip' }
 /* their component tokens, the documented way to re-tone one instance */
 const MD_CHIP_TOK = {
@@ -780,7 +832,7 @@ const rxAccent = (tone) => {
      sweep the day it first ran. Neutral stays bare: gray is gray. */
   return `${accent ? ` data-accent-color="${accent}"` : ''}${t === 'neutral' ? '' : ` data-tone="${t}"`}`
 }
-const RX_BTN = { brand: 'solid', secondary: 'soft', ghost: 'ghost', danger: 'solid' }
+const RX_BTN = { brand: 'solid', secondary: 'soft', outline: 'outline', ghost: 'ghost', danger: 'solid' }
 /* the steps of its own scales that carry a role it takes as a SETTING */
 const RX_SHOWN = { brand: '--accent-9', onBrand: '--accent-contrast', ink: '--gray-12',
   inkMuted: '--gray-11', line: '--gray-a6', focus: '--focus-8' }
@@ -962,6 +1014,7 @@ const MN_BTN = {
      nothing reads. */
   brand: '--button-color:var(--mantine-primary-color-contrast)', secondary: '--button-bg:var(--mantine-color-default);--button-color:var(--mantine-color-text);--button-bd:1px solid var(--mantine-color-default-border)',
   ghost: '--button-bg:transparent;--button-color:var(--mantine-primary-color-filled)',
+  outline: '--button-bg:var(--mantine-color-default);--button-color:var(--mantine-color-text);--button-bd:1px solid var(--mantine-color-default-border)',
   /* their semantic name, not a red I picked */
   danger: '--button-bg:var(--mantine-color-error);--button-color:var(--mantine-color-white)',
 }
@@ -1268,7 +1321,6 @@ Object.assign(bootstrap, {
    stylesheet and a set of CSS variables, not classes: the wall writes it in
    the tokens shadcn hands Sonner (popover, its foreground, border, radius). */
 Object.assign(shadcn, {
-  link:    (n, k) => A(n, k, 'a', sCva('button', 'buttonVariants', { variant: 'link', size: 'default' }), ' href="#" data-slot="button" data-variant="link" data-size="default"'),
   pagination: (n) => {
     const b = (label, on, aria) => `<li data-slot="pagination-item"><a href="#" data-slot="pagination-link" data-active="${on}"${on ? ' aria-current="page"' : ''}${aria ? ` aria-label="${aria}"` : ''} data-variant="${on ? 'outline' : 'ghost'}" data-size="icon" class="${sCva('button', 'buttonVariants', { variant: on ? 'outline' : 'ghost', size: 'icon' })}">${label}</a></li>`
     return `<nav role="navigation" aria-label="pagination" data-slot="pagination" class="${sSlot('pagination')}" style="width:auto;margin:0"><ul data-slot="pagination-content" class="${sSlot('pagination-content')}">${
@@ -1377,6 +1429,13 @@ Object.assign(mantine, {
   spinner: () => `<span class="${cls(mc('Loader'), mc('Loader', 'ovalLoader'))}" role="status" aria-label="Loading" style="--loader-size:var(--loader-size-sm);--loader-color:var(--mantine-primary-color-filled)"></span>`,
 })
 
+/* shadcn's SidebarGroups, label, content and menu */
+const scGroups = (n) => list(n.groups).map((g) => `<div data-slot="sidebar-group" class="${sSlot('sidebar-group')}">
+    <div data-slot="sidebar-group-label" class="${sSlot('sidebar-group-label')}">${esc(g.title)}</div>
+    <div data-slot="sidebar-group-content" class="${sSlot('sidebar-group-content')}"><ul data-slot="sidebar-menu" class="${sSlot('sidebar-menu')}">${
+      list(g.items).map((it) => `<li data-slot="sidebar-menu-item" class="${sSlot('sidebar-menu-item')}"><a href="#" data-slot="sidebar-menu-button" data-size="default" data-active="${!!it.on}" class="${sCva('sidebar', 'sidebarMenuButtonVariants', { variant: 'default', size: 'default' })}">${ico(it.icon)}<span>${esc(it.text)}</span></a>${
+        it.count ? `<div data-slot="sidebar-menu-badge" class="${sSlot('sidebar-menu-badge')}">${esc(it.count)}</div>` : ''}</li>`).join('')}</ul></div></div>`).join('')
+
 /* ── the layer, each kit's own scrim (decision 212) ────────────────────── */
 tailwind.layer = (n, k) => layerOf(n, k, '<div class="absolute inset-0 bg-ink/40"></div>')
 /* daisyUI's scrim is .modal's own background, and a .modal locks the page */
@@ -1390,5 +1449,27 @@ radix.layer = (n, k) => layerOf(n, k, '<div class="rt-BaseDialogOverlay" style="
 mantine.layer = (n, k) => layerOf(n, k, `<div class="${mc('Overlay')}" style="--overlay-bg:rgba(0, 0, 0, 0.6);z-index:0"></div>`)
 /* .antd is where their variables live, so the scrim carries it */
 antd.layer = (n, k) => layerOf(n, k, '<div class="antd" style="position:absolute;inset:0;background:var(--ant-color-bg-mask)"></div>')
+
+/* ── a form, as the kit composes one (decision 213) ───────────────────────
+ * shadcn answers field and fields in its own Field anatomy and Ant in its
+ * Form.Item; the others, until each is measured against its own examples,
+ * in their own label, link and stack: a label over its control, a link in
+ * the label row, a description under it. A card that names a title gets it
+ * as a heading and a muted line over its content. */
+const fieldOf = (bind) => (n, k) => {
+  const label = n.label ? (n.link ? bind.row({ between: true }, bind.label({ text: n.label }) + bind.link({ text: n.link })) : bind.label({ text: n.label })) : ''
+  const hint = n.hint ? bind.muted({}, esc(n.hint) + (n.hintLink ? ' ' + bind.link({ text: n.hintLink }) : '')) : ''
+  return bind.stack({ gap: 1 }, label + k + hint)
+}
+const fieldsOf = (bind) => (n, k) => bind.stack({ gap: 4 }, k)
+const titledPanel = (bind) => { const plain = bind.panel
+  const head = (n) => n.link ? bind.row({ between: true }, bind.heading({ text: n.title }) + bind.link({ text: n.link })) : bind.heading({ text: n.title })
+  return (n, k) => plain(n, n.title ? bind.stack({ gap: 4 }, bind.stack({ gap: 1 }, head(n) + (n.text ? bind.muted({ text: n.text }) : '')) + k) : k) }
+/* a top-bar frame: who is signed in is an avatar at the bar's end */
+const userAtEnd = (bind) => { const bar = bind.navbar
+  return (n, k) => bar(n, n.user ? k + bind.avatar({ text: n.user.initials }) : k) }
+for (const bind of [tailwind, daisyui, bootstrap, material, radix, mantine]) {
+  bind.field = fieldOf(bind); bind.fields = fieldsOf(bind); bind.panel = titledPanel(bind); bind.navbar = userAtEnd(bind)
+}
 
 export const WALL = { tailwind, daisyui, bootstrap, shadcn, material, radix, mantine, antd }
