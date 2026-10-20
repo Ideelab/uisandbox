@@ -30,7 +30,8 @@ const A = (n, k, tag, c, extra = '') => `<${tag} class="${c}"${extra}>${n.text !
    be pressed yet, a field that holds a password, a field in error. Every kit
    styles these off the same attributes, so they are written the same way. */
 const disabledAttr = (n) => (n.disabled ? ' disabled' : '')
-const secretAttr = (n) => (n.secret ? ' type="password"' : '')
+/* a password, or a field of another type (a date opens the browser's own picker) */
+const secretAttr = (n) => (n.secret ? ' type="password"' : n.type ? ` type="${esc(n.type)}"` : '')
 const invalidAttr = (n) => (n.error ? ' aria-invalid="true"' : '')
 /* page numbers around the one you are on, the way every pager shows them */
 const pagesOf = (n) => Array.from({ length: n.pages ?? 5 }, (_, i) => i + 1)
@@ -166,7 +167,7 @@ const tailwind = {
   _id: 'Tailwind',
   stack:   (n, k) => `<div class="flex flex-col gap-${n.gap ?? 3}">${k}</div>`,
   row:     (n, k) => `<div class="flex flex-wrap items-center gap-${n.gap ?? 2}${n.between ? ' justify-between' : ''}">${k}</div>`,
-  grid:    (n, k) => `<div class="grid gap-3" style="grid-template-columns:${tracks(n)}">${k}</div>`,
+  grid:    (n, k) => `<div class="grid gap-3" style="grid-template-columns:${tracks(n)}${n.align ? `;align-items:${n.align}` : ''}">${k}</div>`,
   panel:   (n, k) => `<div class="rounded-lg border border-line bg-surface p-4">${k}</div>`,
   divider: () => `<hr class="border-line">`,
   heading: (n, k) => A(n, k, `h${n.level ?? 3}`, `font-heading font-strong tracking-normal text-ink ${n.level === 2 ? 'text-xl' : 'text-base'}`),
@@ -253,7 +254,7 @@ const daisyui = {
   _id: 'daisyUI',
   stack:   (n, k) => `<div class="flex flex-col gap-${n.gap ?? 3}">${k}</div>`,
   row:     (n, k) => `<div class="flex flex-wrap items-center gap-${n.gap ?? 2}${n.between ? ' justify-between' : ''}">${k}</div>`,
-  grid:    (n, k) => `<div class="grid gap-3" style="grid-template-columns:${tracks(n)}">${k}</div>`,
+  grid:    (n, k) => `<div class="grid gap-3" style="grid-template-columns:${tracks(n)}${n.align ? `;align-items:${n.align}` : ''}">${k}</div>`,
   panel:   (n, k) => `<div class="card card-border bg-base-100"><div class="card-body">${k}</div></div>`,
   divider: () => `<div class="divider"></div>`,
   heading: (n, k) => A(n, k, `h${n.level ?? 3}`, n.level === 2 ? 'card-title text-xl' : 'card-title text-base'),
@@ -348,7 +349,7 @@ const bootstrap = {
   _id: 'Bootstrap',
   stack:   (n, k) => `<div class="d-flex flex-column gap-${Math.min(n.gap ?? 3, 5)}">${k}</div>`,
   row:     (n, k) => `<div class="d-flex flex-wrap align-items-center gap-${Math.min(n.gap ?? 2, 5)}${n.between ? ' justify-content-between' : ''}">${k}</div>`,
-  grid:    (n, k) => `<div class="d-grid gap-3" style="grid-template-columns:${tracks(n)}">${k}</div>`,
+  grid:    (n, k) => `<div class="d-grid gap-3" style="grid-template-columns:${tracks(n)}${n.align ? `;align-items:${n.align}` : ''}">${k}</div>`,
   panel:   (n, k) => `<div class="card"><div class="card-body">${k}</div></div>`,
   divider: () => `<hr>`,
   heading: (n, k) => A(n, k, `h${n.level ?? 3}`, n.level === 2 ? 'h4 mb-0' : 'h6 mb-0'),
@@ -492,7 +493,7 @@ const shadcn = {
   stack:   (n, k) => `<div class="flex flex-col gap-${n.gap ?? 3}">${k}</div>`,
   row:     (n, k) => `<div class="flex flex-wrap items-center gap-${n.gap ?? 2}${n.between ? ' justify-between' : ''}">${k}</div>`,
   /* gap-4, the gap their blocks set between cards (dashboard-01's SectionCards) */
-  grid:    (n, k) => `<div class="grid gap-4" style="grid-template-columns:${tracks(n)}">${k}</div>`,
+  grid:    (n, k) => `<div class="grid gap-4" style="grid-template-columns:${tracks(n)}${n.align ? `;align-items:${n.align}` : ''}">${k}</div>`,
   /* their Card is header, content and footer; a card that names a title
      gets their CardHeader with CardTitle and CardDescription (decision 213) */
   panel:   (n, k) => `<div data-slot="card" class="${sSlot('card')}">${n.title ? `<div data-slot="card-header" class="${sSlot('card-header')}"><div data-slot="card-title" class="${sSlot('card-title')}">${esc(n.title)}</div>${n.text ? `<div data-slot="card-description" class="${sSlot('card-description')}">${esc(n.text)}</div>` : ''}${
@@ -696,7 +697,7 @@ const material = {
   /* layout — Material ships none, so these three are ours and say so */
   stack:   (n, k) => `<div style="display:flex;flex-direction:column;gap:${(n.gap ?? 3) * 4}px">${k}</div>`,
   row:     (n, k) => `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:${(n.gap ?? 2) * 4}px${n.between ? ';justify-content:space-between' : ''}">${k}</div>`,
-  grid:    (n, k) => `<div style="display:grid;gap:12px;grid-template-columns:${tracks(n)}">${k}</div>`,
+  grid:    (n, k) => `<div style="display:grid;gap:12px;grid-template-columns:${tracks(n)}${n.align ? `;align-items:${n.align}` : ''}">${k}</div>`,
 
   panel:   (n, k) => `<md-outlined-card style="padding:16px">${k}</md-outlined-card>`,
   divider: () => `<md-divider></md-divider>`,
@@ -859,7 +860,7 @@ const radix = {
   _id: 'Radix Themes',
   stack:   (n, k) => `<div class="rt-Flex" style="display:flex;flex-direction:column;gap:var(--space-${Math.min(9, n.gap ?? 3)})">${k}</div>`,
   row:     (n, k) => `<div class="rt-Flex" style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-${Math.min(9, n.gap ?? 2)})${n.between ? ';justify-content:space-between' : ''}">${k}</div>`,
-  grid:    (n, k) => `<div class="rt-Grid" style="display:grid;gap:var(--space-3);grid-template-columns:${tracks(n)}">${k}</div>`,
+  grid:    (n, k) => `<div class="rt-Grid" style="display:grid;gap:var(--space-3);grid-template-columns:${tracks(n)}${n.align ? `;align-items:${n.align}` : ''}">${k}</div>`,
   panel:   (n, k) => `<div class="rt-reset rt-BaseCard rt-Card rt-r-size-2 rt-variant-surface">${k}</div>`,
   /* their Separator is color="gray" unless told otherwise; bare, it wore the
      accent and followed a brand pick */
@@ -1045,7 +1046,7 @@ const mantine = {
   _id: 'Mantine',
   stack:   (n, k) => `<div class="${mc('Stack')}" style="--stack-gap:calc(${(n.gap ?? 3) * 0.25}rem * var(--mantine-scale))">${k}</div>`,
   row:     (n, k) => `<div class="${mc('Group')}" style="--group-gap:calc(${(n.gap ?? 2) * 0.25}rem * var(--mantine-scale))${n.between ? ';--group-justify:space-between' : ''}">${k}</div>`,
-  grid:    (n, k) => `<div style="display:grid;gap:var(--mantine-spacing-md);grid-template-columns:${tracks(n)}">${k}</div>`,
+  grid:    (n, k) => `<div style="display:grid;gap:var(--mantine-spacing-md);grid-template-columns:${tracks(n)}${n.align ? `;align-items:${n.align}` : ''}">${k}</div>`,
   panel:   (n, k) => `<div class="${cls(mc('Paper'), mc('Card'))}" data-with-border="true" data-orientation="vertical" style="--paper-shadow:var(--mantine-shadow-xs);--card-padding:var(--mantine-spacing-lg)">${k}</div>`,
   divider: () => `<div class="${mc('Divider')}"></div>`,
   /* Mantine's Title reads --title-fz/fw/lh, which its React layer fills from
@@ -1234,7 +1235,7 @@ const antd = {
      and cards sat edge to edge (decision 213). */
   stack:   (n, k) => `<div class="antd" style="display:flex;flex-direction:column;gap:calc(var(--ant-margin-xs) * ${Math.max(1, n.gap ?? 3) / 2})">${k}</div>`,
   row:     (n, k) => `<div class="antd" style="display:flex;flex-wrap:wrap;align-items:center;gap:calc(var(--ant-margin-xs) * ${Math.max(1, n.gap ?? 2) / 2})${n.between ? ';justify-content:space-between' : ''}">${k}</div>`,
-  grid:    (n, k) => `<div class="antd" style="display:grid;gap:var(--ant-margin);grid-template-columns:${tracks(n)}">${k}</div>`,
+  grid:    (n, k) => `<div class="antd" style="display:grid;gap:var(--ant-margin);grid-template-columns:${tracks(n)}${n.align ? `;align-items:${n.align}` : ''}">${k}</div>`,
   /* every part they DO ship — answered by the render, never by a string */
   ...Object.fromEntries([...ANTD_OWNS].map((part) => [part, antHole])),
 

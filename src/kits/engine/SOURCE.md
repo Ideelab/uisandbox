@@ -127,6 +127,8 @@ table with its decision.
 | `wall-bindings.mjs`, `antd-tree.mjs` | drawer and command in every kit: shadcn's Sheet and CommandDialog, Bootstrap's offcanvas, Mantine's Drawer, Ant's Drawer panel, composed elsewhere; a centred layer near the top, its width, a key | 214 |
 | `kits/shadcn.json` | re-read with sheet, command, popover, calendar and input-group | 214 |
 | `generate.mjs` | the drawer and command gaps named | 214 |
+| `scenes.mjs` | New invoice; Settings with the plan, members and an invite drawer; Expenses in use | 214 |
+| `wall-bindings.mjs`, `antd-tree.mjs` | a field's type; a grid's align; Ant's Form.Item vertical on the item | 214 |
 | `kits/shadcn.json`, `kits/antd.json`, `kits/antd.render.*`, `kits/material.elements.json` | refetched and re-rendered for the new parts | 211 |
 | `scenes.mjs` | the fallback font on :where(html), not #strip: a kit's own body font reaches its wall | 207 |
 | `kit-defaults.mjs` | each default read from the variable the build writes it into (daisyUI radius, Ant Design ink and muted ink); TABLE exported | 207 |

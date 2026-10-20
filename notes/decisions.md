@@ -3475,3 +3475,24 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
 
     Measured: the drawer by its number, its close, a row's Open, Escape,
     the search field and Cmd-K, clicked through in all eight kits.
+
+    Then the form people get stuck on, and the last two screens. New
+    invoice is a screen of its own: a client chosen from a list that opens
+    under its field as a combobox does, a reference, real date fields (a
+    field can name its type, and a date opens the browser's own picker),
+    the lines as a grid of inputs (the description takes the room, the
+    figures keep theirs; a grid can centre its rows), how they can pay,
+    a note, a reminder, the total and where it goes. Settings adds the plan
+    with what is used of it and the members, each with an avatar, a role
+    and a menu; Invite people opens a form in a drawer, and sending it
+    closes the drawer with a toast. Expenses is the page of states, now in
+    use: figures, an error, the month's expenses with their receipt status,
+    reading, uploading, and an empty filter. Ant's Form.Item is vertical on
+    the item too, or a field outside their Form put its label beside the
+    control. Seen and left for its own turn: Mantine's empty state lies on
+    its side in a narrow column.
+
+    Measured: on Settings a member's menu, Invite people, Cancel, again,
+    Send invites and the toast, and on Expenses a row's menu, clicked
+    through in all eight kits; fidelity 100% on all eight, tests and kit
+    gates green, hold-outs without regressions.

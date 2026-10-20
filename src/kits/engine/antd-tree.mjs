@@ -147,7 +147,9 @@ const PART = {
     const label = n.label ? (n.link
       ? e('span', { style: { display: 'flex', width: '100%', justifyContent: 'space-between' } }, text(n.label), e(Typography.Link, { href: '#' }, text(n.link)))
       : text(n.label)) : undefined
-    return e(Form.Item, { label, validateStatus: bad ? 'error' : undefined, help: bad ? text(bad.error) : undefined,
+    /* vertical on the item too: a field outside their Form (in a grid of
+       two) otherwise puts its label beside the control, with a colon */
+    return e(Form.Item, { layout: 'vertical', colon: false, label, validateStatus: bad ? 'error' : undefined, help: bad ? text(bad.error) : undefined,
       extra: n.hint ? e('span', null, text(n.hint), n.hintLink ? e(React.Fragment, null, ' ', e(Typography.Link, { href: '#' }, text(n.hintLink))) : null) : undefined,
       style: { marginBottom: 0 } },
       ...list(n.kids).map((c, i) => element(c && c.error ? { ...c, error: undefined } : c, i)))
@@ -165,7 +167,7 @@ const PART = {
   /* their own error state is status="error"; the message under it is their
      danger Text, which is how their Form shows one */
   input: (n) => e(React.Fragment, null,
-    e(n.secret ? Input.Password : Input, { defaultValue: text(n.value), placeholder: text(n.placeholder), status: n.error ? 'error' : undefined }),
+    e(n.secret ? Input.Password : Input, { defaultValue: text(n.value), placeholder: text(n.placeholder), type: n.type, status: n.error ? 'error' : undefined }),
     n.error ? e(Typography.Text, { type: 'danger' }, text(n.error)) : null),
   textarea: (n) => e(Input.TextArea, { rows: 3, defaultValue: text(n.value), placeholder: text(n.placeholder) }),
   select: (n) => e(Select, { open: true, defaultValue: list(n.options)[0], style: { width: '100%' },

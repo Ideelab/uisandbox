@@ -367,6 +367,8 @@ const shellSide = (on) => ({ p: 'sidenav', brand: 'Ledgeway', mark: true, user: 
 const STATUS = { Overdue: 'danger', Sent: 'brand', Paid: 'success', Draft: 'neutral' }
 const status = (t) => ({ p: 'badge', tone: STATUS[t], text: t })
 const ROW_ACTION = { p: 'iconrow', items: ['ellipsis-vertical'] }
+/* a member: their initials and their name */
+const member = (initials, name) => ({ p: 'row', gap: 2, kids: [{ p: 'avatar', text: initials }, { p: 'text', text: name }] })
 const pick = (on) => ({ p: 'checkbox', on, text: '' })
 const INVOICES = { p: 'table', cols: ['', 'Number', 'Client', 'Status', 'Issued', 'Due', 'Amount', ''], rows: [
   [pick(true), 'INV-1042', 'Halden & Rowe', status('Overdue'), '12 Aug', '12 Sep', '€4,820.00', ROW_ACTION],
@@ -622,11 +624,78 @@ export const SCREENS = [
     ] },
   },
   {
-    id: 'settings', label: 'Settings', shot: true, page: { shell: true, nav: 'Settings' },
-    note: 'Ledgeway, the form everybody ships.',
+    id: 'new', label: 'New invoice', shot: true, page: { shell: true, nav: 'Invoices', title: 'New invoice' },
+    note: 'Ledgeway, the form people get stuck on: a client to choose, dates, lines, terms and a total.',
+    /* the heavy form (decision 214): a client chosen from a list that opens
+       under its field, real date fields, lines as a table of inputs, terms,
+       a total, and where it goes */
     main: { p: 'stack', gap: 4, kids: [
-      { p: 'heading', level: 2, text: 'Settings' },
-      { p: 'tabs', items: ['Workspace', 'Billing', 'Notifications', 'Members'] },
+      { p: 'row', between: true, kids: [
+        { p: 'stack', gap: 1, kids: [
+          { p: 'heading', level: 2, text: 'New invoice' },
+          { p: 'muted', text: 'INV-1045, a draft until you send it.' },
+        ] },
+        { p: 'row', kids: [{ p: 'button', tone: 'ghost', text: 'Save draft' }, { p: 'button', tone: 'outline', text: 'Preview' }, { p: 'button', tone: 'brand', text: 'Send invoice' }] },
+      ] },
+      { p: 'grid', tracks: '2fr 1fr', kids: [
+        { p: 'stack', gap: 4, kids: [
+          { p: 'panel', title: 'Client and dates', text: 'Who it is for and when it is due.', kids: [
+            { p: 'grid', cols: 2, kids: [
+              { p: 'field', label: 'Client', kids: [{ p: 'input', value: 'Halden & Rowe', placeholder: 'Choose a client' }] },
+              { p: 'field', label: 'Their reference', hint: 'A purchase order, if they gave you one.', kids: [{ p: 'input', value: 'PO-88213' }] },
+              { p: 'field', label: 'Issued', kids: [{ p: 'input', type: 'date', value: '2026-09-20' }] },
+              { p: 'field', label: 'Due', kids: [{ p: 'select', options: ['In 30 days, 20 Oct', 'In 14 days, 4 Oct', 'On receipt'] }] },
+            ] },
+          ] },
+          { p: 'panel', title: 'Lines', text: 'What you are charging for, before VAT.', link: 'Add from your catalogue', kids: [{ p: 'stack', gap: 3, kids: [
+            /* a grid, not a table: the description takes the room, the
+               figures keep theirs, as an invoice editor lays its lines out */
+            { p: 'grid', tracks: 'minmax(0,1fr) 72px 112px 104px 40px', align: 'center', kids: [
+              { p: 'label', text: 'Description' }, { p: 'label', text: 'Qty' }, { p: 'label', text: 'Rate' }, { p: 'label', text: 'Amount' }, { p: 'text', text: '' },
+              ...[['Brand identity, phase two', '1', '3,200.00', '€3,200.00'], ['Signage drawings, ground floor', '12', '95.00', '€1,140.00'], ['Print proofs', '4', '65.00', '€260.00']]
+                .flatMap(([what, qty, rate, sum]) => [{ p: 'input', value: what }, { p: 'input', value: qty }, { p: 'input', value: rate }, { p: 'text', text: sum }, { p: 'iconrow', items: ['trash-2'] }]),
+            ] },
+            { p: 'row', kids: [{ p: 'button', tone: 'ghost', text: 'Add a line' }] },
+          ] }] },
+          { p: 'panel', title: 'Payment and notes', kids: [{ p: 'fields', kids: [
+            { p: 'field', label: 'How they can pay', kids: [{ p: 'radio', name: 'pay', on: 2, items: ['Bank transfer', 'Card or iDEAL', 'Either'] }] },
+            { p: 'field', label: 'A note to the client', hint: 'Shown under the lines.', kids: [{ p: 'textarea', value: 'Thank you for the second phase. The ground floor signs follow the drawings of 4 September.' }] },
+            { p: 'switch', on: true, text: 'Remind them three days before it is due' },
+          ] }] },
+        ] },
+        { p: 'stack', gap: 4, kids: [
+          { p: 'panel', title: 'Total', text: 'Due 20 Oct 2026', kids: [{ p: 'stack', gap: 2, kids: [
+            { p: 'row', between: true, kids: [{ p: 'muted', text: 'Subtotal' }, { p: 'text', text: '€4,600.00' }] },
+            { p: 'row', between: true, kids: [{ p: 'muted', text: 'VAT 21%' }, { p: 'text', text: '€966.00' }] },
+            { p: 'divider' },
+            { p: 'row', between: true, kids: [{ p: 'heading', text: 'To pay' }, { p: 'heading', text: '€5,566.00' }] },
+          ] }] },
+          { p: 'panel', title: 'Send to', kids: [{ p: 'fields', kids: [
+            { p: 'field', label: 'Email', kids: [{ p: 'input', value: 'accounts@haldenrowe.example' }] },
+            { p: 'checkbox', on: true, text: 'Attach it as a PDF' },
+            { p: 'checkbox', on: false, text: 'Send me a copy' },
+          ] }] },
+          { p: 'alert', tone: 'warning', text: 'Halden & Rowe has one invoice overdue. You can still send this one.' },
+        ] },
+      ] },
+      /* the client field opens its list, as a combobox does */
+      { p: 'layer', id: 'clients', at: 'anchor', width: 320, opener: ['Choose a client'], kids: [
+        { p: 'menu', trigger: false, label: 'Clients', items: ['Halden & Rowe', 'Northfield Studio', 'Vandermeer Architecten & Partners', 'Orchard Lane Bakery'], end: 'Add a new client' },
+      ] },
+    ] },
+  },
+  {
+    id: 'settings', label: 'Settings', shot: true, page: { shell: true, nav: 'Settings' },
+    note: 'Ledgeway, the form everybody ships, and the people who share it.',
+    /* the form, the plan with what is used of it, the members with their
+       roles and a menu each, inviting people in a drawer (decision 214) */
+    main: { p: 'stack', gap: 4, kids: [
+      { p: 'stack', gap: 1, kids: [
+        { p: 'heading', level: 2, text: 'Settings' },
+        { p: 'muted', text: 'Okafor Design Studio, on the Studio plan.' },
+      ] },
+      { p: 'tabs', items: ['Workspace', 'Billing', 'Notifications', 'Members', 'Integrations'] },
+      { p: 'alert', tone: 'success', text: 'Saved. Your changes are live.' },
       { p: 'grid', tracks: '3fr 2fr', kids: [
         { p: 'panel', title: 'Workspace', text: 'How Ledgeway signs and sends your invoices.', kids: [{ p: 'fields', kids: [
           { p: 'field', label: 'Company name', kids: [{ p: 'input', value: 'Okafor Design Studio' }] },
@@ -639,35 +708,90 @@ export const SCREENS = [
           { p: 'switch', on: false, text: 'A weekly summary' },
           { p: 'row', between: true, kids: [{ p: 'button', tone: 'ghost', text: 'Reset' }, { p: 'button', tone: 'brand', text: 'Save changes' }] },
         ] }] },
-        { p: 'stack', gap: 3, kids: [
-          { p: 'alert', tone: 'success', text: 'Saved. Your changes are live.' },
+        { p: 'stack', gap: 4, kids: [
+          { p: 'panel', title: 'Studio plan', text: '€24 a month, billed yearly. Renews on 1 January.', kids: [{ p: 'stack', gap: 3, kids: [
+            { p: 'row', between: true, kids: [{ p: 'text', text: 'Invoices this year' }, { p: 'muted', text: '164 of 250' }] },
+            { p: 'progress', value: 66 },
+            { p: 'row', between: true, kids: [{ p: 'text', text: 'People' }, { p: 'muted', text: '3 of 5' }] },
+            { p: 'progress', value: 60 },
+            { p: 'row', kids: [{ p: 'button', tone: 'outline', text: 'Change plan' }, { p: 'link', text: 'See every invoice of ours' }] },
+          ] }] },
           { p: 'panel', title: 'Danger zone', text: 'Only an owner can delete this workspace and its 214 invoices.', kids: [
             { p: 'button', tone: 'danger', text: 'Delete workspace', disabled: true },
           ] },
         ] },
       ] },
+      { p: 'panel', title: 'Members', text: 'Three people can open this workspace.', aside: { p: 'button', tone: 'outline', text: 'Invite people' }, kids: [
+        { p: 'table', cols: ['Member', 'Email', 'Role', 'Last seen', ''], rows: [
+          [member('MO', 'Maya Okafor'), 'maya@okafor-studio.com', { p: 'badge', tone: 'neutral', text: 'Owner' }, 'Now', ''],
+          [member('TF', 'Tomás Ferreira'), 'tomas@ferreira-accounts.example', { p: 'select', options: ['Accountant', 'Admin', 'Viewer'] }, 'Yesterday', { p: 'iconrow', items: ['ellipsis'] }],
+          [member('IB', 'Ines Bakker'), 'ines@okafor-studio.com', { p: 'select', options: ['Admin', 'Accountant', 'Viewer'] }, '3 days ago', { p: 'iconrow', items: ['ellipsis'] }],
+        ] },
+      ] },
+      { p: 'layer', id: 'member', at: 'anchor', opener: ['ellipsis'], kids: [
+        { p: 'menu', trigger: false, items: ['Change role', 'Send the invite again'], danger: 'Remove from the workspace' },
+      ] },
+      /* inviting is a form in a drawer; sending it closes it with a toast */
+      { p: 'layer', id: 'invite', at: 'side', scrim: true, opener: ['Invite people', 'Send invites'], then: 'invited', kids: [
+        { p: 'drawer', title: 'Invite people', text: 'They get an email with a link that works for seven days.',
+          foot: { p: 'row', kids: [{ p: 'button', tone: 'outline', text: 'Cancel' }, { p: 'button', tone: 'brand', text: 'Send invites' }] },
+          kids: [{ p: 'fields', kids: [
+            { p: 'field', label: 'Email addresses', hint: 'One per line, or separated by commas.', kids: [{ p: 'textarea', value: 'jonas@vermeulen-print.example' }] },
+            { p: 'field', label: 'Role', kids: [{ p: 'radio', name: 'role', on: 1, items: ['Admin, everything but billing', 'Accountant, invoices and payments', 'Viewer, reads only'] }] },
+            { p: 'checkbox', on: false, text: 'Let them see bank details' },
+          ] }] },
+      ] },
+      { p: 'layer', id: 'invited', at: 'corner', kids: [
+        { p: 'toast', title: 'Invite sent', text: 'To jonas@vermeulen-print.example', action: 'Undo' },
+      ] },
     ] },
   },
   {
     id: 'states', label: 'Expenses', shot: true, page: { shell: true, nav: 'Expenses' },
-    note: 'Ledgeway, while it loads and when there is nothing yet.',
+    note: 'Ledgeway, what it shows while it works, when it fails and when there is nothing.',
+    /* the states systems get stuck on, on one page that is also in use:
+       figures, an error, a list half matched, reading, uploading, empty */
     main: { p: 'stack', gap: 4, kids: [
       { p: 'row', between: true, kids: [
-        { p: 'heading', level: 2, text: 'Expenses' },
-        { p: 'button', tone: 'brand', text: 'Add an expense' },
+        { p: 'stack', gap: 1, kids: [
+          { p: 'heading', level: 2, text: 'Expenses' },
+          { p: 'muted', text: 'September: 23 expenses, €3,412.80 in all.' },
+        ] },
+        { p: 'row', kids: [{ p: 'button', tone: 'outline', text: 'Import from the bank' }, { p: 'button', tone: 'brand', text: 'Add an expense' }] },
       ] },
-      { p: 'grid', tracks: '1fr 1fr', kids: [
-        { p: 'panel', kids: [{ p: 'stack', gap: 3, kids: [
-          { p: 'row', between: true, kids: [
-            { p: 'heading', text: 'Receipts' },
-            { p: 'row', kids: [{ p: 'spinner' }, { p: 'muted', text: 'Reading your receipts' }] },
+      { p: 'grid', cols: 3, kids: [
+        { p: 'stat', label: 'Spent in September', value: '€3,412.80', delta: '+8.2%', tone: 'warning', note: 'More than in August' },
+        { p: 'stat', label: 'Without a receipt', value: '7', delta: '-3', tone: 'success', note: 'Three matched today' },
+        { p: 'stat', label: 'To pay back', value: '€286.40', delta: '2', tone: 'neutral', note: 'To Tomás, for two trips' },
+      ] },
+      { p: 'alert', tone: 'danger', text: 'Two receipts could not be read: they are blurred or cut off. Take a new photo, or type them in.' },
+      { p: 'grid', tracks: '2fr 1fr', kids: [
+        { p: 'panel', title: 'This month', text: 'Matched against your bank feed.', aside: { p: 'segmented', items: ['All', 'No receipt'], on: 0 }, kids: [
+          { p: 'table', cols: ['Date', 'Merchant', 'Category', 'Amount', 'Receipt', ''], rows: [
+            ['19 Sep', 'Drukkerij Vermeulen', { p: 'badge', tone: 'neutral', text: 'Printing' }, '€418.20', { p: 'badge', tone: 'success', text: 'Matched' }, { p: 'iconrow', items: ['ellipsis'] }],
+            ['18 Sep', 'NS, Utrecht to Rotterdam', { p: 'badge', tone: 'neutral', text: 'Travel' }, '€24.60', { p: 'badge', tone: 'warning', text: 'Missing' }, { p: 'iconrow', items: ['ellipsis'] }],
+            ['16 Sep', 'Figma', { p: 'badge', tone: 'neutral', text: 'Software' }, '€45.00', { p: 'badge', tone: 'success', text: 'Matched' }, { p: 'iconrow', items: ['ellipsis'] }],
+            ['15 Sep', 'Café de Zwaan', { p: 'badge', tone: 'neutral', text: 'Meals' }, '€38.50', { p: 'badge', tone: 'danger', text: 'Unreadable' }, { p: 'iconrow', items: ['ellipsis'] }],
+            ['12 Sep', 'Coolblue', { p: 'badge', tone: 'neutral', text: 'Equipment' }, '€1,249.00', { p: 'badge', tone: 'brand', text: 'Reading' }, { p: 'iconrow', items: ['ellipsis'] }],
+            ['9 Sep', 'KPN', { p: 'badge', tone: 'neutral', text: 'Phone' }, '€62.15', { p: 'badge', tone: 'success', text: 'Matched' }, { p: 'iconrow', items: ['ellipsis'] }],
           ] },
-          { p: 'skeleton', rows: 4 },
-          { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Uploading receipt-0412.pdf' }, { p: 'progress', value: 72 }] },
-        ] }] },
-        { p: 'panel', kids: [{ p: 'empty', icon: 'inbox', title: 'No expenses in September', text: 'Add one by hand, or drop a receipt and Ledgeway reads it for you.', kids: [
-          { p: 'button', tone: 'secondary', text: 'Add an expense' },
-        ] }] },
+        ] },
+        { p: 'stack', gap: 4, kids: [
+          { p: 'panel', kids: [{ p: 'stack', gap: 3, kids: [
+            { p: 'row', between: true, kids: [
+              { p: 'heading', text: 'Receipts' },
+              { p: 'row', kids: [{ p: 'spinner' }, { p: 'muted', text: 'Reading three' }] },
+            ] },
+            { p: 'skeleton', rows: 3 },
+            { p: 'stack', gap: 1, kids: [{ p: 'label', text: 'Uploading receipt-0412.pdf' }, { p: 'progress', value: 72 }] },
+          ] }] },
+          { p: 'panel', kids: [{ p: 'empty', icon: 'inbox', title: 'Nothing under Travel yet', text: 'Add a trip by hand, or forward the booking email and Ledgeway files it.', kids: [
+            { p: 'button', tone: 'secondary', text: 'Add an expense' },
+          ] }] },
+        ] },
+      ] },
+      { p: 'layer', id: 'expense', at: 'anchor', opener: ['ellipsis'], kids: [
+        { p: 'menu', trigger: false, items: ['Open', 'Change the category', 'Split it'], danger: 'Delete the expense' },
       ] },
     ] },
   },
