@@ -3578,3 +3578,14 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     dashboard, so they go to the agent as don'ts, in Copy for your AI, with
     the measured ones no knob reaches. "Show me six ways out" opens the
     looks.
+
+    And the way in. The door opens on what it is for, "Make your app look
+    like yours", then the one way: Take this screen along. Over a kit,
+    "No app at hand? Try it on the kit first" closes it. The other ways (one
+    line on your machine, a script line for a deployed app, a build loaded
+    here) are folded under Other ways in, each one click away. The tells and
+    the looks no longer stand over the door.
+
+    Measured, over the six: tests green (483, 145, 121), kit gates green
+    (101, 18), each step tried in the browser at 1440 and the top bar at
+    375. The kits were not rebuilt: nothing in this PR changes their pages.

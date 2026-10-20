@@ -864,3 +864,11 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
 .tells ul { margin: 2px 0 8px; padding-left: 18px; display: flex; flex-direction: column; gap: 3px; }
 .tells__sec { margin: 8px 0 0; font-size: 11px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; color: var(--app-fg-muted); }
 .tells__fine { margin: 4px 0 10px; font-size: 12px; color: var(--app-fg-muted); line-height: 1.45; }
+
+/* The way in (decision 216): what it is for, the bookmarklet, the rest folded. */
+.intake__card .door__head { margin-bottom: 18px; }
+.intake__card .door__head h2 { margin: 0 0 6px; font-size: 22px; font-weight: 650; letter-spacing: -0.01em; }
+.intake__card .door__head p { margin: 0; color: var(--app-fg-muted); font-size: 14.5px; }
+.door__try { display: block; margin: 6px auto 0; border: 0; background: none; font: inherit; font-size: 13px; color: var(--app-fg-muted); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.door__try:hover { color: var(--app-fg); }
+.intake__card .door__others { margin: 26px 0 8px; font-size: 11px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; color: var(--app-fg-muted); text-align: left; }

@@ -209,7 +209,7 @@ export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, pi
         {/* The door is its own card; nothing lies on top of it. */}
         {!showVerify && !atDoor && notes}
         <div className="stage__low">
-        {showTells && tells && (
+        {showTells && tells && !atDoor && !looks && (
           <div className="card popcard popcard--low verify tells" role="dialog" aria-label="Why it looks generic">
             <button type="button" className="btn btn--ghost btn--icon popcard__x" onClick={() => setShowTells(false)} aria-label="Close" title="Close"><X size={15} /></button>
             <h3>{tells.length ? 'Why it looks generic' : 'No AI tells on this screen'}</h3>
