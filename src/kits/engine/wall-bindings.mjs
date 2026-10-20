@@ -15,7 +15,7 @@
  *
  * Everything else here is the kit's own classes, verbatim.
  */
-import { esc, list, PHOTO } from './parts.mjs'
+import { esc, list, PHOTO, cellOf } from './parts.mjs'
 import { ANTD_OWNS } from './antd-nodes.mjs'
 import { MAP, ROLES } from './roles.mjs'
 /* shadcn composes its classes with cn(), which is tailwind-merge: a variant's
@@ -39,6 +39,8 @@ const pagesOf = (n) => Array.from({ length: n.pages ?? 5 }, (_, i) => i + 1)
 const SKEL = [['72%', '38%'], ['58%', '30%'], ['80%', '46%'], ['64%', '34%'], ['70%', '40%']]
 const skelRows = (n) => SKEL.slice(0, n.rows ?? 3)
 /* a grid's columns: equal by default, or the tracks a screen names (2fr 1fr) */
+/* a chart's height: a dashboard's main chart is taller than a card's */
+const chartH = (n) => n.height ?? 112
 const tracks = (n) => n.tracks ?? `repeat(${n.cols ?? 2},minmax(0,1fr))`
 /* LEDGEWAY'S MARK (decision 212): four tiles in the kit's own brand colour,
    the mark UIcockpit's made-up app had. A made-up app needs a made-up logo,
@@ -48,9 +50,23 @@ const brandOf = (n, paint) => `<span style="display:inline-flex;align-items:cent
 /* A LAYER is what an app puts over itself: a dialog over a scrim in the
    middle of the window, or a toast in its corner. Fixed to the window, as a
    running app does it; the scrim is each kit's own. */
+/* A layer with an id opens and closes (decision 214): it starts hidden, says
+   which controls open it (their text, aria-label or placeholder), what it
+   leads to once its own action is taken, and where it sits. The behaviour
+   is the page's LAYER_SCRIPT (scenes.mjs), ours and kit-free; the look is
+   still entirely the kit's. */
+const layerAttrs = (n) => n.id
+  ? ` data-layer-id="${esc(n.id)}" data-at="${esc(n.at ?? 'center')}"${n.opener ? ` data-opener="${esc(JSON.stringify(list(n.opener)))}"` : ''}${n.then ? ` data-then="${esc(n.then)}"` : ''}${n.open ? '' : ' hidden'}`
+  : ''
 const layerOf = (n, k, scrim = '') => n.at === 'corner'
-  ? `<div data-layer="corner" style="position:fixed;inset:auto 24px 24px auto;z-index:1100;width:min(380px,calc(100vw - 48px))">${k}</div>`
-  : `<div data-layer="center" style="position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:24px">${n.scrim ? scrim : ''}<div style="position:relative;z-index:1;width:min(460px,100%)">${k}</div></div>`
+  ? `<div data-layer="corner"${layerAttrs(n)} style="position:fixed;inset:auto 24px 24px auto;z-index:1100;width:min(380px,calc(100vw - 48px))"><div data-layer-box>${k}</div></div>`
+  /* a popover hangs from its control; the script places it there */
+  : n.at === 'anchor'
+    ? `<div data-layer="anchor"${layerAttrs(n)} style="position:fixed;inset:0;z-index:1050"><div data-layer-box style="position:absolute;top:0;left:0;${n.width ? `width:min(${n.width}px,calc(100vw - 16px))` : 'width:max-content;max-width:calc(100vw - 16px)'}">${k}</div></div>`
+    /* a drawer comes in from the right, over the scrim */
+    : n.at === 'side'
+      ? `<div data-layer="side"${layerAttrs(n)} style="position:fixed;inset:0;z-index:1000">${n.scrim ? scrim : ''}<div data-layer-box style="position:absolute;inset:0 0 0 auto;width:min(${n.width ?? 440}px,100%);overflow:auto">${k}</div></div>`
+      : `<div data-layer="center"${layerAttrs(n)} style="position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:24px">${n.scrim ? scrim : ''}<div data-layer-box style="position:relative;z-index:1;width:min(460px,100%)">${k}</div></div>`
 
 /* ── the icons ────────────────────────────────────────────────────────────
  * Read at build time and HANDED IN — the same hand-in as Mantine's class map,
@@ -165,7 +181,7 @@ const tailwind = {
   badge:   (n, k) => A(n, k, 'span', cls('inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium', TW_TONE[n.tone ?? 'neutral'])),
   alert:   (n, k) => `<div class="${cls('rounded-lg border p-3 text-sm', TW_TONE[n.tone ?? 'neutral'])}">${n.text != null ? esc(n.text) : k}</div>`,
   stat:    (n) => `<div class="rounded-lg border border-line bg-surface p-4"><div class="text-sm text-ink-muted">${esc(n.label)}</div><div class="text-2xl font-semibold text-ink">${esc(n.value)}</div></div>`,
-  table:   (n) => `<table class="w-full text-left text-sm"><thead class="border-b border-line text-xs uppercase text-ink-muted"><tr>${list(n.cols).map((c) => `<th class="py-2 pr-3 font-medium">${esc(c)}</th>`).join('')}</tr></thead><tbody>${list(n.rows).map((r) => `<tr class="border-b border-line">${list(r).map((c) => `<td class="py-2 pr-3 text-ink">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`,
+  table:   (n) => `<table class="w-full text-left text-sm"><thead class="border-b border-line text-xs uppercase text-ink-muted"><tr>${list(n.cols).map((c) => `<th class="py-2 pr-3 font-medium">${esc(c)}</th>`).join('')}</tr></thead><tbody>${list(n.rows).map((r) => `<tr class="border-b border-line">${list(r).map((c) => `<td class="py-2 pr-3 text-ink">${cellOf(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`,
   avatar:  (n) => `<span class="inline-grid size-8 shrink-0 place-items-center rounded-full bg-brand text-xs font-semibold text-brand-foreground">${esc(n.text)}</span>`,
   /* the semantic names our package ADDS — the same ones the manifest tells you
      to reference, shown doing their job */
@@ -198,12 +214,12 @@ const tailwind = {
   iconrow: (n) => `<div class="flex flex-wrap gap-1">${list(n.items).map((i) => `<button aria-label="${esc(i)}" class="inline-flex size-9 items-center justify-center rounded-lg text-ink hover:bg-surface ${TW_RING}">${ico(i)}</button>`).join('')}</div>`,
   breadcrumb: (n) => `<nav class="flex flex-wrap items-center gap-2 text-sm text-ink-muted">${list(n.items).map((t, i, a) => `${i ? '<span class="text-ink-muted">/</span>' : ''}<a href="#" class="${i === a.length - 1 ? 'font-medium text-ink' : 'hover:text-ink'}">${esc(t)}</a>`).join('')}</nav>`,
   menu:    (n) => `<div class="relative inline-block">
-    <button aria-haspopup="menu" aria-expanded="true" class="inline-flex min-h-9 items-center gap-2 rounded-lg border border-line bg-surface px-4 text-sm text-ink ${TW_RING}">${esc(n.trigger ?? 'Actions')}${ico('chevron-down', 14)}</button>
-    <div class="mt-1 min-w-48 overflow-hidden rounded-lg border border-line bg-surface p-1 shadow-md">
-      <p class="px-2 py-1.5 text-xs font-medium text-ink-muted">${esc(n.label ?? '')}</p>
-      ${list(n.items).map((t) => `<a href="#" class="flex items-center rounded-md px-2 py-1.5 text-sm text-ink hover:bg-page ${TW_RING}">${esc(t)}</a>`).join('')}
+    ${n.trigger === false ? '' : `<button aria-haspopup="menu" aria-expanded="true" class="inline-flex min-h-9 items-center gap-2 rounded-lg border border-line bg-surface px-4 text-sm text-ink ${TW_RING}">${esc(n.trigger ?? 'Actions')}${ico('chevron-down', 14)}</button>`}
+    <div role="menu" class="${n.trigger === false ? '' : 'mt-1 '}min-w-48 overflow-hidden rounded-lg border border-line bg-surface p-1 shadow-md">
+      ${n.label ? `<p class="px-2 py-1.5 text-xs font-medium text-ink-muted">${esc(n.label)}</p>` : ''}
+      ${list(n.items).map((t) => `<a href="#" role="menuitem" class="flex items-center rounded-md px-2 py-1.5 text-sm text-ink hover:bg-page ${TW_RING}">${esc(t)}</a>`).join('')}
       <hr class="-mx-1 my-1 border-line">
-      <a href="#" class="flex items-center rounded-md px-2 py-1.5 text-sm text-danger hover:bg-page ${TW_RING}">${esc(n.danger ?? 'Delete')}</a></div></div>`,
+      <a href="#" role="menuitem" class="flex items-center rounded-md px-2 py-1.5 text-sm ${n.end ? 'text-ink' : 'text-danger'} hover:bg-page ${TW_RING}">${esc(n.end ?? n.danger ?? 'Delete')}</a></div></div>`,
   sidenav: (n) => `<nav class="flex flex-col gap-4">${list(n.groups).map((g) => `<div class="flex flex-col gap-1">
     <p class="px-2 text-xs font-medium text-ink-muted">${esc(g.title)}</p>${list(g.items).map((it) => `<a href="#"${it.on ? ' aria-current="page"' : ''} class="flex min-h-9 items-center gap-2 rounded-lg px-2 text-sm ${TW_RING} ${it.on ? 'bg-surface font-medium text-ink' : 'text-ink-muted hover:bg-surface'}">${ico(it.icon)}<span>${esc(it.text)}</span>${it.count ? `<span class="ml-auto rounded-full bg-brand/10 px-2 text-xs text-brand">${esc(it.count)}</span>` : ''}</a>`).join('')}</div>`).join('')}</nav>`,
   list:    (n) => `<div class="flex flex-col">${list(n.rows).map((r) => `<div class="flex min-h-12 items-center gap-3 border-b border-line py-2 last:border-0">
@@ -212,8 +228,8 @@ const tailwind = {
     <span class="shrink-0 text-sm tabular-nums text-ink-muted">${esc(r.meta ?? '')}</span></div>`).join('')}</div>`,
   kv:      (n) => `<div class="flex flex-col gap-2">${list(n.rows).map(([k2, v]) => `<div class="flex min-h-9 items-center gap-3 rounded-lg border border-line bg-surface px-3">
     <code class="flex-1 truncate font-mono text-xs text-ink">${esc(k2)}</code><span class="font-mono text-xs text-ink-muted">${esc(v)}</span></div>`).join('')}</div>`,
-  chart:   (n) => `<div class="flex flex-col gap-3"><div class="flex h-28 items-end gap-2">${bars(n).map((b) => `<div class="flex flex-1 flex-col items-center gap-1">
-    <div class="flex h-24 w-full items-end justify-center gap-0.5"><div class="w-1/2 rounded-t-sm bg-brand" style="height:${b.a}%"></div><div class="w-1/2 rounded-t-sm bg-brand/30" style="height:${b.b}%"></div></div>
+  chart:   (n) => `<div class="flex flex-col gap-3"><div class="flex items-end gap-2" style="height:${chartH(n)}px">${bars(n).map((b) => `<div class="flex flex-1 flex-col items-center gap-1">
+    <div class="flex w-full items-end justify-center gap-0.5" style="height:${chartH(n) - 16}px"><div class="w-1/2 rounded-t-sm bg-brand" style="height:${b.a}%"></div><div class="w-1/2 rounded-t-sm bg-brand/30" style="height:${b.b}%"></div></div>
     <span class="text-xs text-ink-muted">${esc(b.label)}</span></div>`).join('')}</div>
     <div class="flex gap-4 text-xs text-ink-muted">${list(n.legend).map((t, i) => `<span class="inline-flex items-center gap-1.5"><span class="size-2 rounded-full ${i ? 'bg-brand/30' : 'bg-brand'}"></span>${esc(t)}</span>`).join('')}</div></div>`,
   empty:   (n, k) => `<div class="flex flex-col items-center gap-2 py-8 text-center">
@@ -252,7 +268,7 @@ const daisyui = {
   badge:   (n, k) => A(n, k, 'span', cls('badge badge-soft', DA_TONE[n.tone ?? 'neutral'])),
   alert:   (n, k) => `<div role="alert" class="${cls('alert alert-soft', DA_ALERT[n.tone ?? 'neutral'])}"><span>${n.text != null ? esc(n.text) : k}</span></div>`,
   stat:    (n) => `<div class="stats bg-base-100"><div class="stat"><div class="stat-title">${esc(n.label)}</div><div class="stat-value text-2xl">${esc(n.value)}</div></div></div>`,
-  table:   (n) => `<div class="overflow-x-auto"><table class="table table-zebra"><thead><tr>${list(n.cols).map((c) => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${list(n.rows).map((r) => `<tr>${list(r).map((c) => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`,
+  table:   (n) => `<div class="overflow-x-auto"><table class="table table-zebra"><thead><tr>${list(n.cols).map((c) => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${list(n.rows).map((r) => `<tr>${list(r).map((c) => `<td>${cellOf(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`,
   avatar:  (n) => `<div class="avatar avatar-placeholder"><div class="bg-primary text-primary-content w-8 rounded-full"><span class="text-xs">${esc(n.text)}</span></div></div>`,
   /* daisyUI ships BOTH of these as real components: .navbar with its three
      regions, and .footer with .footer-title. Nothing here is composed by hand. */
@@ -287,12 +303,12 @@ const daisyui = {
      absolutely positioned, as it is in their own docs, so the card would
      collapse behind it: the wrapper reserves exactly the room it takes, off
      their own row height rather than a guess. */
-  menu:    (n) => `<div class="dropdown dropdown-open" style="min-height:${(list(n.items).length + 1) * 32 + (n.label ? 28 : 0) + 60}px">
-    <div tabindex="0" role="button" aria-haspopup="menu" aria-expanded="true" class="btn">${esc(n.trigger ?? 'Actions')}${ico('chevron-down', 14)}</div>
-    <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-1 w-56 p-2 shadow-sm">
+  menu:    (n) => `${n.trigger === false ? '<div>' : `<div class="dropdown dropdown-open" style="min-height:${(list(n.items).length + 1) * 32 + (n.label ? 28 : 0) + 60}px">
+    <div tabindex="0" role="button" aria-haspopup="menu" aria-expanded="true" class="btn">${esc(n.trigger ?? 'Actions')}${ico('chevron-down', 14)}</div>`}
+    <ul tabindex="0" role="menu" class="${n.trigger === false ? '' : 'dropdown-content '}menu bg-base-100 rounded-box z-1 w-56 p-2 shadow-sm">
       ${n.label ? `<li class="menu-title">${esc(n.label)}</li>` : ''}
       ${list(n.items).map((t) => `<li><a>${esc(t)}</a></li>`).join('')}
-      <li><a class="text-error">${esc(n.danger ?? 'Delete')}</a></li></ul></div>`,
+      ${n.end ? `<li><a>${esc(n.end)}</a></li>` : `<li><a class="text-error">${esc(n.danger ?? 'Delete')}</a></li>`}</ul></div>`,
   sidenav: (n) => `<ul class="menu w-full p-0">${list(n.groups).map((g) => `<li class="menu-title">${esc(g.title)}</li>${
     list(g.items).map((it) => `<li><a${it.on ? ' class="menu-active"' : ''}>${ico(it.icon)}<span>${esc(it.text)}</span>${it.count ? `<span class="badge badge-sm badge-primary badge-soft">${esc(it.count)}</span>` : ''}</a></li>`).join('')}`).join('')}</ul>`,
   list:    (n) => `<ul class="list bg-base-100">${list(n.rows).map((r) => `<li class="list-row items-center">
@@ -301,8 +317,8 @@ const daisyui = {
     <span class="text-sm opacity-60 tabular-nums">${esc(r.meta ?? '')}</span></li>`).join('')}</ul>`,
   kv:      (n) => `<ul class="list bg-base-100">${list(n.rows).map(([k2, v]) => `<li class="list-row items-center py-2">
     <code class="font-mono text-xs">${esc(k2)}</code><span class="font-mono text-xs opacity-60">${esc(v)}</span></li>`).join('')}</ul>`,
-  chart:   (n) => `<div class="flex flex-col gap-3"><div class="flex h-28 items-end gap-2">${bars(n).map((b) => `<div class="flex flex-1 flex-col items-center gap-1">
-    <div class="flex h-24 w-full items-end justify-center gap-0.5"><div class="bg-primary w-1/2 rounded-t-sm" style="height:${b.a}%"></div><div class="bg-primary/30 w-1/2 rounded-t-sm" style="height:${b.b}%"></div></div>
+  chart:   (n) => `<div class="flex flex-col gap-3"><div class="flex items-end gap-2" style="height:${chartH(n)}px">${bars(n).map((b) => `<div class="flex flex-1 flex-col items-center gap-1">
+    <div class="flex w-full items-end justify-center gap-0.5" style="height:${chartH(n) - 16}px"><div class="bg-primary w-1/2 rounded-t-sm" style="height:${b.a}%"></div><div class="bg-primary/30 w-1/2 rounded-t-sm" style="height:${b.b}%"></div></div>
     <span class="text-xs opacity-60">${esc(b.label)}</span></div>`).join('')}</div>
     <div class="flex gap-4 text-xs opacity-60">${list(n.legend).map((t, i) => `<span class="inline-flex items-center gap-1.5"><span class="size-2 rounded-full ${i ? 'bg-primary/30' : 'bg-primary'}"></span>${esc(t)}</span>`).join('')}</div></div>`,
   empty:   (n, k) => `<div class="flex flex-col items-center gap-2 py-8 text-center">
@@ -354,7 +370,7 @@ const bootstrap = {
   badge:   (n, k) => A(n, k, 'span', cls('badge', BS_TONE[n.tone ?? 'neutral'])),
   alert:   (n, k) => `<div class="${cls('alert mb-0', BS_ALERT[n.tone ?? 'neutral'])}" role="alert">${n.text != null ? esc(n.text) : k}</div>`,
   stat:    (n) => `<div class="card"><div class="card-body"><div class="text-body-secondary small">${esc(n.label)}</div><div class="fs-3 fw-semibold">${esc(n.value)}</div></div></div>`,
-  table:   (n) => `<table class="table"><thead><tr>${list(n.cols).map((c) => `<th scope="col">${esc(c)}</th>`).join('')}</tr></thead><tbody>${list(n.rows).map((r) => `<tr>${list(r).map((c) => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`,
+  table:   (n) => `<table class="table"><thead><tr>${list(n.cols).map((c) => `<th scope="col">${esc(c)}</th>`).join('')}</tr></thead><tbody>${list(n.rows).map((r) => `<tr>${list(r).map((c) => `<td>${cellOf(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`,
   avatar:  (n) => `<span class="d-inline-flex flex-shrink-0 align-items-center justify-content-center rounded-circle bg-primary text-white" style="width:2rem;height:2rem;font-size:.75rem;font-weight:600">${esc(n.text)}</span>`,
   /* Bootstrap ships .navbar and the whole .card-img-top anatomy. It ships no
      footer component at all, so that one is its own utilities on plain markup —
@@ -388,12 +404,12 @@ const bootstrap = {
   iconrow: (n) => `<div class="btn-group flex-wrap">${list(n.items).map((i) => `<button type="button" aria-label="${esc(i)}" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center">${ico(i)}</button>`).join('')}</div>`,
   breadcrumb: (n) => `<nav><ol class="breadcrumb mb-0">${list(n.items).map((t, i, a) => `<li class="breadcrumb-item${i === a.length - 1 ? ' active' : ''}">${i === a.length - 1 ? esc(t) : `<a href="#">${esc(t)}</a>`}</li>`).join('')}</ol></nav>`,
   menu:    (n) => `<div class="dropdown">
-    <button class="btn btn-secondary dropdown-toggle" type="button" aria-expanded="true">${esc(n.trigger ?? 'Actions')}</button>
+    ${n.trigger === false ? '' : `<button class="btn btn-secondary dropdown-toggle" type="button" aria-expanded="true">${esc(n.trigger ?? 'Actions')}</button>`}
     <ul class="dropdown-menu show position-static">
-      <li><h6 class="dropdown-header">${esc(n.label ?? '')}</h6></li>
+      ${n.label ? `<li><h6 class="dropdown-header">${esc(n.label)}</h6></li>` : ''}
       ${list(n.items).map((t) => `<li><a class="dropdown-item" href="#">${esc(t)}</a></li>`).join('')}
       <li><hr class="dropdown-divider"></li>
-      <li><a class="dropdown-item text-danger" href="#">${esc(n.danger ?? 'Delete')}</a></li></ul></div>`,
+      <li><a class="dropdown-item${n.end ? '' : ' text-danger'}" href="#">${esc(n.end ?? n.danger ?? 'Delete')}</a></li></ul></div>`,
   sidenav: (n) => `<div class="d-flex flex-column gap-3">${list(n.groups).map((g) => `<div>
     <p class="text-body-secondary text-uppercase small mb-1 px-2">${esc(g.title)}</p>
     <ul class="nav nav-pills flex-column">${list(g.items).map((it) => `<li class="nav-item"><a href="#" class="nav-link d-flex align-items-center gap-2 py-1${it.on ? ' active' : ' link-body-emphasis'}">${ico(it.icon)}<span>${esc(it.text)}</span>${it.count ? `<span class="badge rounded-pill text-bg-secondary ms-auto">${esc(it.count)}</span>` : ''}</a></li>`).join('')}</ul></div>`).join('')}</div>`,
@@ -403,8 +419,8 @@ const bootstrap = {
     <span class="small text-body-secondary font-monospace">${esc(r.meta ?? '')}</span></li>`).join('')}</ul>`,
   kv:      (n) => `<ul class="list-group">${list(n.rows).map(([k2, v]) => `<li class="list-group-item d-flex justify-content-between align-items-center py-2">
     <code class="small">${esc(k2)}</code><span class="small text-body-secondary font-monospace">${esc(v)}</span></li>`).join('')}</ul>`,
-  chart:   (n) => `<div class="d-flex flex-column gap-3"><div class="d-flex align-items-end gap-2" style="height:7rem">${bars(n).map((b) => `<div class="d-flex flex-column align-items-center gap-1 flex-fill">
-    <div class="d-flex align-items-end justify-content-center gap-1 w-100" style="height:6rem"><div class="bg-primary rounded-top" style="width:45%;height:${b.a}%"></div><div class="bg-primary-subtle rounded-top" style="width:45%;height:${b.b}%"></div></div>
+  chart:   (n) => `<div class="d-flex flex-column gap-3"><div class="d-flex align-items-end gap-2" style="height:${chartH(n)}px">${bars(n).map((b) => `<div class="d-flex flex-column align-items-center gap-1 flex-fill">
+    <div class="d-flex align-items-end justify-content-center gap-1 w-100" style="height:${chartH(n) - 16}px"><div class="bg-primary rounded-top" style="width:45%;height:${b.a}%"></div><div class="bg-primary-subtle rounded-top" style="width:45%;height:${b.b}%"></div></div>
     <span class="small text-body-secondary">${esc(b.label)}</span></div>`).join('')}</div>
     <div class="d-flex gap-3 small text-body-secondary">${list(n.legend).map((t, i) => `<span class="d-inline-flex align-items-center gap-1"><span class="rounded-circle ${i ? 'bg-primary-subtle' : 'bg-primary'}" style="width:.5rem;height:.5rem"></span>${esc(t)}</span>`).join('')}</div></div>`,
   empty:   (n, k) => `<div class="d-flex flex-column align-items-center gap-2 py-5 text-center">
@@ -481,7 +497,7 @@ const shadcn = {
      gets their CardHeader with CardTitle and CardDescription (decision 213) */
   panel:   (n, k) => `<div data-slot="card" class="${sSlot('card')}">${n.title ? `<div data-slot="card-header" class="${sSlot('card-header')}"><div data-slot="card-title" class="${sSlot('card-title')}">${esc(n.title)}</div>${n.text ? `<div data-slot="card-description" class="${sSlot('card-description')}">${esc(n.text)}</div>` : ''}${
     /* a link in the head is their CardAction */
-    n.link ? `<div data-slot="card-action" class="${sSlot('card-action')}">${shadcn.link({ text: n.link })}</div>` : ''}</div>` : ''}<div data-slot="card-content" class="${sSlot('card-content')}">${k}</div></div>`,
+    n.asideHtml || n.link ? `<div data-slot="card-action" class="${sSlot('card-action')}">${n.asideHtml ?? shadcn.link({ text: n.link })}</div>` : ''}</div>` : ''}<div data-slot="card-content" class="${sSlot('card-content')}">${k}</div></div>`,
   divider: () => `<div data-slot="separator" role="none" data-orientation="horizontal" class="${sSlot('separator')}"></div>`,
   /* a page's title as their tasks example sets it; a heading inside a card
      as their CardTitle does (decision 213) */
@@ -558,10 +574,12 @@ const shadcn = {
   alert:   (n, k) => `<div role="alert" data-slot="alert" class="${sCva('alert', 'alertVariants', { variant: n.tone === 'danger' ? 'destructive' : 'default' })}"><div data-slot="alert-description" class="${sSlot('alert-description')}">${n.text != null ? esc(n.text) : k}</div></div>`,
   /* dashboard-01's SectionCards: a card in the brand at 5%, fading up, the
      figure at text-2xl semibold, 3xl once the card is 250px wide */
-  stat:    (n) => `<div data-slot="card" class="${twMerge(sSlot('card'), '@container/card bg-linear-to-t from-primary/5 to-card shadow-xs dark:bg-card')}"><div data-slot="card-header" class="${sSlot('card-header')}"><div data-slot="card-description" class="${sSlot('card-description')}">${esc(n.label)}</div><div data-slot="card-title" class="${twMerge(sSlot('card-title'), 'text-2xl font-semibold tabular-nums @[250px]/card:text-3xl')}">${esc(n.value)}</div></div></div>`,
+  stat:    (n) => `<div data-slot="card" class="${twMerge(sSlot('card'), '@container/card bg-linear-to-t from-primary/5 to-card shadow-xs dark:bg-card')}"><div data-slot="card-header" class="${sSlot('card-header')}"><div data-slot="card-description" class="${sSlot('card-description')}">${esc(n.label)}</div><div data-slot="card-title" class="${twMerge(sSlot('card-title'), 'text-2xl font-semibold tabular-nums @[250px]/card:text-3xl')}">${esc(n.value)}</div>${
+    n.delta ? `<div data-slot="card-action" class="${sSlot('card-action')}"><span data-slot="badge" class="${sCva('badge', 'badgeVariants', { variant: 'outline' })}">${ico(String(n.delta).startsWith('-') ? 'trending-down' : 'trending-up')}${esc(n.delta)}</span></div>` : ''}</div>${
+    n.note ? `<div data-slot="card-footer" class="${twMerge(sSlot('card-footer'), 'flex-col items-start gap-1.5 text-sm')}"><div class="text-muted-foreground">${esc(n.note)}</div></div>` : ''}</div>`,
   table:   (n) => `<div data-slot="table-container" class="${sSlot('table-container')}"><table data-slot="table" class="${sSlot('table')}"><thead data-slot="table-header" class="${sSlot('table-header')}"><tr data-slot="table-row" class="${sSlot('table-row')}">${
     list(n.cols).map((c) => `<th data-slot="table-head" class="${sSlot('table-head')}">${esc(c)}</th>`).join('')}</tr></thead><tbody data-slot="table-body" class="${sSlot('table-body')}">${
-    list(n.rows).map((r) => `<tr data-slot="table-row" class="${sSlot('table-row')}">${list(r).map((c) => `<td data-slot="table-cell" class="${sSlot('table-cell')}">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`,
+    list(n.rows).map((r) => `<tr data-slot="table-row" class="${sSlot('table-row')}">${list(r).map((c) => `<td data-slot="table-cell" class="${sSlot('table-cell')}">${cellOf(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`,
   /* Item is their row: media, content, title, description, actions */
   list:    (n) => `<div data-slot="item-group" class="${sSlot('item-group')}">${list(n.rows).map((r) => `<div data-slot="item" data-variant="default" data-size="default" class="${sCva('item', 'itemVariants', { variant: 'default', size: 'default' })}">
     <div data-slot="item-media" data-variant="icon" class="${sCva('item', 'itemMediaVariants', { variant: 'icon' })}">${ico(r.icon)}</div>
@@ -570,8 +588,8 @@ const shadcn = {
     <div data-slot="item-actions" class="${sSlot('item-actions')}"><span class="text-muted-foreground text-sm tabular-nums">${esc(r.meta ?? '')}</span></div></div>`).join('')}</div>`,
   kv:      (n) => `<div class="flex flex-col gap-2">${list(n.rows).map(([k2, v]) => `<div class="bg-muted/40 flex min-h-9 items-center gap-3 rounded-md border px-3">
     <code class="flex-1 truncate font-mono text-xs">${esc(k2)}</code><span class="text-muted-foreground font-mono text-xs">${esc(v)}</span></div>`).join('')}</div>`,
-  chart:   (n) => `<div class="flex flex-col gap-3"><div class="flex h-28 items-end gap-2">${bars(n).map((b) => `<div class="flex flex-1 flex-col items-center gap-1">
-    <div class="flex h-24 w-full items-end justify-center gap-0.5"><div class="bg-chart-1 w-1/2 rounded-t-sm" style="height:${b.a}%"></div><div class="bg-chart-2 w-1/2 rounded-t-sm" style="height:${b.b}%"></div></div>
+  chart:   (n) => `<div class="flex flex-col gap-3"><div class="flex items-end gap-2" style="height:${chartH(n)}px">${bars(n).map((b) => `<div class="flex flex-1 flex-col items-center gap-1">
+    <div class="flex w-full items-end justify-center gap-0.5" style="height:${chartH(n) - 16}px"><div class="bg-chart-1 w-1/2 rounded-t-sm" style="height:${b.a}%"></div><div class="bg-chart-2 w-1/2 rounded-t-sm" style="height:${b.b}%"></div></div>
     <span class="text-muted-foreground text-xs">${esc(b.label)}</span></div>`).join('')}</div>
     <div class="text-muted-foreground flex gap-4 text-xs">${list(n.legend).map((t, i) => `<span class="inline-flex items-center gap-1.5"><span class="size-2 rounded-full ${i ? 'bg-chart-2' : 'bg-chart-1'}"></span>${esc(t)}</span>`).join('')}</div></div>`,
   avatar:  (n) => `<span data-slot="avatar" class="${sSlot('avatar')}"><span data-slot="avatar-fallback" class="${sSlot('avatar-fallback')}">${esc(n.text)}</span></span>`,
@@ -605,7 +623,7 @@ const shadcn = {
   sidenav: (n) => n.brand ? `<div data-slot="sidebar" class="${twMerge(sSlot('sidebar'), 'p-2')}" style="--sidebar-width:16rem">
     <div data-slot="sidebar-header" data-sidebar="header" class="${sSlot('sidebar-header')}"><ul data-slot="sidebar-menu" class="${sSlot('sidebar-menu')}"><li data-slot="sidebar-menu-item" class="${sSlot('sidebar-menu-item')}"><a href="#" data-slot="sidebar-menu-button" data-size="default" class="${twMerge(sCva('sidebar', 'sidebarMenuButtonVariants', { variant: 'default', size: 'default' }), 'p-1.5')}">${markOf('var(--primary)').replace('<svg', '<svg class="size-5!"')}<span class="text-base font-semibold">${esc(n.brand)}</span></a></li></ul></div>
     <div data-slot="sidebar-content" data-sidebar="content" class="${sSlot('sidebar-content')}">${scGroups(n)}</div>
-    ${n.user ? `<div data-slot="sidebar-footer" data-sidebar="footer" class="${sSlot('sidebar-footer')}"><ul data-slot="sidebar-menu" class="${sSlot('sidebar-menu')}"><li data-slot="sidebar-menu-item" class="${sSlot('sidebar-menu-item')}"><a href="#" data-slot="sidebar-menu-button" data-size="lg" class="${sCva('sidebar', 'sidebarMenuButtonVariants', { variant: 'default', size: 'lg' })}">
+    ${n.user ? `<div data-slot="sidebar-footer" data-sidebar="footer" class="${sSlot('sidebar-footer')}"><ul data-slot="sidebar-menu" class="${sSlot('sidebar-menu')}"><li data-slot="sidebar-menu-item" class="${sSlot('sidebar-menu-item')}"><a href="#" aria-label="Account" data-slot="sidebar-menu-button" data-size="lg" class="${sCva('sidebar', 'sidebarMenuButtonVariants', { variant: 'default', size: 'lg' })}">
       <span data-slot="avatar" class="${twMerge(sSlot('avatar'), 'size-8 rounded-lg grayscale')}"><span data-slot="avatar-fallback" class="${twMerge(sSlot('avatar-fallback'), 'rounded-lg')}">${esc(n.user.initials)}</span></span>
       <div class="grid flex-1 text-left text-sm leading-tight"><span class="truncate font-medium">${esc(n.user.name)}</span><span class="truncate text-xs text-foreground/70">${esc(n.user.email)}</span></div>${ico('ellipsis-vertical', 16, 'ml-auto size-4')}</a></li></ul></div>` : ''}</div>`
     : `<div data-slot="sidebar-content" class="${sSlot('sidebar-content')} bg-sidebar text-sidebar-foreground rounded-lg p-2">${scGroups(n)}</div>`,
@@ -618,12 +636,12 @@ const shadcn = {
      positioning; on a wall those are simply unset, which is what `origin-()`
      and a max-height with no value mean anyway. */
   menu:    (n) => `<div class="relative inline-block">
-    <button data-slot="button" data-variant="outline" data-size="default" aria-haspopup="menu" aria-expanded="true" class="${sCva('button', 'buttonVariants', { variant: 'outline', size: 'default' })}">${esc(n.trigger ?? 'Actions')}${ico('chevron-down', 14)}</button>
-    <div data-slot="dropdown-menu-content" data-open data-side="bottom" class="${sSlot('dropdown-menu-content')} mt-1">
-      <div data-slot="dropdown-menu-label" class="${sSlot('dropdown-menu-label')}">${esc(n.label ?? '')}</div>
+    ${n.trigger === false ? '' : `<button data-slot="button" data-variant="outline" data-size="default" aria-haspopup="menu" aria-expanded="true" class="${sCva('button', 'buttonVariants', { variant: 'outline', size: 'default' })}">${esc(n.trigger ?? 'Actions')}${ico('chevron-down', 14)}</button>`}
+    <div role="menu" data-slot="dropdown-menu-content" data-open data-side="bottom" class="${twMerge(sSlot('dropdown-menu-content'), n.trigger === false ? 'min-w-56' : 'mt-1')}">
+      ${n.label ? `<div data-slot="dropdown-menu-label" class="${sSlot('dropdown-menu-label')}">${esc(n.label)}</div>` : ''}
       ${list(n.items).map((t) => `<div role="menuitem" data-slot="dropdown-menu-item" class="${sSlot('dropdown-menu-item')}">${esc(t)}</div>`).join('')}
       <div role="separator" data-slot="dropdown-menu-separator" class="${sSlot('dropdown-menu-separator')}"></div>
-      <div role="menuitem" data-slot="dropdown-menu-item" data-variant="destructive" class="${sSlot('dropdown-menu-item')}">${esc(n.danger ?? 'Delete')}</div></div></div>`,
+      <div role="menuitem" data-slot="dropdown-menu-item"${n.end ? '' : ' data-variant="destructive"'} class="${sSlot('dropdown-menu-item')}">${esc(n.end ?? n.danger ?? 'Delete')}</div></div></div>`,
   mediacard: (n) => `<div data-slot="card" class="${sSlot('card')}">
     <div class="text-muted-foreground bg-muted mx-6 flex items-center justify-center rounded-lg" style="aspect-ratio:16/9">${PHOTO}</div>
     <div data-slot="card-header" class="${sSlot('card-header')}"><div data-slot="card-title" class="${sSlot('card-title')}">${esc(n.title)}</div>
@@ -710,7 +728,7 @@ const material = {
   /* Material 3 specifies a data table; @material/web does not ship one. */
   table:   (n) => `<table class="md-typescale-body-medium" style="width:100%;border-collapse:collapse"><thead><tr>${list(n.cols).map((c) =>
     `<th class="md-typescale-label-medium" style="text-align:left;padding:12px 8px;color:var(--md-sys-color-on-surface-variant)">${esc(c)}</th>`).join('')}</tr></thead><tbody>${
-    list(n.rows).map((r) => `<tr>${list(r).map((c) => `<td style="padding:12px 8px;border-top:1px solid var(--md-sys-color-outline-variant)">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`,
+    list(n.rows).map((r) => `<tr>${list(r).map((c) => `<td style="padding:12px 8px;border-top:1px solid var(--md-sys-color-outline-variant)">${cellOf(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`,
   /* nor an avatar */
   avatar:  (n) => `<span class="md-typescale-label-large" style="flex:none;display:inline-grid;place-items:center;width:40px;height:40px;border-radius:var(--md-sys-shape-corner-full);background:var(--md-sys-color-primary-container);color:var(--md-sys-color-on-primary-container)">${esc(n.text)}</span>`,
   /* Material ships a navigation bar as a custom element. It ships no footer
@@ -769,15 +787,16 @@ const material = {
    * anchor's offsetParent and writes a plain inset, so a positioned span would
    * be a second origin: the two disagreed by the height of the button and the
    * panel hung out of the bottom of the card. */
-  menu:    (n) => `<div style="position:relative;display:inline-flex;flex-direction:column;gap:8px;align-items:flex-start">
-    <md-outlined-button id="menu-anchor">${esc(n.trigger ?? 'Actions')}</md-outlined-button>
+  menu:    (n) => { const id = `menu-${String(n.label ?? (n.trigger || 'actions')).toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
+    return `<div style="position:relative;display:inline-flex;flex-direction:column;gap:${n.trigger === false ? 0 : 8}px;align-items:flex-start">
+    ${n.trigger === false ? `<span id="${id}" style="display:block;height:0"></span>` : `<md-outlined-button id="${id}">${esc(n.trigger ?? 'Actions')}</md-outlined-button>`}
     <span style="display:block;min-width:224px;min-height:${(list(n.items).length + 1) * 56 + (n.label ? 28 : 0) + 33}px">
-      <md-menu anchor="menu-anchor" positioning="absolute" open quick default-focus="none" style="min-width:224px">
+      <md-menu anchor="${id}" positioning="absolute" open quick default-focus="none" style="min-width:224px">
         ${n.label ? `<div class="md-typescale-label-medium" style="padding:6px 12px;color:var(--md-sys-color-on-surface-variant)">${esc(n.label)}</div>` : ''}
         ${list(n.items).map((t) => `<md-menu-item><div slot="headline">${esc(t)}</div></md-menu-item>`).join('')}
         <md-divider></md-divider>
-        <md-menu-item style="--md-menu-item-label-text-color:var(--md-sys-color-error)"><div slot="headline">${esc(n.danger ?? 'Delete')}</div></md-menu-item>
-      </md-menu></span></div>`,
+        <md-menu-item${n.end ? '' : ' style="--md-menu-item-label-text-color:var(--md-sys-color-error)"'}><div slot="headline">${esc(n.end ?? n.danger ?? 'Delete')}</div></md-menu-item>
+      </md-menu></span></div>` },
   sidenav: (n) => `<div style="display:flex;flex-direction:column;gap:16px">${list(n.groups).map((g) => `<div>
     <p class="md-typescale-title-small" style="margin:0 0 4px;padding:0 12px;color:var(--md-sys-color-on-surface-variant)">${esc(g.title)}</p>
     <md-list style="--md-list-container-color:transparent">${list(g.items).map((it) => `<md-list-item type="button"${it.on ? ' style="--md-list-item-container-color:var(--md-sys-color-secondary-container);--md-list-item-label-text-color:var(--md-sys-color-on-secondary-container)"' : ''}>
@@ -789,8 +808,8 @@ const material = {
   kv:      (n) => `<md-list style="--md-list-container-color:transparent">${list(n.rows).map(([k2, v]) => `<md-list-item>
     <div slot="headline" style="font-family:ui-monospace,monospace;font-size:12px">${esc(k2)}</div>
     <div slot="trailing-supporting-text" style="font-family:ui-monospace,monospace">${esc(v)}</div></md-list-item>`).join('')}</md-list>`,
-  chart:   (n) => `<div style="display:flex;flex-direction:column;gap:12px"><div style="display:flex;align-items:flex-end;gap:8px;height:112px">${bars(n).map((b) => `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
-    <div style="display:flex;align-items:flex-end;justify-content:center;gap:2px;width:100%;height:96px"><div style="width:45%;height:${b.a}%;border-radius:var(--md-sys-shape-corner-extra-small) var(--md-sys-shape-corner-extra-small) 0 0;background:var(--md-sys-color-primary)"></div><div style="width:45%;height:${b.b}%;border-radius:var(--md-sys-shape-corner-extra-small) var(--md-sys-shape-corner-extra-small) 0 0;background:var(--md-sys-color-primary-container)"></div></div>
+  chart:   (n) => `<div style="display:flex;flex-direction:column;gap:12px"><div style="display:flex;align-items:flex-end;gap:8px;height:${chartH(n)}px">${bars(n).map((b) => `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+    <div style="display:flex;align-items:flex-end;justify-content:center;gap:2px;width:100%;height:${chartH(n) - 16}px"><div style="width:45%;height:${b.a}%;border-radius:var(--md-sys-shape-corner-extra-small) var(--md-sys-shape-corner-extra-small) 0 0;background:var(--md-sys-color-primary)"></div><div style="width:45%;height:${b.b}%;border-radius:var(--md-sys-shape-corner-extra-small) var(--md-sys-shape-corner-extra-small) 0 0;background:var(--md-sys-color-primary-container)"></div></div>
     <span class="md-typescale-label-small" style="color:var(--md-sys-color-on-surface-variant)">${esc(b.label)}</span></div>`).join('')}</div>
     <div class="md-typescale-label-small" style="display:flex;gap:16px;color:var(--md-sys-color-on-surface-variant)">${list(n.legend).map((t, i) => `<span style="display:inline-flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:var(--md-sys-shape-corner-full);background:var(--md-sys-color-${i ? 'primary-container' : 'primary'})"></span>${esc(t)}</span>`).join('')}</div></div>`,
   empty:   (n, k) => `<div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:32px 0;text-align:center">
@@ -882,7 +901,7 @@ const radix = {
   stat:    (n) => `<div class="rt-reset rt-BaseCard rt-Card rt-r-size-2 rt-variant-surface"><p class="rt-Text rt-r-size-1" data-accent-color="gray">${esc(n.label)}</p><p class="rt-Heading rt-r-size-6">${esc(n.value)}</p></div>`,
   table:   (n) => `<div class="rt-TableRoot rt-r-size-2 rt-variant-surface"><table class="rt-TableRootTable"><thead class="rt-TableHeader"><tr class="rt-TableRow">${
     list(n.cols).map((c) => `<th class="rt-TableCell rt-TableColumnHeaderCell">${esc(c)}</th>`).join('')}</tr></thead><tbody class="rt-TableBody">${
-    list(n.rows).map((r) => `<tr class="rt-TableRow">${list(r).map((c) => `<td class="rt-TableCell">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`,
+    list(n.rows).map((r) => `<tr class="rt-TableRow">${list(r).map((c) => `<td class="rt-TableCell">${cellOf(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`,
   avatar:  (n) => `<span class="rt-reset rt-AvatarRoot rt-r-size-2 rt-variant-soft"><span class="rt-AvatarFallback">${esc(n.text)}</span></span>`,
   /* Radix writes each tab label TWICE: the visible copy is absolutely
      positioned and a hidden bold copy holds the width open so the row does not
@@ -935,13 +954,13 @@ const radix = {
   /* their own menu classes — BaseMenu is what both the dropdown and the
      context menu are built from, and DropdownMenuContent is the surface */
   menu:    (n) => `<div class="rt-Flex" style="display:inline-flex;flex-direction:column;gap:var(--space-2);align-items:flex-start">
-    <button class="rt-reset rt-BaseButton rt-r-size-2 rt-variant-surface rt-Button" data-accent-color="gray" aria-haspopup="menu" aria-expanded="true">${esc(n.trigger ?? 'Actions')}</button>
-    <div class="rt-PopperContent rt-BaseMenuContent rt-DropdownMenuContent rt-r-size-2 rt-variant-solid" data-state="open" data-side="bottom" style="min-width:224px">
+    ${n.trigger === false ? '' : `<button class="rt-reset rt-BaseButton rt-r-size-2 rt-variant-surface rt-Button" data-accent-color="gray" aria-haspopup="menu" aria-expanded="true">${esc(n.trigger ?? 'Actions')}</button>`}
+    <div role="menu" class="rt-PopperContent rt-BaseMenuContent rt-DropdownMenuContent rt-r-size-2 rt-variant-solid" data-state="open" data-side="bottom" style="min-width:224px">
       <div class="rt-BaseMenuViewport">
-        <div class="rt-BaseMenuLabel">${esc(n.label ?? '')}</div>
+        ${n.label ? `<div class="rt-BaseMenuLabel">${esc(n.label)}</div>` : ''}
         ${list(n.items).map((t) => `<div class="rt-reset rt-BaseMenuItem" role="menuitem">${esc(t)}</div>`).join('')}
         <div class="rt-BaseMenuSeparator"></div>
-        <div class="rt-reset rt-BaseMenuItem" role="menuitem" data-accent-color="red">${esc(n.danger ?? 'Delete')}</div></div></div></div>`,
+        <div class="rt-reset rt-BaseMenuItem" role="menuitem"${n.end ? '' : ' data-accent-color="red"'}>${esc(n.end ?? n.danger ?? 'Delete')}</div></div></div></div>`,
   sidenav: (n) => `<div class="rt-Flex" style="display:flex;flex-direction:column;gap:var(--space-4)">${list(n.groups).map((g) => `<div style="display:flex;flex-direction:column;gap:var(--space-1)">
     <p class="rt-Text rt-r-size-1 rt-Strong" data-accent-color="gray" style="padding:0 var(--space-2)">${esc(g.title)}</p>${list(g.items).map((it) => `<a href="#"${it.on ? ' aria-current="page"' : ''} class="rt-Text rt-r-size-2" style="display:flex;align-items:center;gap:var(--space-2);min-height:32px;padding:0 var(--space-2);border-radius:var(--radius-2);text-decoration:none;color:${it.on ? 'var(--accent-11)' : 'var(--gray-11)'};background:${it.on ? 'var(--accent-a3)' : 'transparent'}">${ico(it.icon)}<span>${esc(it.text)}</span>${it.count ? `<span class="rt-reset rt-Badge rt-r-size-1 rt-variant-soft" style="margin-left:auto">${esc(it.count)}</span>` : ''}</a>`).join('')}</div>`).join('')}</div>`,
   list:    (n) => `<div class="rt-Flex" style="display:flex;flex-direction:column">${list(n.rows).map((r) => `<div style="display:flex;align-items:center;gap:var(--space-3);min-height:48px;padding:var(--space-2) 0;border-bottom:1px solid var(--gray-a4)">
@@ -951,8 +970,8 @@ const radix = {
   kv:      (n) => `<dl class="rt-DataListRoot rt-r-size-2" data-orientation="horizontal">${list(n.rows).map(([k2, v]) => `<div class="rt-DataListItem">
     <dt class="rt-DataListLabel" style="min-width:9rem"><code class="rt-reset rt-Code rt-r-size-1 rt-variant-soft">${esc(k2)}</code></dt>
     <dd class="rt-DataListValue"><span class="rt-Text rt-r-size-1" data-accent-color="gray">${esc(v)}</span></dd></div>`).join('')}</dl>`,
-  chart:   (n) => `<div class="rt-Flex" style="display:flex;flex-direction:column;gap:var(--space-3)"><div style="display:flex;align-items:flex-end;gap:var(--space-2);height:112px">${bars(n).map((b) => `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:var(--space-1)">
-    <div style="display:flex;align-items:flex-end;justify-content:center;gap:2px;width:100%;height:96px"><div style="width:45%;height:${b.a}%;border-radius:var(--radius-1) var(--radius-1) 0 0;background:var(--accent-9)"></div><div style="width:45%;height:${b.b}%;border-radius:var(--radius-1) var(--radius-1) 0 0;background:var(--accent-6)"></div></div>
+  chart:   (n) => `<div class="rt-Flex" style="display:flex;flex-direction:column;gap:var(--space-3)"><div style="display:flex;align-items:flex-end;gap:var(--space-2);height:${chartH(n)}px">${bars(n).map((b) => `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:var(--space-1)">
+    <div style="display:flex;align-items:flex-end;justify-content:center;gap:2px;width:100%;height:${chartH(n) - 16}px"><div style="width:45%;height:${b.a}%;border-radius:var(--radius-1) var(--radius-1) 0 0;background:var(--accent-9)"></div><div style="width:45%;height:${b.b}%;border-radius:var(--radius-1) var(--radius-1) 0 0;background:var(--accent-6)"></div></div>
     <span class="rt-Text rt-r-size-1" data-accent-color="gray">${esc(b.label)}</span></div>`).join('')}</div>
     <div style="display:flex;gap:var(--space-4)">${list(n.legend).map((t, i) => `<span class="rt-Text rt-r-size-1" data-accent-color="gray" style="display:inline-flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:var(--accent-${i ? 6 : 9})"></span>${esc(t)}</span>`).join('')}</div></div>`,
   empty:   (n, k) => `<div style="display:flex;flex-direction:column;align-items:center;gap:var(--space-2);padding:var(--space-6) 0;text-align:center">
@@ -1082,7 +1101,7 @@ const mantine = {
   stat:    (n) => `<div class="${cls(mc('Paper'), mc('Card'))}" data-with-border="true" data-orientation="vertical" style="--card-padding:var(--mantine-spacing-lg)"><p class="${mc('Text')}" style="--text-color:var(--mantine-color-dimmed);--text-fz:var(--mantine-font-size-sm)">${esc(n.label)}</p><p class="${mc('Title')}" data-order="2" style="--title-fz:var(--mantine-h2-font-size);--title-fw:var(--mantine-h2-font-weight);--title-lh:var(--mantine-h2-line-height)">${esc(n.value)}</p></div>`,
   table:   (n) => `<table class="${mc('Table', 'table')}" data-with-table-border="true" data-with-row-border="true"><thead class="${mc('Table', 'thead')}"><tr class="${mc('Table', 'tr')}">${
     list(n.cols).map((c) => `<th class="${mc('Table', 'th')}">${esc(c)}</th>`).join('')}</tr></thead><tbody class="${mc('Table', 'tbody')}">${
-    list(n.rows).map((r) => `<tr class="${mc('Table', 'tr')}" data-with-row-border="true">${list(r).map((c) => `<td class="${mc('Table', 'td')}">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`,
+    list(n.rows).map((r) => `<tr class="${mc('Table', 'tr')}" data-with-row-border="true">${list(r).map((c) => `<td class="${mc('Table', 'td')}">${cellOf(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`,
   avatar:  (n) => `<div class="${mc('Avatar')}"><span class="${mc('Avatar', 'placeholder')}">${esc(n.text)}</span></div>`,
   /* Mantine's AppShell publishes a header AND a footer class — the only kit
      here that ships both — and Card.section is its edge-to-edge media slot. */
@@ -1148,12 +1167,12 @@ const mantine = {
    * one is --menu-item-color, the variable their own varsResolver writes from
    * the color prop. */
   menu:    (n) => `<div class="${mc('Stack')}" style="--stack-gap:var(--mantine-spacing-xs);align-items:flex-start">
-    <button type="button" class="${cls(MN_FOCUS, 'mantine-active', mc('Button'), mc('UnstyledButton'))}" aria-haspopup="menu" aria-expanded="true" style="${MN_BTN_VARS}${MN_BTN.secondary}">${esc(n.trigger ?? 'Actions')}</button>
+    ${n.trigger === false ? '' : `<button type="button" class="${cls(MN_FOCUS, 'mantine-active', mc('Button'), mc('UnstyledButton'))}" aria-haspopup="menu" aria-expanded="true" style="${MN_BTN_VARS}${MN_BTN.secondary}">${esc(n.trigger ?? 'Actions')}</button>`}
     <div class="${cls(mc('Popover', 'dropdown'), mc('Menu', 'dropdown'))}" role="menu" aria-orientation="vertical" data-menu-dropdown style="position:static;min-width:224px">
       ${n.label ? `<div class="${mc('Menu', 'label')}">${esc(n.label)}</div>` : ''}
       ${list(n.items).map((t) => `<button type="button" class="${cls(MN_FOCUS, mc('UnstyledButton'), mc('Menu', 'item'))}" role="menuitem" data-menu-item><span class="${mc('Menu', 'itemLabel')}" data-menu-item-label>${esc(t)}</span></button>`).join('')}
       <div class="${mc('Menu', 'divider')}"></div>
-      <button type="button" class="${cls(MN_FOCUS, mc('UnstyledButton'), mc('Menu', 'item'))}" role="menuitem" data-menu-item style="--menu-item-color:var(--mantine-color-red-6);--menu-item-hover:var(--mantine-color-red-0)"><span class="${mc('Menu', 'itemLabel')}" data-menu-item-label>${esc(n.danger ?? 'Delete')}</span></button></div></div>`,
+      <button type="button" class="${cls(MN_FOCUS, mc('UnstyledButton'), mc('Menu', 'item'))}" role="menuitem" data-menu-item${n.end ? '' : ' style="--menu-item-color:var(--mantine-color-red-6);--menu-item-hover:var(--mantine-color-red-0)"'}><span class="${mc('Menu', 'itemLabel')}" data-menu-item-label>${esc(n.end ?? n.danger ?? 'Delete')}</span></button></div></div>`,
   sidenav: (n) => `<div class="${mc('Stack')}" style="--stack-gap:var(--mantine-spacing-md)">${list(n.groups).map((g) => `<div>
     <p class="${mc('Text')}" style="--text-fz:var(--mantine-font-size-xs);--text-color:var(--mantine-color-dimmed);padding:0 var(--mantine-spacing-xs);margin:0 0 4px">${esc(g.title)}</p>${
     list(g.items).map((it) => `<a href="#" class="${cls(MN_FOCUS, mc('UnstyledButton'), mc('NavLink'))}"${it.on ? ' data-active="true"' : ''}><span class="${mc('NavLink', 'section')}" data-position="left">${ico(it.icon)}</span><span class="${mc('NavLink', 'body')}"><span class="${mc('NavLink', 'label')}">${esc(it.text)}</span></span>${it.count ? `<span class="${mc('NavLink', 'section')}" data-position="right"><span class="${mc('Badge')}" style="--badge-height:1.125rem">${esc(it.count)}</span></span>` : ''}</a>`).join('')}</div>`).join('')}</div>`,
@@ -1164,8 +1183,8 @@ const mantine = {
   kv:      (n) => `<dl class="${mc('DataList')}" data-orientation="horizontal" style="--datalist-gap:var(--mantine-spacing-xs)">${list(n.rows).map(([k2, v]) => `<div class="${mc('DataList', 'item')}">
     <dt class="${mc('DataList', 'itemLabel')}" style="min-width:9rem"><code class="${mc('Code')}">${esc(k2)}</code></dt>
     <dd class="${mc('DataList', 'itemValue')}"><span class="${mc('Text')}" style="--text-fz:var(--mantine-font-size-xs);--text-color:var(--mantine-color-dimmed)">${esc(v)}</span></dd></div>`).join('')}</dl>`,
-  chart:   (n) => `<div class="${mc('Stack')}" style="--stack-gap:var(--mantine-spacing-sm)"><div style="display:flex;align-items:flex-end;gap:var(--mantine-spacing-xs);height:112px">${bars(n).map((b) => `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
-    <div style="display:flex;align-items:flex-end;justify-content:center;gap:2px;width:100%;height:96px"><div style="width:45%;height:${b.a}%;border-radius:var(--mantine-radius-sm) var(--mantine-radius-sm) 0 0;background:var(--mantine-primary-color-filled)"></div><div style="width:45%;height:${b.b}%;border-radius:var(--mantine-radius-sm) var(--mantine-radius-sm) 0 0;background:var(--mantine-primary-color-light)"></div></div>
+  chart:   (n) => `<div class="${mc('Stack')}" style="--stack-gap:var(--mantine-spacing-sm)"><div style="display:flex;align-items:flex-end;gap:var(--mantine-spacing-xs);height:${chartH(n)}px">${bars(n).map((b) => `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+    <div style="display:flex;align-items:flex-end;justify-content:center;gap:2px;width:100%;height:${chartH(n) - 16}px"><div style="width:45%;height:${b.a}%;border-radius:var(--mantine-radius-sm) var(--mantine-radius-sm) 0 0;background:var(--mantine-primary-color-filled)"></div><div style="width:45%;height:${b.b}%;border-radius:var(--mantine-radius-sm) var(--mantine-radius-sm) 0 0;background:var(--mantine-primary-color-light)"></div></div>
     <span class="${mc('Text')}" style="--text-fz:var(--mantine-font-size-xs);--text-color:var(--mantine-color-dimmed)">${esc(b.label)}</span></div>`).join('')}</div>
     <div class="${mc('Group')}" style="--group-gap:var(--mantine-spacing-md)">${list(n.legend).map((t, i) => `<span class="${mc('Text')}" style="--text-fz:var(--mantine-font-size-xs);--text-color:var(--mantine-color-dimmed);display:inline-flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:var(--mantine-${i ? 'primary-color-light' : 'primary-color-filled'})"></span>${esc(t)}</span>`).join('')}</div></div>`,
   empty:   (n, k) => `<div class="${mc('EmptyState')}"><div class="${mc('EmptyState', 'indicator')}">${ico(n.icon, 18)}</div>
@@ -1232,8 +1251,8 @@ const antd = {
   elevation: (n) => `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:16px">${list(n.levels).map((lv, i) =>
     `<div style="width:96px;height:64px;display:flex;align-items:center;justify-content:center;border-radius:var(--ant-border-radius-lg);background:var(--ant-color-bg-container);box-shadow:var(--ant-box-shadow${['-tertiary', '', '-secondary'][i] ?? ''})"><span style="font-size:var(--ant-font-size-sm);color:var(--ant-color-text-secondary)">${esc(lv)}</span></div>`).join('')}</div>`,
   /* Ant Design ships no chart; the bars are its own primary at two fills. */
-  chart:   (n) => `<div style="display:flex;flex-direction:column;gap:12px"><div style="display:flex;align-items:flex-end;gap:8px;height:112px">${bars(n).map((b) => `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
-    <div style="display:flex;align-items:flex-end;justify-content:center;gap:2px;width:100%;height:96px"><div style="width:45%;height:${b.a}%;border-radius:var(--ant-border-radius-xs) var(--ant-border-radius-xs) 0 0;background:var(--ant-color-primary)"></div><div style="width:45%;height:${b.b}%;border-radius:var(--ant-border-radius-xs) var(--ant-border-radius-xs) 0 0;background:var(--ant-color-primary-bg)"></div></div>
+  chart:   (n) => `<div style="display:flex;flex-direction:column;gap:12px"><div style="display:flex;align-items:flex-end;gap:8px;height:${chartH(n)}px">${bars(n).map((b) => `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+    <div style="display:flex;align-items:flex-end;justify-content:center;gap:2px;width:100%;height:${chartH(n) - 16}px"><div style="width:45%;height:${b.a}%;border-radius:var(--ant-border-radius-xs) var(--ant-border-radius-xs) 0 0;background:var(--ant-color-primary)"></div><div style="width:45%;height:${b.b}%;border-radius:var(--ant-border-radius-xs) var(--ant-border-radius-xs) 0 0;background:var(--ant-color-primary-bg)"></div></div>
     <span style="font-size:var(--ant-font-size-sm);color:var(--ant-color-text-secondary)">${esc(b.label)}</span></div>`).join('')}</div>
     <div style="display:flex;gap:16px">${list(n.legend).map((t, i) => `<span style="display:inline-flex;align-items:center;gap:6px;font-size:var(--ant-font-size-sm);color:var(--ant-color-text-secondary)"><span style="width:8px;height:8px;border-radius:50%;background:var(--ant-color-primary${i ? '-bg' : ''})"></span>${esc(t)}</span>`).join('')}</div></div>`,
 }
@@ -1466,13 +1485,21 @@ const fieldOf = (bind) => (n, k) => {
 }
 const fieldsOf = (bind) => (n, k) => bind.stack({ gap: 4 }, k)
 const titledPanel = (bind) => { const plain = bind.panel
-  const head = (n) => n.link ? bind.row({ between: true }, bind.heading({ text: n.title }) + bind.link({ text: n.link })) : bind.heading({ text: n.title })
+  const head = (n) => n.asideHtml || n.link ? bind.row({ between: true }, bind.heading({ text: n.title }) + (n.asideHtml ?? bind.link({ text: n.link }))) : bind.heading({ text: n.title })
   return (n, k) => plain(n, n.title ? bind.stack({ gap: 4 }, bind.stack({ gap: 1 }, head(n) + (n.text ? bind.muted({ text: n.text }) : '')) + k) : k) }
+/* a stat's trend: the kit's own badge and a muted line, under the figure */
+const withTrend = (bind) => { const plain = bind.stat
+  return (n) => { const html = plain(n)
+    if (!n.delta) return html
+    const trend = bind.row({ gap: 2 }, bind.badge({ tone: n.tone ?? 'neutral', text: n.delta }) + bind.muted({ text: n.note ?? '' }))
+    /* inside the card, after the figure: the card is the outermost element */
+    const at = html.lastIndexOf('</')
+    return html.slice(0, at) + trend + html.slice(at) } }
 /* a top-bar frame: who is signed in is an avatar at the bar's end */
 const userAtEnd = (bind) => { const bar = bind.navbar
   return (n, k) => bar(n, n.user ? k + bind.avatar({ text: n.user.initials }) : k) }
 for (const bind of [tailwind, daisyui, bootstrap, material, radix, mantine]) {
-  bind.field = fieldOf(bind); bind.fields = fieldsOf(bind); bind.panel = titledPanel(bind); bind.navbar = userAtEnd(bind)
+  bind.field = fieldOf(bind); bind.fields = fieldsOf(bind); bind.panel = titledPanel(bind); bind.navbar = userAtEnd(bind); bind.stat = withTrend(bind)
 }
 
 export const WALL = { tailwind, daisyui, bootstrap, shadcn, material, radix, mantine, antd }

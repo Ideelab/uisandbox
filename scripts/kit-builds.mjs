@@ -50,7 +50,7 @@ const { icons } = await import(join(ENGINE, 'icons.mjs'))
 const { route } = await import(join(ENGINE, 'roles.mjs'))
 const { buildCss } = await import(join(ENGINE, 'build-css.mjs'))
 const { WALL, useMantineClasses, useRadixTones, useIcons, useIconSets, iconKit, useShadcnParts, useAntdParts } = await import(join(ENGINE, 'wall-bindings.mjs'))
-const { ICON_NAMES, SCREENS, wallMarkup } = await import(join(ENGINE, 'scenes.mjs'))
+const { ICON_NAMES, SCREENS, wallMarkup, LAYER_SCRIPT } = await import(join(ENGINE, 'scenes.mjs'))
 const { readIconSets, KIT_ICON_SETS } = await import(join(ENGINE, 'icon-sets.mjs'))
 const { kitDefaults } = await import(join(ENGINE, 'kit-defaults.mjs'))
 const { ROOT } = await import(join(ENGINE, 'kit-root.mjs'))
@@ -193,6 +193,7 @@ html #strip > [data-board][data-shot] { display: flex }
 </head>
 <body>
 ${wallMarkup(WALL[id], [screen]).replace(SCRIPT, '')}
+<script>${LAYER_SCRIPT}</script>
 </body>
 </html>
 `

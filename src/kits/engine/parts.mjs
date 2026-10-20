@@ -49,7 +49,7 @@ export const TONES = ['neutral', 'brand', 'success', 'warning', 'danger']
  * with a reference to nothing and a blank tool, with one line in the console
  * about a constant nobody had heard of.
  */
-export const BINDING_ICONS = ['chevron-down', 'check', 'chevron-left', 'chevron-right', 'x', 'loader-circle', 'panel-left', 'ellipsis-vertical']
+export const BINDING_ICONS = ['chevron-down', 'check', 'chevron-left', 'chevron-right', 'x', 'loader-circle', 'panel-left', 'ellipsis-vertical', 'trending-up', 'trending-down']
 
 export const esc = (s) => String(s ?? '').replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]))
 export const list = (v) => (Array.isArray(v) ? v : [])
@@ -80,9 +80,29 @@ export function render(node, bind) {
     if (html != null) return html.replace('<div data-antd-kids=""></div>', kids)
   }
   const fn = bind[node.p]
+  if (fn) node = inProps(node, bind)
   if (!fn) return `<span data-missing="${esc(node.p)}" style="display:inline-block;padding:4px 8px;border:1px dashed currentColor;opacity:.6;font-size:12px">${esc(node.p)} — not in ${esc(bind._id)}</span>`
   return fn(node, kids)
 }
+
+/**
+ * A NODE INSIDE A PROP, rendered before the part sees it.
+ *
+ * A status in a table is a badge, an action in a row is an icon button, a
+ * card's head can carry a segmented control (decision 214). The part is handed
+ * them as finished markup, `{ html }` in a cell and `asideHtml` beside a
+ * title, so a table stays a table of the kit's and its cells stay the kit's
+ * own badges. Ant Design renders the same nodes inside its own components.
+ */
+function inProps(node, bind) {
+  const cells = node.p === 'table' && list(node.rows).some((r) => list(r).some((c) => c && typeof c === 'object'))
+  if (!cells && !(node.aside && typeof node.aside === 'object')) return node
+  return { ...node,
+    ...(cells ? { rows: list(node.rows).map((r) => list(r).map((c) => (c && typeof c === 'object' ? { html: render(c, bind) } : c))) } : {}),
+    ...(node.aside && typeof node.aside === 'object' ? { asideHtml: render(node.aside, bind) } : {}) }
+}
+/** A table cell: text, or a node already rendered (inProps). */
+export const cellOf = (c) => (c && typeof c === 'object' && c.html != null ? c.html : esc(c))
 
 /**
  * ONE NODE PER PART, with every field a part might read.

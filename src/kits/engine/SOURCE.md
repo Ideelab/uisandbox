@@ -118,6 +118,11 @@ table with its decision.
 | `scenes.mjs` | the shell's nodes carry the user and the page's title; a side frame; Sign in, Settings and the dashboard's cards in fields and titled panels | 213 |
 | `parts.mjs`, `icon-sets.mjs` | field and fields; panel-left and ellipsis-vertical in every set | 213 |
 | `antd-tree.mjs`, `antd-nodes.mjs` | field and fields as their Form.Item; a panel's title and link; the avatar at the header's end | 213 |
+| `parts.mjs` | render() hands a node inside a table cell or a card's head to the part as markup (inProps, cellOf); trending-up and trending-down for every kit | 214 |
+| `scenes.mjs` | layers that open and close (LAYER_SCRIPT); the account menu and notifications on every shell page; a row's menu, the void dialog and its toast; the whole dashboard; On top removed | 214 |
+| `wall-bindings.mjs` | a layer's id, opener and place (anchor, side, centre, corner); a menu without a trigger and with a plain end item; a stat's trend; table cells and a panel's aside as nodes; a chart's height | 214 |
+| `antd-tree.mjs` | the same for Ant: a hidden trigger, the end item, a stat's Tag, nodes in cells and in a card's head | 214 |
+| `icon-sets.mjs`, `kit-defaults.mjs` | trending-down in every set; Tailwind's onBrand from white, read as a colour | 213, 214 |
 | `kits/shadcn.json`, `kits/antd.json`, `kits/antd.render.*`, `kits/material.elements.json` | refetched and re-rendered for the new parts | 211 |
 | `scenes.mjs` | the fallback font on :where(html), not #strip: a kit's own body font reaches its wall | 207 |
 | `kit-defaults.mjs` | each default read from the variable the build writes it into (daisyUI radius, Ant Design ink and muted ink); TABLE exported | 207 |

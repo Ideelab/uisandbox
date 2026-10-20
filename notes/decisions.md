@@ -3412,3 +3412,46 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     shrink beside a search field (Tailwind 22px, Bootstrap 23px, Material
     29px, all their own size again). And switching kit on a screen stays
     on that screen, so the same Dashboard can be compared kit to kit.
+
+214. Every screen a showcase; what opens, opens.
+
+    Alexander: Void an invoice was a dialog you could only look at, and a
+    dashboard should be a dashboard with everything on it, realistic, not a
+    few components at the top. The screens should be exactly where people
+    get stuck in their own design system: menus, the top navigation,
+    overviews, popups, modals, how an account menu opens. So the screens
+    became showcases, and what opens in an app opens here.
+
+    A layer with an id starts closed and names the controls that open it,
+    by their text, aria-label or placeholder: the avatar opens the account
+    menu, the bell the notifications, a row's ⋯ its menu, that menu's Void
+    invoice the dialog, whose own Void invoice closes it and leaves a toast.
+    A popover hangs from its control (right-aligned from the right half,
+    above it when there is no room below); a click outside or on the scrim
+    closes, so does Escape; a menu closes on a choice; a toast goes after
+    six seconds; #open=<id> opens one on load. The behaviour is one script
+    of ours (LAYER_SCRIPT), the same in every kit and with no look of its
+    own; the parts stay the kit's. Void an invoice is gone as a screen: the
+    same dialog and toast are now reached from any invoice row.
+
+    No new parts for it. A table cell or a card's head can hold a node (a
+    status as the kit's badge, a row's action, a segmented range); render()
+    hands it over as markup, Ant renders it inside its own Table and Card.
+    A menu can be opened by a layer and so carry no trigger, and can end on
+    a plain item (Sign out) rather than a destructive one. A stat carries
+    its trend: shadcn's as dashboard-01's CardAction badge and CardFooter,
+    Ant's as a Tag and a secondary line, the others as their badge and
+    muted text. A chart can be as tall as a dashboard's main chart (250px,
+    dashboard-01's).
+
+    The dashboard: four figures with their trend, revenue with its range,
+    the month's target with its progress and top clients, what is due this
+    week with status badges and a menu per row, and recent activity. Every
+    shell page has the account menu and the notifications. Found on the
+    way: M3's menu closes itself on the click that opens it, so it opens
+    after that click; a number, a date or a status in a table stays on one
+    line (shadcn's TableCell is whitespace-nowrap), a name may wrap.
+
+    Measured: the whole path (avatar, Escape, bell, a click outside, a
+    row's menu, Void invoice, the confirm, the toast) clicked through in
+    all eight kits by a script, every step opening what it should.

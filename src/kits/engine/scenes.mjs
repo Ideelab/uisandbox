@@ -363,14 +363,51 @@ const shellSide = (on) => ({ p: 'sidenav', brand: 'Ledgeway', mark: true, user: 
     { icon: 'life-buoy', text: 'Help' },
   ] },
 ] })
-const INVOICES = { p: 'table', cols: ['Number', 'Client', 'Status', 'Due', 'Amount'], rows: [
-  ['INV-1042', 'Halden & Rowe', 'Overdue', '12 Sep', '€4,820.00'],
-  ['INV-1041', 'Northfield Studio', 'Sent', '28 Sep', '€1,250.00'],
-  ['INV-1040', 'Vandermeer Architecten & Partners', 'Paid', '9 Sep', '€18,374.65'],
-  ['INV-1039', 'Kestrel Logistics', 'Draft', '', '€960.00'],
-  ['INV-1038', 'Brightwater Dental Care', 'Paid', '2 Sep', '€2,105.40'],
-  ['INV-1037', 'Orchard Lane Bakery', 'Sent', '30 Sep', '€312.75'],
+/* a status is the kit's badge, and every row has its menu (decision 214) */
+const STATUS = { Overdue: 'danger', Sent: 'brand', Paid: 'success', Draft: 'neutral' }
+const status = (t) => ({ p: 'badge', tone: STATUS[t], text: t })
+const ROW_ACTION = { p: 'iconrow', items: ['ellipsis-vertical'] }
+const INVOICES = { p: 'table', cols: ['Number', 'Client', 'Status', 'Due', 'Amount', ''], rows: [
+  ['INV-1042', 'Halden & Rowe', status('Overdue'), '12 Sep', '€4,820.00', ROW_ACTION],
+  ['INV-1041', 'Northfield Studio', status('Sent'), '28 Sep', '€1,250.00', ROW_ACTION],
+  ['INV-1040', 'Vandermeer Architecten & Partners', status('Paid'), '9 Sep', '€18,374.65', ROW_ACTION],
+  ['INV-1039', 'Kestrel Logistics', status('Draft'), '', '€960.00', ROW_ACTION],
+  ['INV-1038', 'Brightwater Dental Care', status('Paid'), '2 Sep', '€2,105.40', ROW_ACTION],
+  ['INV-1037', 'Orchard Lane Bakery', status('Sent'), '30 Sep', '€312.75', ROW_ACTION],
 ] }
+/* WHAT OPENS (decision 214). A layer with an id starts closed and says which
+   control opens it: the avatar the account menu, the bell the
+   notifications, a row's ⋯ its menu, that menu's Void invoice the dialog,
+   whose own Void invoice closes it and leaves a toast. Every shell page has
+   the first two; a page with invoice rows has the rest. */
+const SHELL_LAYERS = { p: 'stack', gap: 0, kids: [
+  { p: 'layer', id: 'account', at: 'anchor', opener: ['MO', 'Maya Okafor', 'Account'], kids: [
+    { p: 'menu', trigger: false, label: 'maya@okafor-studio.com', items: ['Profile', 'Billing', 'Workspace settings', 'Keyboard shortcuts'], end: 'Sign out' },
+  ] },
+  { p: 'layer', id: 'notifications', at: 'anchor', width: 380, opener: ['bell'], kids: [
+    { p: 'panel', title: 'Notifications', text: 'Three since yesterday', link: 'Mark all as read', kids: [
+      { p: 'list', rows: [
+        { icon: 'credit-card', title: 'Halden & Rowe paid INV-1036', sub: '€2,940.00 by bank transfer', meta: '2m' },
+        { icon: 'bell', title: 'INV-1042 is 8 days overdue', sub: 'A reminder goes out tomorrow', meta: '1h' },
+        { icon: 'users', title: 'Tomás Ferreira joined', sub: 'Invited by you, as Accountant', meta: 'Yesterday' },
+      ] },
+    ] },
+  ] },
+] }
+const ROW_LAYERS = [
+  { p: 'layer', id: 'row', at: 'anchor', opener: ['ellipsis-vertical'], kids: [
+    { p: 'menu', trigger: false, items: ['Open', 'Duplicate', 'Send a reminder', 'Mark as paid'], danger: 'Void invoice' },
+  ] },
+  { p: 'layer', id: 'void', at: 'center', scrim: true, opener: ['Void invoice'], then: 'voided', kids: [
+    { p: 'dialog', title: 'Void invoice INV-1042?', text: 'Halden & Rowe can no longer pay it, and it leaves your outstanding total. This cannot be undone.', kids: [
+      { p: 'button', tone: 'ghost', text: 'Cancel' },
+      { p: 'button', tone: 'danger', text: 'Void invoice' },
+    ] },
+  ] },
+  { p: 'layer', id: 'voided', at: 'corner', kids: [
+    { p: 'toast', title: 'Invoice INV-1042 voided', text: 'Halden & Rowe no longer owes it', action: 'Undo' },
+  ] },
+]
 const invoiceList = () => ({ p: 'panel', kids: [{ p: 'stack', gap: 3, kids: [
   { p: 'row', between: true, kids: [
     { p: 'segmented', items: ['All', 'Drafts', 'Overdue', 'Paid'], on: 0 },
@@ -468,22 +505,49 @@ export const SCREENS = [
   {
     id: 'overview', label: 'Dashboard', shot: true, page: { shell: true, nav: 'Dashboard' },
     note: 'Ledgeway, the screen it opens on.',
+    /* a dashboard with everything on it: figures with their trend, the
+       chart with its range, a target, what is due with its status and its
+       menu, and what happened (decision 214) */
     main: { p: 'stack', gap: 4, kids: [
       { p: 'row', between: true, kids: [
-        { p: 'heading', level: 2, text: 'Good morning, Maya' },
+        { p: 'stack', gap: 1, kids: [
+          { p: 'heading', level: 2, text: 'Good morning, Maya' },
+          { p: 'muted', text: 'September so far: 18 invoices sent, 11 of them paid.' },
+        ] },
         { p: 'row', kids: [{ p: 'button', tone: 'outline', text: 'Export' }, { p: 'button', tone: 'brand', text: 'New invoice' }] },
       ] },
       { p: 'grid', cols: 4, kids: [
-        { p: 'stat', label: 'Revenue this month', value: '€48,210.00' },
-        { p: 'stat', label: 'Outstanding', value: '€12,940.50' },
-        { p: 'stat', label: 'Overdue', value: '3 invoices' },
-        { p: 'stat', label: 'Paid on time', value: '94%' },
+        { p: 'stat', label: 'Revenue this month', value: '€48,210.00', delta: '+12.4%', tone: 'success', note: 'Up on August' },
+        { p: 'stat', label: 'Outstanding', value: '€12,940.50', delta: '-3.1%', tone: 'success', note: 'Six invoices waiting' },
+        { p: 'stat', label: 'Overdue', value: '€4,820.00', delta: '+1', tone: 'danger', note: 'Halden & Rowe, 8 days' },
+        { p: 'stat', label: 'Paid on time', value: '94%', delta: '+2 pts', tone: 'success', note: 'The best quarter so far' },
       ] },
-      { p: 'grid', tracks: '3fr 2fr', kids: [
-        { p: 'panel', title: 'Revenue by month', text: 'Paid and outstanding, April to September', kids: [
-          { p: 'chart', legend: ['Paid', 'Outstanding'], bars: [
+      { p: 'grid', tracks: '2fr 1fr', kids: [
+        { p: 'panel', title: 'Revenue', text: 'Paid and outstanding, April to September', aside: { p: 'segmented', items: ['6 months', '12 months'], on: 0 }, kids: [
+          { p: 'chart', height: 250, legend: ['Paid', 'Outstanding'], bars: [
             { label: 'Apr', a: 82, b: 34 }, { label: 'May', a: 96, b: 30 }, { label: 'Jun', a: 74, b: 41 },
             { label: 'Jul', a: 110, b: 28 }, { label: 'Aug', a: 91, b: 33 }, { label: 'Sep', a: 124, b: 22 },
+          ] },
+        ] },
+        { p: 'panel', title: 'September target', text: '€60,000 to invoice this month', kids: [{ p: 'stack', gap: 3, kids: [
+          { p: 'row', between: true, kids: [{ p: 'text', text: '€48,210 invoiced' }, { p: 'muted', text: '80%' }] },
+          { p: 'progress', value: 80 },
+          { p: 'divider' },
+          { p: 'list', rows: [
+            { icon: 'users', title: 'Vandermeer Architecten & Partners', sub: 'Four invoices', meta: '€18,374.65' },
+            { icon: 'users', title: 'Halden & Rowe', sub: 'Two invoices', meta: '€7,760.00' },
+            { icon: 'users', title: 'Brightwater Dental Care', sub: 'One invoice', meta: '€2,105.40' },
+          ] },
+        ] }] },
+      ] },
+      { p: 'grid', tracks: '3fr 2fr', kids: [
+        { p: 'panel', title: 'Due this week', text: 'Five invoices, €26,862.80 in all', link: 'All invoices', kids: [
+          { p: 'table', cols: ['Invoice', 'Client', 'Status', 'Due', 'Amount', ''], rows: [
+            ['INV-1042', 'Halden & Rowe', status('Overdue'), '12 Sep', '€4,820.00', ROW_ACTION],
+            ['INV-1041', 'Northfield Studio', status('Sent'), '28 Sep', '€1,250.00', ROW_ACTION],
+            ['INV-1043', 'Vandermeer Architecten & Partners', status('Sent'), '29 Sep', '€18,374.65', ROW_ACTION],
+            ['INV-1044', 'Brightwater Dental Care', status('Draft'), '30 Sep', '€2,105.40', ROW_ACTION],
+            ['INV-1037', 'Orchard Lane Bakery', status('Sent'), '30 Sep', '€312.75', ROW_ACTION],
           ] },
         ] },
         { p: 'panel', title: 'Recent activity', text: 'Payments, reminders and new clients', link: 'View all', kids: [
@@ -491,9 +555,11 @@ export const SCREENS = [
             { icon: 'credit-card', title: 'Invoice INV-1040 paid', sub: 'Vandermeer Architecten & Partners', meta: 'Today' },
             { icon: 'bell', title: 'Reminder sent', sub: 'INV-1042 · Halden & Rowe', meta: 'Yesterday' },
             { icon: 'users', title: 'New client added', sub: 'Orchard Lane Bakery', meta: '11 Sep' },
+            { icon: 'file-text', title: 'Invoice INV-1041 sent', sub: 'Northfield Studio', meta: '10 Sep' },
           ] },
         ] },
       ] },
+      ...ROW_LAYERS,
     ] },
   },
   {
@@ -517,6 +583,7 @@ export const SCREENS = [
           { p: 'menu', trigger: 'More', label: 'Invoice INV-1042', items: ['Duplicate', 'Send a reminder', 'Mark as paid'], danger: 'Void invoice' },
         ] }] },
       ] },
+      ...ROW_LAYERS,
     ] },
   },
   {
@@ -543,23 +610,6 @@ export const SCREENS = [
             { p: 'button', tone: 'danger', text: 'Delete workspace', disabled: true },
           ] },
         ] },
-      ] },
-    ] },
-  },
-  {
-    id: 'ontop', label: 'Void an invoice', shot: true, page: { shell: true, nav: 'Invoices' },
-    note: 'Ledgeway, a dialog over the list and a toast in the corner.',
-    main: { p: 'stack', gap: 4, kids: [
-      { p: 'heading', level: 2, text: 'Invoices' },
-      invoiceList(),
-      { p: 'layer', at: 'center', scrim: true, kids: [
-        { p: 'dialog', title: 'Void invoice INV-1042?', text: 'Halden & Rowe can no longer pay it, and it leaves your outstanding total. This cannot be undone.', kids: [
-          { p: 'button', tone: 'ghost', text: 'Cancel' },
-          { p: 'button', tone: 'danger', text: 'Void invoice' },
-        ] },
-      ] },
-      { p: 'layer', at: 'corner', kids: [
-        { p: 'toast', title: 'Invoice INV-1041 sent', text: 'To Northfield Studio, just now', action: 'Undo' },
       ] },
     ] },
   },
@@ -607,10 +657,85 @@ export const nodeOf = (card) => (card.panel ? { p: 'panel', kids: [card.node] } 
  * exactly the markup the wall shows, not on an unwrapped version of it.
  */
 const titleOf = (b) => b.page.title ?? b.page.nav
+
+/**
+ * WHAT MAKES A LAYER OPEN (decision 214), as the page's one script.
+ *
+ * Ours, kit-free and look-free: it shows and hides [data-layer-id] and places
+ * a popover under (or over) the control that opened it. A control opens a
+ * layer when its aria-label, placeholder or own text is one the layer names;
+ * inside a layer, the layer's own name is its action, which closes it and
+ * opens what it leads to (a dialog's confirm, then a toast). A click outside
+ * a popover or on a scrim closes it, so does Escape; a menu closes when an
+ * item is chosen; a toast goes after six seconds. #open=<id> opens one on
+ * load, for a link or a screenshot. Written without a closing script tag:
+ * this module is also inlined into a page's script.
+ */
+export const LAYER_SCRIPT = `(() => {
+  const layers = [...document.querySelectorAll('[data-layer-id]')]
+  if (!layers.length) return
+  const by = new Map()
+  for (const l of layers) for (const k of JSON.parse(l.dataset.opener || '[]')) by.set(k, l)
+  const CONTROL = 'a,button,[role=button],[role=menuitem],[role=tab],td,li,input,label'
+  const keys = (el) => [el.getAttribute('aria-label'), el.getAttribute('placeholder'),
+    el.children.length === 0 || el.matches(CONTROL) ? (el.textContent || '').trim() : null].filter(Boolean)
+  const hit = (start) => {
+    for (let el = start; el && el.nodeType === 1; el = el.parentElement) {
+      for (const k of keys(el)) if (by.has(k)) return [by.get(k), el]
+      if (el.hasAttribute('data-layer-box')) break
+    }
+    return [null, null]
+  }
+  const timers = new Map()
+  const close = (l) => { l.hidden = true }
+  const place = (l, from) => {
+    const box = l.querySelector('[data-layer-box]'), r = from.getBoundingClientRect()
+    box.style.visibility = 'hidden'; l.hidden = false
+    const w = box.offsetWidth, h = box.offsetHeight
+    /* from a control on the right half, the popover's right edge meets the control's */
+    const x = (r.left + r.right) / 2 > innerWidth / 2 || r.left + w > innerWidth - 8 ? r.right - w : r.left
+    const y = r.bottom + 6 + h > innerHeight - 8 ? r.top - h - 6 : r.bottom + 6
+    box.style.left = Math.max(8, x) + 'px'; box.style.top = Math.max(8, y) + 'px'; box.style.visibility = ''
+  }
+  const open = (l, from) => {
+    for (const o of layers) if (o !== l && !o.hidden && o.dataset.at !== 'corner') close(o)
+    /* after this click is done: M3's menu closes itself on a click outside it,
+       and the click that opened the layer is one */
+    setTimeout(() => { for (const m of l.querySelectorAll('md-menu')) m.open = true })
+    if (l.dataset.at === 'anchor' && from) place(l, from); else l.hidden = false
+    if (l.dataset.at === 'corner') { clearTimeout(timers.get(l)); timers.set(l, setTimeout(() => close(l), 6000)) }
+  }
+  document.addEventListener('click', (ev) => {
+    const inside = ev.target.closest('[data-layer-id]')
+    const [target, from] = hit(ev.target)
+    if (target && target === inside) {
+      ev.preventDefault(); close(target)
+      const then = layers.find((l) => l.dataset.layerId === target.dataset.then)
+      if (then) open(then)
+      return
+    }
+    if (target) { ev.preventDefault(); open(target, from); return }
+    if (!inside) return
+    if (!ev.target.closest('[data-layer-box]')) { if (inside.dataset.at !== 'corner') close(inside); return }
+    const control = ev.target.closest('a,button,[role=menuitem],[role=option],md-menu-item')
+    if (!control) return
+    if (control.matches('a')) ev.preventDefault()
+    const name = (control.getAttribute('aria-label') || control.textContent || '').trim()
+    if (inside.dataset.at !== 'side' || /^(close|cancel|x)$/i.test(name)) close(inside)
+  }, true)
+  document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') for (const l of layers) if (l.dataset.at !== 'corner') close(l) })
+  const want = /[#&]open=([\\w-]+)/.exec(location.hash)
+  const first = want && layers.find((l) => l.dataset.layerId === want[1])
+  if (first) {
+    const names = JSON.parse(first.dataset.opener || '[]')
+    const from = [...document.querySelectorAll('*')].find((el) => !el.closest('[data-layer-id]') && keys(el).some((k) => names.includes(k)))
+    open(first, from)
+  }
+})()`
 /* A page screen (decision 212) is three cards to everything that counts or
    tests: its top bar, its side bar and its content, each rendered whole. */
 const pageCards = (b) => [
-  ...(b.page.shell ? [{ id: `${b.id}-top`, title: '', node: shellTop(titleOf(b)) }, { id: `${b.id}-side`, title: '', node: shellSide(b.page.nav) }] : [{ id: `${b.id}-top`, title: '', node: BARE_TOP }]),
+  ...(b.page.shell ? [{ id: `${b.id}-top`, title: '', node: shellTop(titleOf(b)) }, { id: `${b.id}-side`, title: '', node: shellSide(b.page.nav) }, { id: `${b.id}-layers`, title: '', node: SHELL_LAYERS }] : [{ id: `${b.id}-top`, title: '', node: BARE_TOP }]),
   { id: `${b.id}-main`, title: '', node: b.main },
 ]
 export const SCENES = [...BOARDS, ...SCREENS].flatMap((b) => b.page
@@ -669,8 +794,8 @@ const pageMarkup = (b, bind) => b.page.shell
   ? bind._frame?.side
     /* the sidebar runs the full height and the bar sits over the content,
        both inside the kit's own wrapper and inset (decision 213) */
-    ? `<div data-shell data-frame="side" class="${bind._frame.wrap ?? ''}"><aside data-shell-side>${render(shellSide(b.page.nav), bind)}</aside><div data-shell-body class="${bind._frame.body ?? ''}"><div data-shell-top>${render(shellTop(titleOf(b)), bind)}</div><div data-shell-main>${render(b.main, bind)}</div></div></div>`
-    : `<div data-shell><div data-shell-top>${render(shellTop(titleOf(b)), bind)}</div><aside data-shell-side>${render(shellSide(b.page.nav), bind)}</aside><div data-shell-main>${render(b.main, bind)}</div></div>`
+    ? `<div data-shell data-frame="side" class="${bind._frame.wrap ?? ''}"><aside data-shell-side>${render(shellSide(b.page.nav), bind)}</aside><div data-shell-body class="${bind._frame.body ?? ''}"><div data-shell-top>${render(shellTop(titleOf(b)), bind)}</div><div data-shell-main>${render(b.main, bind)}</div></div>${render(SHELL_LAYERS, bind)}</div>`
+    : `<div data-shell><div data-shell-top>${render(shellTop(titleOf(b)), bind)}</div><aside data-shell-side>${render(shellSide(b.page.nav), bind)}</aside><div data-shell-main>${render(b.main, bind)}</div>${render(SHELL_LAYERS, bind)}</div>`
   : `<div data-bare-page><div data-shell-top>${render(BARE_TOP, bind)}</div><div data-bare><div data-bare-box>${render(b.main, bind)}</div></div></div>`
 export const wallMarkup = (bind, boards = BOARDS) => `<main id="strip">${boards.map((b) => b.page
   ? `<section class="board" id="b_${b.id}" data-board="${b.id}" data-shot data-page>${pageMarkup(b, bind)}</section>`
@@ -722,6 +847,10 @@ body{margin:0;overflow:hidden}
 [data-shell-top]{grid-column:1/-1;min-width:0}
 [data-shell-side]{padding:16px 12px;border-inline-end:1px solid rgb(128 128 128 / .18);min-width:0}
 [data-shell-main]{display:flex;flex-direction:column;gap:20px;padding:28px 32px 40px;min-width:0;max-width:1240px}
+[data-layer-id][hidden]{display:none!important}
+/* a number, a date or a status in a table keeps to one line, as an app's
+   table does (shadcn's TableCell is whitespace-nowrap); a name may wrap */
+[data-shell-main] td:not(:nth-child(2)){white-space:nowrap}
 [data-shell][data-frame=side]{display:flex;align-items:flex-start}
 [data-frame=side]>[data-shell-side]{flex:none;padding:0;border:0;position:sticky;top:0;height:100vh}
 [data-frame=side]>[data-shell-body]{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;align-self:stretch}

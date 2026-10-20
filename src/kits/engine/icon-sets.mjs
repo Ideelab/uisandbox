@@ -53,7 +53,7 @@ export const TRANSLATIONS = {
     'ellipsis': 'ellipsis-horizontal', 'file-text': 'document-text', 'inbox': 'inbox',
     'info': 'information-circle', 'layout-dashboard': 'squares-2x2', 'life-buoy': 'lifebuoy',
     'plus': 'plus', 'refresh-cw': 'arrow-path', 'share': 'share', 'shield': 'shield-check',
-    'shopping-cart': 'shopping-cart', 'trash-2': 'trash', 'trending-up': 'arrow-trending-up',
+    'shopping-cart': 'shopping-cart', 'trash-2': 'trash', 'trending-up': 'arrow-trending-up', 'trending-down': 'arrow-trending-down',
     'user': 'user',
   },
   'bootstrap-icons': {
@@ -66,7 +66,7 @@ export const TRANSLATIONS = {
     'ellipsis': 'three-dots', 'file-text': 'file-text', 'inbox': 'inbox',
     'info': 'info-circle', 'layout-dashboard': 'grid', 'life-buoy': 'life-preserver',
     'plus': 'plus-lg', 'refresh-cw': 'arrow-clockwise', 'share': 'share', 'shield': 'shield',
-    'shopping-cart': 'cart3', 'trash-2': 'trash', 'trending-up': 'graph-up-arrow',
+    'shopping-cart': 'cart3', 'trash-2': 'trash', 'trending-up': 'graph-up-arrow', 'trending-down': 'graph-down-arrow',
     'user': 'person',
   },
   'material-symbols': {
@@ -79,7 +79,7 @@ export const TRANSLATIONS = {
     'ellipsis': 'more_horiz', 'file-text': 'description', 'inbox': 'inbox',
     'info': 'info', 'layout-dashboard': 'dashboard', 'life-buoy': 'support',
     'plus': 'add', 'refresh-cw': 'refresh', 'share': 'share', 'shield': 'shield',
-    'shopping-cart': 'shopping_cart', 'trash-2': 'delete', 'trending-up': 'trending_up',
+    'shopping-cart': 'shopping_cart', 'trash-2': 'delete', 'trending-up': 'trending_up', 'trending-down': 'trending_down',
     'user': 'person',
   },
   'radix-icons': {
@@ -92,7 +92,7 @@ export const TRANSLATIONS = {
     'ellipsis': 'dots-horizontal', 'file-text': 'file-text', 'inbox': 'envelope-closed',
     'info': 'info-circled', 'layout-dashboard': 'dashboard', 'life-buoy': 'question-mark-circled',
     'plus': 'plus', 'refresh-cw': 'update', 'share': 'share-1', 'shield': 'lock-closed',
-    'shopping-cart': null, 'trash-2': 'trash', 'trending-up': 'bar-chart',
+    'shopping-cart': null, 'trash-2': 'trash', 'trending-up': 'bar-chart', 'trending-down': null,
     'user': 'person',
   },
   tabler: {
@@ -105,7 +105,7 @@ export const TRANSLATIONS = {
     'ellipsis': 'dots', 'file-text': 'file-text', 'inbox': 'inbox',
     'info': 'info-circle', 'layout-dashboard': 'layout-dashboard', 'life-buoy': 'lifebuoy',
     'plus': 'plus', 'refresh-cw': 'refresh', 'share': 'share', 'shield': 'shield',
-    'shopping-cart': 'shopping-cart', 'trash-2': 'trash', 'trending-up': 'trending-up',
+    'shopping-cart': 'shopping-cart', 'trash-2': 'trash', 'trending-up': 'trending-up', 'trending-down': 'trending-down',
     'user': 'user',
   },
   'antd-icons': {
@@ -119,7 +119,7 @@ export const TRANSLATIONS = {
     'info': 'InfoCircleOutlined', 'layout-dashboard': 'AppstoreOutlined', 'life-buoy': 'QuestionCircleOutlined',
     'plus': 'PlusOutlined', 'refresh-cw': 'ReloadOutlined', 'share': 'ShareAltOutlined',
     'shield': 'SafetyOutlined', 'shopping-cart': 'ShoppingCartOutlined', 'trash-2': 'DeleteOutlined',
-    'trending-up': 'RiseOutlined', 'user': 'UserOutlined',
+    'trending-up': 'RiseOutlined', 'trending-down': 'FallOutlined', 'user': 'UserOutlined',
   },
 }
 

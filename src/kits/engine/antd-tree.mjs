@@ -136,7 +136,7 @@ const PART = {
     n.title ? e('div', { style: { marginBottom: 24 } },
       e('div', { style: { display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 16 } },
         e(Typography.Title, { level: 4, style: { margin: 0 } }, text(n.title)),
-        n.link ? e(Typography.Link, { href: '#' }, text(n.link)) : null),
+        n.aside ? element(n.aside, 'aside') : n.link ? e(Typography.Link, { href: '#' }, text(n.link)) : null),
       n.text ? e(Typography.Paragraph, { type: 'secondary', style: { margin: '4px 0 0' } }, text(n.text)) : null) : null,
     e('div', { 'data-antd-kids': '' })),
   /* their Form, vertical: Form.Item puts the label over the control and the
@@ -180,12 +180,18 @@ const PART = {
 
   badge: (n) => e(Tag, { color: TAG[n.tone ?? 'neutral'] }, text(n.text)),
   alert: (n) => e(Alert, { type: ALERT[n.tone ?? 'neutral'], title: text(n.text) }),
-  stat: (n) => e(Card, { size: 'small' }, e(Statistic, { title: text(n.label), value: text(n.value) })),
+  /* and the trend under the figure, as Ant Design Pro's ChartCard sets it:
+     a Tag and a secondary line (decision 214) */
+  stat: (n) => e(Card, { size: 'small' }, e(Statistic, { title: text(n.label), value: text(n.value) }),
+    n.delta ? e(Flex, { align: 'center', gap: 8, style: { marginTop: 8 } },
+      e(Tag, { color: TAG[n.tone ?? 'neutral'], style: { marginInlineEnd: 0 } }, text(n.delta)),
+      e(Typography.Text, { type: 'secondary' }, text(n.note))) : null),
   progress: (n) => e(Progress, { percent: n.value ?? 60 }),
   table: (n) => e(Table, {
     size: 'small', pagination: false,
     columns: list(n.cols).map((c, i) => ({ title: c, dataIndex: String(i), key: String(i) })),
-    dataSource: list(n.rows).map((r, i) => Object.assign({ key: String(i) }, ...list(r).map((c, j) => ({ [j]: c })))),
+    /* a cell can be a node, a status Tag or an action, drawn as theirs */
+    dataSource: list(n.rows).map((r, i) => Object.assign({ key: String(i) }, ...list(r).map((c, j) => ({ [j]: c && typeof c === 'object' ? element(c, j) : c })))),
   }),
   list: (n) => e(List, { itemLayout: 'horizontal',
     dataSource: list(n.rows),
@@ -232,15 +238,17 @@ const PART = {
   /* the wrapper reserves the room the open panel takes, counted off their own
      32px item height — their dropdown is out of flow, so without it the card
      collapsed behind it, the same as every other kit's menu on this wall */
-  menu: (n) => e('div', { style: { minHeight: (list(n.items).length + 2) * 32 + (n.label ? 30 : 0) + 44 } },
+  menu: (n) => e('div', { style: { minHeight: (list(n.items).length + 2) * 32 + (n.label ? 30 : 0) + (n.trigger === false ? 0 : 44) } },
   e(Dropdown, { open: true, autoAdjustOverflow: false, getPopupContainer: (t) => t.parentElement,
     menu: { items: [
       ...(n.label ? [{ key: 'h', type: 'group', label: n.label }] : []),
       ...list(n.items).map((t, i) => ({ key: String(i), label: t })),
       { type: 'divider' },
-      { key: 'danger', label: text(n.danger ?? 'Delete'), danger: true },
+      n.end ? { key: 'end', label: text(n.end) } : { key: 'danger', label: text(n.danger ?? 'Delete'), danger: true },
     ] } },
-  e(Button, { icon: icon('chevron-down', 14), iconPosition: 'end' }, text(n.trigger ?? 'Actions')))),
+  /* a menu a layer opens has no trigger of its own: their Dropdown still
+     needs one to hang from, so it is there and not shown */
+  e(Button, { icon: icon('chevron-down', 14), iconPosition: 'end', style: n.trigger === false ? { display: 'none' } : undefined }, text(n.trigger ?? 'Actions')))),
   /* ── the screens' newer parts (decision 211) ──────────────────────────
      A tooltip, a dialog and a notification are portals in a running page;
      their own static panels (what their docs render inline) are the same
