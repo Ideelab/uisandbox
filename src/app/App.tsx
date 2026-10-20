@@ -635,6 +635,9 @@ function Editor() {
   // it: read from the screen, so the two can never disagree.
   const openDoor = () => setTab('app')
   const closeDoor = () => setTab(loaded && !isSheet(loaded.screen) ? 'screens' : 'components')
+  // One card at a time: Export or How it works, opened from the top bar or
+  // the footer the door leaves uncovered, closes the door under it.
+  useEffect(() => { if ((showExport || aboutOpen) && tab === 'app' && loaded?.kit) closeDoor() }, [showExport, aboutOpen]) // eslint-disable-line react-hooks/exhaustive-deps
   const makeDoor = (standalone = false) => <Door standalone={standalone} onClose={!standalone && loaded?.kit ? closeDoor : undefined} carryNote={standalone ? undefined : carryNote} onArchive={onArchive} onUrl={(u) => void loadFromUrl(`/__repo/?u=${encodeURIComponent(u)}`)} onSample={(p) => void loadFromUrl(p)} busy={busy} error={error} />
   return (
     <div className="app">
