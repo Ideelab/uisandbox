@@ -3646,3 +3646,9 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     where to fetch it; the page's own `Figtree, sans-serif` read as a system
     stack, and an agent told to add no new fonts would have fallen back to
     sans-serif. Checked on all nine kits: every one carries the chosen two.
+
+    Take it home, one line per way. Alexander used only Copy for your AI and
+    did not miss the skill, and read the long note as "the zip adds a skill".
+    It does not: the prompt already carries SKILL.md. What the zip adds is
+    that the files stay in the repo, so later screens keep the look. Each
+    button now says when it is the one; the note keeps the tools and the MCP line.

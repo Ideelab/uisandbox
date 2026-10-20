@@ -561,16 +561,32 @@ export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName,
         ) : (
           <div className="exp__overview">
             <div className="exp__home">
+              {/* one line per way, saying when it is the one: the long sentence
+                  under the row was read as "the zip adds a skill", while the
+                  prompt already carries SKILL.md (decision 216) */}
               <div className="exp__homebtns">
-                {send && <SendButton to={send.to} onSend={send.onSend} />}
-                <button type="button" className={`btn ${send ? 'btn--secondary' : 'btn--primary'} exp__homebtn`} onClick={() => void copyForAi()}>
-                  {aiCopied ? <Check size={15} strokeWidth={2} /> : <Copy size={15} strokeWidth={2} />} {aiCopied ? 'Copied. Paste it into your AI' : 'Copy for your AI'}
-                </button>
-                {kitDoorName
-                  ? <button type="button" className="btn btn--secondary exp__homebtn" onClick={downloadKit} disabled={!kitFiles} title={kitFiles ? 'theme.css, DESIGN.md, SKILL.md, tokens.json, install.md and MANIFEST.md' : 'Writing the design system…'}><Download size={15} strokeWidth={2} /> Design system + Skill (.zip)</button>
-                  : <button type="button" className="btn btn--secondary exp__homebtn" onClick={downloadAll}><Download size={15} strokeWidth={2} /> Everything (.zip)</button>}
+                {send && (
+                  <div className="exp__opt">
+                    <SendButton to={send.to} onSend={send.onSend} />
+                    <span className="exp__optnote">Straight to the agent in your project.</span>
+                  </div>
+                )}
+                <div className="exp__opt">
+                  <button type="button" className={`btn ${send ? 'btn--secondary' : 'btn--primary'} exp__homebtn`} onClick={() => void copyForAi()}>
+                    {aiCopied ? <Check size={15} strokeWidth={2} /> : <Copy size={15} strokeWidth={2} />} {aiCopied ? 'Copied. Paste it into your AI' : 'Copy for your AI'}
+                  </button>
+                  <span className="exp__optnote">One paste and it restyles the app you have.</span>
+                </div>
+                <div className="exp__opt">
+                  {kitDoorName
+                    ? <button type="button" className="btn btn--secondary exp__homebtn" onClick={downloadKit} disabled={!kitFiles} title={kitFiles ? 'theme.css, DESIGN.md, SKILL.md, tokens.json, install.md and MANIFEST.md' : 'Writing the design system…'}><Download size={15} strokeWidth={2} /> Design system + Skill (.zip)</button>
+                    : <button type="button" className="btn btn--secondary exp__homebtn" onClick={downloadAll}><Download size={15} strokeWidth={2} /> Everything (.zip)</button>}
+                  <span className="exp__optnote">{kitDoorName
+                    ? 'Kept in your repo, so screens you build later get the look too.'
+                    : 'The changed files and every format, to apply by hand.'}</span>
+                </div>
               </div>
-              <p className="exp__homenote">For Claude Code, Cursor, Codex, Lovable or v0: the prompt carries DESIGN.md{kitFiles ? ' and SKILL.md' : ''}, and asks it to keep to the tokens.{send ? '' : <> Run <code>npx uisandbox-mcp open</code> in your project and Send hands it to your agent directly.</>}</p>
+              {!send && <p className="exp__homenote">Works in Claude Code, Cursor, Codex, Lovable and v0. To send it straight in, run <code>npx uisandbox-mcp open</code> in your project.</p>}
             </div>
             <div className="exp__stats">
               <div className="exp__stat"><b>{movedCount}</b><span>of {table.entries.length} values moved</span></div>
