@@ -735,21 +735,10 @@ function Editor() {
           </>}
         </div>
       </header>
-      {/* One line that says what this is, on the kit everybody lands on. The
-          page's h1 lives here: the homepage IS the editor now. */}
-      {!loaded && !error && (
-        <div className="app__intro">
-          <h1>Play with your app's design, right in the browser.</h1>
-          <span>Start from a kit or your own app, turn the knobs, export the code.</span>
-        </div>
-      )}
-      {loaded?.kit && (
-        <div className="app__intro">
-          <h1>Play with your app's design, right in the browser.</h1>
-          <span>This is {loaded.kit.name} as it ships. Turn a knob<span className="app__intro-where"> on the left</span>, then <button type="button" className="app__intro-link" onClick={openDoor}>try it on your own app</button>.</span>
-          <a className="app__intro-link app__intro-how" href="/about" onClick={openAbout}>How it works</a>
-        </div>
-      )}
+      {/* The intro line is gone (Alexander: if it needs explaining, the app
+          does not explain itself); the page's h1 stays, for search and for
+          screen readers, and the line itself is in the footer. */}
+      <h1 className="vh">UISandbox: play with your app's design, right in the browser</h1>
       <div className="app__body">
         {loaded && (
           <>

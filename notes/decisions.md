@@ -3751,3 +3751,11 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     Not the presets' doing, and left for its own pass: daisyUI's Dashboard
     squeezes the stat descriptions and the client names into narrow columns
     at this width, with or without a preset.
+
+    The bar under the header is gone (Alexander: if a line has to explain
+    the app, the app does not). Its sentence is in the footer line; the h1
+    stays, hidden, for search and screen readers; How it works shows in the
+    header on a phone too, where the bar used to carry it. The widths went
+    with it (a design system is looked at on a desktop, and a window
+    resizes); the stage always fills, and Light and Dark sit left, by the
+    screen they change.

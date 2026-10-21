@@ -39,7 +39,7 @@ export function Footer({ onAbout }: { onAbout?: (section?: string) => void }) {
       <div className="foot__sheet sitefoot" inert={!open} onClick={onSheetClick}>
         <SiteColumns />
       </div>
-      <span><b className="foot__name">UISandbox Design System Generator</b> · Made by <a href={m.href} target="_blank" rel="noopener author">{m.name}</a> at <a href={m.orgHref} target="_blank" rel="noopener">{m.org}</a> · © {new Date().getFullYear()} · <a href={m.licenceHref} target="_blank" rel="noopener license">{m.licence}</a></span>
+      <span><b className="foot__name">UISandbox Design System Generator</b> · Play with your app's design, right in the browser · Made by <a href={m.href} target="_blank" rel="noopener author">{m.name}</a> at <a href={m.orgHref} target="_blank" rel="noopener">{m.org}</a> · © {new Date().getFullYear()} · <a href={m.licenceHref} target="_blank" rel="noopener license">{m.licence}</a></span>
       <span className="foot__sep" aria-hidden>·</span>
       <nav className="foot__links" aria-label="UISandbox links">
         <a href="/kits/">Kits</a>

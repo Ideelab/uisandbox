@@ -44,7 +44,7 @@ interface StageProps {
   kitName?: string
   /** The ways in, shown on the "Your app" tab while a kit is on the stage. */
   door?: React.ReactNode
-  /** Canvas controls that sit with the widths (Light / Dark). */
+  /** Canvas controls that sit with the screen picker (Light / Dark). */
   barExtra?: React.ReactNode
   /** The "What we read" card: shown or not, and its toggle in the foot. */
   onToggleNotes?: () => void
@@ -56,13 +56,6 @@ export type StageTab = 'components' | 'screens' | 'app'
 
 /** A kit build's components sheet is its index page; every other page is a screen. */
 export const isSheet = (s: Screen) => /^(index\.html?)?$/i.test(s.path.replace(/^\//, ''))
-
-const WIDTHS: Array<{ id: string; label: string; w: number | null }> = [
-  { id: 'fit', label: 'Fit', w: null },
-  { id: 'desktop', label: '1280', w: 1280 },
-  { id: 'tablet', label: '820', w: 820 },
-  { id: 'phone', label: '390', w: 390 },
-]
 
 /** What a sandboxed document may do — everything a page needs, minus top navigation. */
 export const SANDBOX_FLAGS = 'allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-pointer-lock allow-orientation-lock'
@@ -85,14 +78,12 @@ function reportUrl(project: SandboxProject, detail: string): string {
 export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, pinnable, changedCount, peek, onPeek, looks, tells, onLooks, warning, warningTitle, coverage, notes, tab = 'app', onTab, kitName, door, barExtra, onToggleNotes, notesOpen, notesLabel }: StageProps) {
   const [showCov, setShowCov] = useState(false)
   const [showTells, setShowTells] = useState(false)
-  const [width, setWidth] = useState<string>('fit')
   const [verify, setVerify] = useState<VerifyResult | { busy: true } | null>(null)
   const [showVerify, setShowVerify] = useState(false)
   const [leftSandbox, setLeftSandbox] = useState(false)
   // A warning closed stays closed until it says something else.
   const [dismissedWarning, setDismissedWarning] = useState<string | null>(null)
   const hiddenHost = useRef<HTMLDivElement>(null)
-  const w = WIDTHS.find((x) => x.id === width)?.w ?? null
   const src = sandboxUrl(project.id, screen.path, project.base)
 
   // A new project or screen invalidates the last measurement.
@@ -152,19 +143,11 @@ export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, pi
           </div>
         )}
         {(!kitName || tab === 'screens') && <ScreenPicker screens={others} current={screen} onPick={onScreen} onPin={onPin} pinnable={pinnable} named={!!kitName} />}
-        {!atDoor && <>
-        {/* the width and the mode sit right, over the screen they size;
-            Reload and Open are gone from the bar (Alexander) */}
-        <span className="stage__spacer" style={{ flex: 1 }} />
-        <div className="seg" role="group" aria-label="Viewport width">
-          {WIDTHS.map((x) => (
-            <button key={x.id} className={`seg__opt ${x.id === width ? 'seg__opt--on' : ''}`} onClick={() => setWidth(x.id)}>{x.label}</button>
-          ))}
-        </div>
-        {barExtra}
-        </>}
+        {/* the mode sits with the screen it shows; no widths (Alexander: a
+            design system is looked at on a desktop, and a window resizes) */}
+        {!atDoor && barExtra}
       </div>
-      <div className={`stage__frame ${w ? 'stage__frame--w' : ''} ${atDoor ? 'stage__frame--door' : ''}`}>
+      <div className={`stage__frame ${atDoor ? 'stage__frame--door' : ''}`}>
         {/* The door sits OVER the kit, which stays loaded and measured under
             it: the knobs, the reach and the export keep working while a
             visitor decides what to bring. */}
@@ -192,7 +175,6 @@ export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, pi
           sandbox={SANDBOX_FLAGS}
           title={`${project.name} · ${screen.label}`}
           src={src}
-          style={w ? { width: w, maxWidth: '100%' } : undefined}
           onLoad={() => {
             // A page that redirected to another origin is out of our hands.
             let away = false
