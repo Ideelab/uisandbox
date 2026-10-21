@@ -157,9 +157,12 @@ async function pageFromDevServer(o: Owned, path: string, search: string, sid: st
 }
 
 /** Live mode: the dev server's answer for a file the archive does not hold. */
-async function fromDevServer(o: Owned, path: string, search: string): Promise<{ type: string; body: ArrayBuffer } | null> {
+async function fromDevServer(o: Owned, path: string, search: string, accept: string): Promise<{ type: string; body: ArrayBuffer } | null> {
   let res: Response
-  try { res = await fetch(`/__dev/${path}${devSearch(search)}`, { cache: 'no-store' }) } catch { return null }
+  // The frame's own Accept: Vite answers a .css asked for by <link> (text/css)
+  // with the sheet, and without it with a JS module that injects the sheet, so
+  // a stylesheet fetched bare came back as script and the page unstyled.
+  try { res = await fetch(`/__dev/${path}${devSearch(search)}`, { cache: 'no-store', ...(accept ? { headers: { accept } } : {}) }) } catch { return null }
   if (!res.ok) return null
   const type = res.headers.get('content-type') || 'application/octet-stream'
   if (o.variant === 'rewritten' && /text\/css/i.test(type)) {
@@ -195,7 +198,7 @@ export function resolveFile<T>(files: Map<string, T>, path: string): T | undefin
 }
 
 async function onMessage(e: MessageEvent) {
-  const data = e.data as { type?: string; sid?: string; path?: string; url?: string; css?: string; navigate?: boolean; search?: string; method?: string } | undefined
+  const data = e.data as { type?: string; sid?: string; path?: string; url?: string; css?: string; navigate?: boolean; search?: string; method?: string; accept?: string } | undefined
   if (!data || !data.sid) return
   const port = e.ports[0]
   if (!port) return
@@ -220,7 +223,7 @@ async function onMessage(e: MessageEvent) {
   // reload or a hot-reloaded stylesheet (Next swaps a <link> for the same URL
   // with a new ?v=) must get today's file, not the one read at open.
   if (o.live) {
-    const fresh = data.navigate && /\.html?$/i.test(path) ? await pageFromDevServer(o, path, data.search ?? '', data.sid) : await fromDevServer(o, path, data.search ?? '')
+    const fresh = data.navigate && /\.html?$/i.test(path) ? await pageFromDevServer(o, path, data.search ?? '', data.sid) : await fromDevServer(o, path, data.search ?? '', data.accept ?? '')
     if (fresh) { port.postMessage({ found: true, type: fresh.type, body: fresh.body }, [fresh.body]); return }
   }
   let f = resolveFile(files, path)

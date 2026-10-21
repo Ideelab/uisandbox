@@ -75,7 +75,7 @@ async function askPage(sid, path, navigate = false, extra = {}) {
       const id = ++seq
       const timer = setTimeout(() => resolve(null), 4000)
       ch.port1.onmessage = (e) => { clearTimeout(timer); resolve(e.data) }
-      client.postMessage({ type: 'us:fetch', id, sid, path, navigate: !!navigate, search: extra.search || '', method: extra.method || 'GET' }, [ch.port2])
+      client.postMessage({ type: 'us:fetch', id, sid, path, navigate: !!navigate, search: extra.search || '', method: extra.method || 'GET', accept: extra.accept || '' }, [ch.port2])
     })
     if (answer && (answer.found || answer.passthrough)) return answer
     if (answer && answer.owner === false) continue
@@ -175,7 +175,9 @@ self.addEventListener('fetch', (event) => {
     }
     // A directory → its index; a route with no extension → the SPA's index.
     if (path === '' || path.endsWith('/')) path += 'index.html'
-    const answer = await askPage(sid, path, event.request.mode === 'navigate', { search: url.search, method: event.request.method })
+    // The Accept goes along: a live dev server answers on it (Vite sends a .css
+    // asked for by <link> as CSS, and the same file imported from JS as a module).
+    const answer = await askPage(sid, path, event.request.mode === 'navigate', { search: url.search, method: event.request.method, accept: event.request.headers.get('accept') || '' })
     // A live project (a running dev server behind the local UISandbox server):
     // what the page does not rewrite goes to the dev server as it was asked,
     // method, headers and body included (an API call, a form post).

@@ -3878,3 +3878,23 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     tuned; the kit's knobs are no longer put on unasked. One more screen
     taken along with the bookmarklet keeps what was turned, unasked, as
     before. Test: carry.test.ts, the token round trip and its refusals.
+
+    Live mode on a Vite dev server rendered SB Admin 2 unstyled, 1 value
+    from 231 KB of CSS (Alexander, the first test of the line on a running
+    app). Vite answers a .css by the Accept it is asked with: text/css (a
+    <link>) gets the sheet, anything else a JS module that injects it. The
+    snapshot fetched bare, and in the page every file is fetched fresh from
+    the dev server, bare too, so the <link>'s sheet came back as script. The
+    service worker now hands the frame's own Accept along (sw.js askPage,
+    host.ts fromDevServer), so a CSS import from JS still gets its module;
+    the snapshot asks as a <link> does. Not new with 217: 0.5.2 and before
+    did the same. uisandbox-mcp 0.5.3.
+
+    The gate it lacked: scripts/live-dev.mjs (`pnpm live:dev`), four apps on
+    their own dev server through the packed CLI: SB Admin 2 on Vite, Vite +
+    React with CSS from JS and a CSS module, Vite + React + Tailwind v4 with
+    shadcn's oklch theme, the Bootstrap kit on a plain python server. Each:
+    What we found, its CSS read, styled, Soft picked moves values, a saved
+    CSS file shows through hot reload with the look still on, and with
+    --carry the kit's brand and shape come along. 46 checks, 0 failed.
+

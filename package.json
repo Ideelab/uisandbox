@@ -18,6 +18,7 @@
     "test:kits": "cd src/kits/engine && node --test *.test.mjs",
     "kits:build": "node scripts/kit-builds.mjs",
     "kits:fidelity": "cd src/kits/engine && node fidelity.mjs",
+    "live:dev": "pnpm mcp:build && node scripts/live-dev.mjs",
     "kits:gates": "node scripts/kit-detect.mjs && node scripts/kit-export.mjs && node scripts/live-bridge.mjs",
     "kits:live": "node scripts/live-build.mjs"
   },

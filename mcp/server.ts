@@ -128,7 +128,7 @@ When to use it — and offer it without being asked:
 
 Rules: never claim more than \`verify\` and the reach meter report — quote the numbers; if a load is refused (iOS/Android/source-only), relay the reason and suggest building first; \`verify\`/\`screenshot\` need Chromium (npx playwright install chromium once) — \`open\`, \`load\`, \`set\`, \`export\` do not.`
 
-const server = new McpServer({ name: 'uisandbox', version: '0.5.2' }, { instructions: INSTRUCTIONS })
+const server = new McpServer({ name: 'uisandbox', version: '0.5.3' }, { instructions: INSTRUCTIONS })
 
 server.registerTool('load', {
   title: 'Load a built web app',
@@ -239,7 +239,8 @@ async function snapshotLive(target: string): Promise<{ bytes: Uint8Array<ArrayBu
     if (!href) continue
     const abs = new URL(href, u)
     if (abs.origin !== u.origin) continue
-    try { const r = await fetch(abs); if (r.ok) files.push({ name: abs.pathname.replace(/^\//, ''), text: await r.text() }) } catch { /* fetched live later */ }
+    // as a <link> asks: a Vite dev server answers a bare .css request with a JS module
+    try { const r = await fetch(abs, { headers: { accept: 'text/css,*/*;q=0.1' } }); if (r.ok) files.push({ name: abs.pathname.replace(/^\//, ''), text: await r.text() }) } catch { /* fetched live later */ }
   }
   const bytes = new Uint8Array(await zipSync(files).arrayBuffer()) as Uint8Array<ArrayBuffer>
   return { bytes, name: `${u.host.replace(/[^\w.-]+/g, '-')}.zip` }
