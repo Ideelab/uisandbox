@@ -130,6 +130,10 @@ function Editor() {
   // What was turned on a kit at uisandbox.org, brought along in the command
   // line (`--carry=`, state/carry.ts): offered on the first load, as a kit's
   // knobs are when an app is brought after it in the same tab.
+  // `&quiet=1`: a page the MCP server drives headless (verify, screenshot,
+  // the live report). No What we found over the screen, no notes card, the
+  // carried knobs put on unasked: what it captures is the app.
+  const quiet = useRef(new URLSearchParams(location.search).get('quiet') === '1').current
   const carryFirst = useRef(new URLSearchParams(location.search).get('carry'))
   // Read once, then off the address: a reload or a copied link must not offer it again.
   useEffect(() => {
@@ -318,27 +322,31 @@ function Editor() {
     if (!id || !/^(127\.0\.0\.1|localhost)$/.test(location.hostname)) return
     fetch(`/__session/${encodeURIComponent(id)}`).then((r) => (r.ok ? r.json() : null)).then((j) => { if (j?.to === 'agent' || j?.to === 'terminal') setSendTo(j.to) }).catch(() => {})
   }, [])
+  // The page's own account: it saw everything the build styled, runtime and
+  // hot-reloaded styles included, which the server never does.
+  const pageReport = () => {
+    if (!loaded) return undefined
+    const base = loaded.report.baseline.cfg
+    const at = (c: Config, k: string) => k.startsWith('sb.') ? (c.sb as unknown as Record<string, unknown>)[k.slice(3)] : (c as unknown as Record<string, unknown>)[k]
+    const turned = differingKeys(base, cfg).filter(isShownKnob).map((k) => ({ knob: knobLabel(k), from: at(base, k) ?? 'as in the code', to: at(cfg, k) ?? 'as in the code' }))
+    return { turned, moved: changedCount, of: loaded.project.table.entries.length, patch: genPatch(loaded.project.table, vars) }
+  }
   const sendBack = async (): Promise<{ waiting: number } | null> => {
     const id = new URLSearchParams(location.search).get('sync')
     if (!id) return null
-    // The page sends its own account: it saw everything the build styled,
-    // runtime and hot-reloaded styles included, which the server never does.
-    const report = (() => {
-      if (!loaded) return undefined
-      const base = loaded.report.baseline.cfg
-      const at = (c: Config, k: string) => k.startsWith('sb.') ? (c.sb as unknown as Record<string, unknown>)[k.slice(3)] : (c as unknown as Record<string, unknown>)[k]
-      const turned = differingKeys(base, cfg).filter(isShownKnob).map((k) => ({ knob: knobLabel(k), from: at(base, k) ?? 'as in the code', to: at(cfg, k) ?? 'as in the code' }))
-      return { turned, moved: changedCount, of: loaded.project.table.entries.length, patch: genPatch(loaded.project.table, vars) }
-    })()
+    const report = pageReport()
     try { const r = await fetch(`/__send/${encodeURIComponent(id)}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cfg, report }) }); return r.ok ? await r.json() : null } catch { return null }
   }
   useEffect(() => {
     const id = new URLSearchParams(location.search).get('sync')
     // Only the app the server opened: a kit picked in the Engine menu is not its project.
     if (!id || !loaded || loaded.kit || !/^(127\.0\.0\.1|localhost)$/.test(location.hostname)) return
-    const t = setTimeout(() => { void fetch(`/__state/${encodeURIComponent(id)}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cfg }) }).catch(() => {}) }, 400)
+    // A headless page (quiet) reports what it measured, not knobs of its own:
+    // the agent's knobs stay the server's, the page's numbers come back.
+    const body = quiet ? { report: pageReport() } : { cfg }
+    const t = setTimeout(() => { void fetch(`/__state/${encodeURIComponent(id)}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).catch(() => {}) }, quiet ? 900 : 400)
     return () => clearTimeout(t)
-  }, [cfg, loaded])
+  }, [cfg, loaded, ...(quiet ? [vars] : [])]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // After each load: apply the sheet, then watch what their JS styles at runtime.
   /* Let the SCREEN and the GROWN sheet correct the baseline — but only while
@@ -518,7 +526,7 @@ function Editor() {
       carryFirst.current = null
       // What we found: for an app that came in now, not for one more screen
       // taken along to the ones before it.
-      const ask = !kit && !(extra?.captured && prev?.captured)
+      const ask = !kit && !quiet && !(extra?.captured && prev?.captured)
       if (loaded) disown(loaded.project)
       // A previous tenant's leftovers, before the next one renders: the frame
       // is same-origin, so what the last app wrote to localStorage is still
@@ -559,7 +567,7 @@ function Editor() {
       // Their own app is what they came for: what was read from it, step 2.
       // A kit opens quietly on its Dashboard.
       if (kit) setTab(isSheet(first) ? 'components' : 'screens')
-      else { setBringOpen(false); setLooksOpen(false); setShowExport(false); if (ask) setFoundOpen(true); else setShowNotes(true) }
+      else { setBringOpen(false); setLooksOpen(false); setShowExport(false); if (ask) setFoundOpen(true); else if (!quiet) setShowNotes(true) }
     } catch (err) {
       setError((err as Error).message)
     } finally {
@@ -741,7 +749,7 @@ function Editor() {
   const schemeHooks = loaded ? [loaded.project.scheme.media ? 'prefers-color-scheme' : null, ...loaded.project.scheme.hooks.map(([a, d]) => (a === 'class' ? `.${d}` : `[${a}="${d}"]`))].filter(Boolean).join(' · ') : ''
   const makeDoor = (standalone = false) => <Door standalone={standalone} onClose={!standalone && loaded ? () => setBringOpen(false) : undefined} carry={standalone ? null : kitCarry} onArchive={onArchive} onUrl={(u) => void loadFromUrl(`/__repo/?u=${encodeURIComponent(u)}`)} onSample={(p) => void loadFromUrl(p)} busy={busy} error={error} />
   return (
-    <div className="app">
+    <div className={`app ${quiet ? 'app--quiet' : ''}`}>
       <header className="app__topbar">
         <a className="app__brand" href="/" title={loaded && !loaded.kit ? 'Close your app and start over' : 'UISandbox'} onClick={(e) => { if (loaded) { e.preventDefault(); startOver() } }}><span className="app__brand-mark"><Mark size={16} /></span><span className="app__brand-name">UISandbox</span></a>
         {/* Beside the name, where "Design System Generator" stood (it lives in

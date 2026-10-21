@@ -146,7 +146,7 @@ async function pageFromDevServer(o: Owned, path: string, search: string, sid: st
   if (o.variant === 'raw') out = injectGuard(stripLinkIntegrity(html))
   else {
     const before = o.project.table.entries.length
-    const rewritten = rewriteHtml(html, o.project.table, `dev: /${route}`)
+    const rewritten = rewriteHtml(html, o.project.table, route ? `the page at /${route}` : 'index.html') // the patch names it so: a file, or the route whose HTML holds the <style>
     // Literals new in today's page hold their own value until the app maps
     // them, so nothing is undefined while it does.
     const fresh = Object.fromEntries(o.project.table.entries.slice(before).map((x) => [varName(x.id), cssValue(x.value)]))
@@ -166,7 +166,7 @@ async function fromDevServer(o: Owned, path: string, search: string, accept: str
   if (!res.ok) return null
   const type = res.headers.get('content-type') || 'application/octet-stream'
   if (o.variant === 'rewritten' && /text\/css/i.test(type)) {
-    const css = rewriteLateCss(o, await res.text(), `dev: /${path}`)
+    const css = rewriteLateCss(o, await res.text(), path)
     return { type, body: new TextEncoder().encode(css).buffer as ArrayBuffer }
   }
   return { type, body: await res.arrayBuffer() }

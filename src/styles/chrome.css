@@ -671,7 +671,7 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
 /* the card never wider than the window: one track, as wide as the window, not as the longest line */
 .stage__door > .intake { min-width: 0; width: 100%; box-sizing: border-box; }
 .stage__door > * { margin: auto; }
-.stage__door .intake { padding-top: 28px; padding-bottom: 28px; }
+.stage__door .intake { padding-top: 28px; padding-bottom: 28px; overflow: visible; } /* the layer scrolls; the glow must not be cut to the box */
 /* The door alone, without the story around it (that lives on /about). */
 .intake--door { justify-content: flex-start; }
 .app__body--page { overflow-y: auto; display: block; }
@@ -908,9 +908,8 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
 .bring .install__cmd { min-width: 0; }
 .bring p { max-width: none; margin: 0; text-align: left; }
 .bring .install__pill { width: 100%; max-width: none; border-radius: 10px; }
-.bring__agent, .bring__fine { margin: 0; font-size: 13px; line-height: 1.5; color: var(--app-fg-muted); }
-.bring__agent b { color: var(--app-fg); }
-.bring__agent a, .bring__fine a { color: var(--app-fg); }
+.bring__fine { margin: 0; font-size: 13px; line-height: 1.5; color: var(--app-fg-muted); }
+.bring__fine a { color: var(--app-fg); }
 .bring__fine { font-size: 12px; }
 .bring__else { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; padding-top: 16px; border-top: 1px solid var(--app-border); font-size: 13px; color: var(--app-fg-muted); }
 .bring__links { display: flex; flex-wrap: wrap; gap: 6px 18px; }
@@ -947,4 +946,12 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
   .bring { padding: 20px 16px 22px; }
   .bring__head h3 { font-size: 19px; }
 }
+/* A page the MCP server drives headless: nothing of ours over what it captures. */
+.app--quiet .peek { display: none; }
+/* The agent prompt under the line (decision 217): the text it pastes, shown. */
+.agentprompt { display: grid; gap: 6px; }
+.bring .agentprompt__q { font-size: 13px; color: var(--app-fg-muted); }
+.agentprompt__box { display: flex; align-items: flex-start; gap: 10px; padding: 10px 10px 10px 14px; border: 1px solid var(--app-border); border-radius: 10px; background: var(--app-surface-2); }
+.bring .agentprompt__text { flex: 1; min-width: 0; font-size: 12.5px; line-height: 1.5; color: var(--app-fg); overflow-wrap: anywhere; }
+.agentprompt__copy { flex: none; }
 

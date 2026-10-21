@@ -57,22 +57,39 @@ export function genSheetJson(table: SubstitutionTable, vars: Record<string, stri
   return JSON.stringify({ generator: 'uisandbox', variables: rows }, null, 2) + '\n'
 }
 
-/** `file → [original, current]` for everything that changed. */
+/** `file → [original, current]` for everything that changed, each line naming
+ *  where the value sits. A literal is not one place: shadcn's oklch(0.985 0 0)
+ *  is ten declarations and only --primary-foreground moved, and an agent
+ *  applying "oklch(0.985 0 0) → #161616 (×2)" had to guess which two (decision
+ *  217, the agent-prompt test). The same from → to on two entries is one line. */
 export function genPatch(table: SubstitutionTable, vars: Record<string, string>): string {
   const rows = sheetRows(table, vars).filter((r) => r.changed)
-  const byFile = new Map<string, Array<{ from: string; to: string; kind: string; count: number }>>()
+  type Line = { from: string; to: string; kind: string; count: number; where: string[] }
+  const byFile = new Map<string, Map<string, Line>>()
+  const sel = (x?: string) => (x && x.length > 40 ? x.slice(0, 39) + '…' : x)
+  // a variable on :root by its name; anywhere else (.dark, [data-theme]) with its selector
+  const whereOf = (x: { prop: string; selector?: string }) => (x.prop.startsWith('--') ? (!x.selector || /^(:root|html|:root,\s*:host|:host)$/.test(x.selector.trim()) ? x.prop : `${sel(x.selector)} ${x.prop}`) : `${x.selector ? `${sel(x.selector)} ` : ''}{ ${x.prop} }`)
   for (const r of rows) {
-    const files = new Set(r.entry.sites.map((s) => s.file))
+    const files = new Set(r.entry.sites.map((x) => x.file))
     for (const f of files) {
-      if (!byFile.has(f)) byFile.set(f, [])
-      byFile.get(f)!.push({ from: cssValue(r.entry.value), to: r.current, kind: r.entry.kind, count: r.entry.sites.filter((s) => s.file === f).length })
+      if (!byFile.has(f)) byFile.set(f, new Map())
+      const here = r.entry.sites.filter((x) => x.file === f)
+      const k = `${r.entry.kind}|${cssValue(r.entry.value)}|${r.current}`
+      const lines = byFile.get(f)!
+      const l = lines.get(k) ?? { from: cssValue(r.entry.value), to: r.current, kind: r.entry.kind, count: 0, where: [] }
+      l.count += here.length
+      for (const x of here) { const w = whereOf(x); if (!l.where.includes(w)) l.where.push(w) }
+      lines.set(k, l)
     }
   }
   if (!byFile.size) return '# Nothing changed: the sandbox is still 1:1 with your code.\n'
-  const out: string[] = ['# UISandbox patch: replace these literals in your source to apply what you see.', '# One line per value: kind  original  →  current  (occurrences seen in the built CSS)', '']
+  const out: string[] = ['# UISandbox patch: replace these literals in your source to apply what you see.', '# One line per value: kind  original  →  current  (occurrences seen in the CSS: where)', '']
   for (const [file, list] of [...byFile.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
     out.push(`## ${file}`)
-    for (const l of list) out.push(`${l.kind.padEnd(11)} ${l.from}  →  ${l.to}   (×${l.count})`)
+    // A dev server's own build of the CSS (Next.js writes no source map for
+    // it): the file does not exist in their repo, the literals do.
+    if (/(^|\/)_next\/static\/|(^|\/)\.next\//.test(file)) out.push('# Built by Next.js from your source CSS (app/globals.css, or wherever you import it): find each value there.')
+    for (const l of list.values()) out.push(`${l.kind.padEnd(11)} ${l.from}  →  ${l.to}   (×${l.count}: ${l.where.slice(0, 3).join(', ')}${l.where.length > 3 ? `, +${l.where.length - 3} more` : ''})`)
     out.push('')
   }
   return out.join('\n')

@@ -73,7 +73,7 @@ export function Found({ facts, carry, onDone }: {
                 </fieldset>
               )}
               <div className="found__go">
-                <button type="button" className="btn btn--ghost" onClick={() => onDone(bring, false)}>Just the knobs</button>
+                <button type="button" className="btn btn--secondary" onClick={() => onDone(bring, false)}>Tune it directly</button>
                 <button type="button" className="btn btn--primary" onClick={() => onDone(bring, true)}>See it six ways</button>
               </div>
             </div>

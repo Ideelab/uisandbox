@@ -3898,3 +3898,63 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     CSS file shows through hot reload with the look still on, and with
     --carry the kit's brand and shape come along. 46 checks, 0 failed.
 
+    The sweep of the localhost route (Alexander: "we vinden nog veel
+    gebreken"), on a real shadcn-style dashboard (Vite + React + Tailwind v4,
+    four pages, .dark) and the same on Next 15, through the page and through
+    the MCP tools. Found and fixed:
+    - The six ignored every knob on a live app: Vite injects its CSS at
+      runtime, and only the stage's frame was observed. Each look's frame
+      observes its own now (LookGrid), and the six follow the table's growth.
+    - No Light / Dark on a Tailwind or shadcn app: the scheme was read from
+      the static CSS only. The live observer detects hooks in runtime CSS.
+    - The screen picker said Home while the app sat on /invoices after a click
+      inside it, and picking Home then did nothing. It follows the frame now,
+      picking navigates it, and the six show the screen the frame is on.
+    - The reach meter read oklch/oklab paint as nothing and showed 0 of 0 as
+      100 %; radii derived from a tokenised --radius (calc, inline in the rule
+      with @theme inline) read as outside. Both counted now; shadcn's kit goes
+      from 70 % to 100 % radii.
+    - "0 KB of CSS" and "0 files changed" on a live app: runtime CSS is
+      counted per source, and Export counts the files the patch names.
+    - A style="color-scheme" on <html> before React hydrates: Next flagged a
+      hydration error in their app. A <style id="us-scheme"> instead.
+    - The agent route was blind on a Vite app: verify and screenshot opened the
+      snapshot (no CSS, a shell of 2 elements) and, since this decision,
+      captured What we found over it; set and export read 0 of 0. A live
+      project is now driven as `open` drives it (the local address, live,
+      the agent's knobs as --carry, `&quiet=1`: no What we found, no notes,
+      no peek pill), and the quiet page reports its own count and patch to
+      the server (POST /__state {report}), which `set`, `export patch` and
+      `state` use.
+    - A Next.js dev build's CSS has no source map: the patch heading
+      _next/static/... says the literals live in the source CSS. A route's
+      inline <style> is named "index.html" or "the page at /x", not "dev: /".
+    live-dev.mjs grows an MCP pass per app (load, set, verify, screenshot,
+    export): 66 checks, 0 failed. patchSource.test.ts holds the Next note.
+
+    "Or tell your agent: open this app in UISandbox" assumed the MCP tools
+    and named no address (Alexander). It is a prompt to copy now, under the
+    line, with the address and the kit's knobs in it, that works either way:
+    with the tools, load / open (carry, a new `open` parameter) /
+    wait_for_send; without, `npx -y uisandbox-mcp open <url>` in the
+    background, where Send prints the patch. Tested with a subagent that had
+    no tools: it ran the line, read the patch and applied it. It had to guess
+    three times, all from the patch: which two of ten oklch(0.985 0 0) moved,
+    0.25rem and 1px that are not in the file (Tailwind's own, compiled in),
+    and which of two 4px. Each patch line now names where its value sits (a
+    variable by name, .dark --primary outside :root, a rule as selector {
+    property }); identical from → to lines are one; and the CLI and the MCP
+    server, which run on the machine, check each line against the file it
+    names and say so when the value is not written there. Second run: no
+    guess about where; it left the two Tailwind defaults alone, as the patch
+    said. The count above the patch says how many lines it is.
+
+    "Just the knobs" on What we found said nothing about what happens:
+    "Tune it directly" beside "See it six ways", the two ways on. And the
+    takeover's glow was cut to a rectangle: .intake scrolled inside a layer
+    that already scrolls, and clipped the shadow.
+
+    Hold-outs on all of it: 173, ok 154, differs 4, no regressions. The five
+    with low colour reach (water.css source among them) read the same with
+    the meter as it was.
+

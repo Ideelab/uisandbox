@@ -4,7 +4,8 @@
  * localhost, `npx uisandbox-mcp open http://localhost:<port>` (the packed CLI,
  * mcp/dist), the page it opens, What we found, a look picked, hot reload, and
  * the kit's knobs carried along in the line (--carry), on the stage and in
- * each of the six looks.
+ * each of the six looks; then the same app through the MCP tools an agent
+ * uses (load, set, verify, screenshot, export).
  *
  *   pnpm mcp:build && node scripts/live-dev.mjs
  *
@@ -23,6 +24,8 @@
  * through a shell.
  */
 import { chromium } from 'playwright'
+import { Client } from '@modelcontextprotocol/sdk/client/index.js'
+import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { spawn, execFileSync } from 'node:child_process'
 import { existsSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'node:fs'
 import { join, dirname } from 'node:path'
@@ -131,7 +134,7 @@ try {
           const n = await moved(page)
           check(tag, 'and moved values on the page', n > 0, `${n} moved`)
         } else {
-          await page.click('text=Just the knobs'); await page.waitForTimeout(2500)
+          await page.click('text=Tune it directly'); await page.waitForTimeout(2500)
           const f = frame()
           const v = f ? await f.evaluate(app.probe) : 'no frame'
           check(tag, 'the page renders styled', app.styled(v), v.slice(0, 70))
@@ -157,6 +160,27 @@ try {
       } catch (e) { check(tag, 'ran through', false, String(e.message).split('\n')[0]) }
       await page.context().close(); c.kill()
     }
+    // The agent's route (MCP): what Claude Code does with "open this app".
+    // A live app's CSS is written at runtime, so set, verify, screenshot and
+    // the patch are measured in a headless page, quiet (no What we found).
+    const tag = `${app.id}·mcp`
+    const mcp = new Client({ name: 'live-dev', version: '1' })
+    try {
+      await mcp.connect(new StdioClientTransport({ command: 'node', args: [cli] }))
+      const text = (r) => r.content.filter((x) => x.type === 'text').map((x) => x.text).join('\n')
+      const loaded = JSON.parse(text(await mcp.callTool({ name: 'load', arguments: { devUrl: url } })))
+      const set = JSON.parse(text(await mcp.callTool({ name: 'set', arguments: { id: loaded.id, knobs: { cPrimary: '#e11d48', radius: 1.8 } } })))
+      check(tag, 'set moves values on the running app', set.moved > 0 && set.of >= 5, `${set.moved} of ${set.of}`)
+      const v = JSON.parse(text(await mcp.callTool({ name: 'verify', arguments: { id: loaded.id } })))
+      const paired = Number(/(\d+) elements paired/.exec(v.result)?.[1] ?? 0)
+      check(tag, 'verify renders the app 1:1, not a shell', v.ok && paired >= 5 && !v.warnings.length, `${paired} paired${v.warnings.length ? ' · ' + v.warnings[0].slice(0, 60) : ''}`)
+      const shot = await mcp.callTool({ name: 'screenshot', arguments: { id: loaded.id } })
+      const png = shot.content.find((x) => x.type === 'image')
+      check(tag, 'screenshot is an image of the app', !!png && png.data.length > 8000, png ? `${Math.round(png.data.length / 1365)} KB` : 'none')
+      const patch = text(await mcp.callTool({ name: 'export', arguments: { id: loaded.id, format: 'patch' } }))
+      check(tag, 'export patch carries the brand', /→\s+#e11d48/.test(patch), patch.split('\n').find((l) => /^## /.test(l)) ?? patch.slice(0, 60))
+    } catch (e) { check(tag, 'ran through', false, String(e.message).split('\n')[0]) }
+    await mcp.close().catch(() => {})
   }
 } finally {
   await browser.close()

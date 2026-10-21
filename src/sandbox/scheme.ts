@@ -85,6 +85,11 @@ export function applyScheme(doc: Document, scheme: Scheme, want: 'dark' | 'light
       root.setAttribute(attr, want === 'dark' ? dark : (light ?? 'light'))
     }
   }
-  // 3) UA colour scheme (form controls, scrollbars, canvas default text)
-  root.style.colorScheme = want ?? ''
+  // 3) UA colour scheme (form controls, scrollbars, canvas default text), from
+  // a sheet of our own: a style="" on <html> written before React hydrates is
+  // an attribute the server never sent, and Next's dev overlay then flagged a
+  // hydration error in their app (decision 217).
+  let el = doc.getElementById('us-scheme')
+  if (!el && want) { el = doc.createElement('style'); el.id = 'us-scheme'; (doc.head ?? root).appendChild(el) }
+  if (el) el.textContent = want ? `:root{color-scheme:${want}!important}` : ''
 }

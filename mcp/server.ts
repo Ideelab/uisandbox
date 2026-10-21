@@ -39,7 +39,7 @@ import { openZip, type Archive } from '../src/audit/intake/readZip'
 import { buildProject, type SandboxProject } from '../src/sandbox/project'
 import { deriveBaseline, type BaselineReport } from '../src/sandbox/baseline'
 import { computeVars } from '../src/sandbox/mapping'
-import { differingKeys, isShownKnob, knobLabel } from '../src/state/carry'
+import { carryToken, differingKeys, isShownKnob, knobLabel } from '../src/state/carry'
 import { buildTokens } from '../src/tokens/buildTokens'
 import { formatCssColor } from '../src/sandbox/cssColor'
 import { encode } from '../src/state/hash'
@@ -67,6 +67,8 @@ interface Loaded {
   /** The page's own account at the last Send: it saw the runtime and
    *  hot-reloaded styles this server never fetched (live mode above all). */
   pageReport?: { turned: Array<{ knob: string; from: unknown; to: unknown }>; moved: number; of: number; patch: string }
+  /** When a headless page (quiet) last reported what it measured. */
+  reportAt?: number
 }
 const projects = new Map<string, Loaded>()
 /* Agents waiting in `wait_for_send`, per project: resolved by the next Send. */
@@ -98,10 +100,34 @@ const summarise = (p: Loaded) => {
 /* What a Send hands over: what the user turned (in the panel's own names, from
    → to), how many of the build's values moved, and the patch that writes the
    result into their source. Ready to act on, not a dump to interpret. */
+/** The patch held against the files it names, where they are on this machine
+ *  (a Vite dev server names the absolute source path; a build, a path under
+ *  the folder this runs in). A value the file does not hold as written is a
+ *  framework default compiled in (Tailwind's own 0.25rem) or a computed one:
+ *  said on its line, so an agent does not hunt for it (decision 217). Lines
+ *  of a file that cannot be read are left as they were. */
+function checkPatch(patch: string): string {
+  let text: string | null = null
+  return patch.split('\n').map((line) => {
+    const h = line.match(/^## (.+)$/)
+    if (h) {
+      const name = h[1]!.trim()
+      const path = [name, join(process.cwd(), name.replace(/^\//, ''))].find((x) => { try { return statSync(x).isFile() } catch { return false } })
+      try { text = path ? readFileSync(path, 'utf8') : null } catch { text = null }
+      return line
+    }
+    const m = line.match(/^\S+\s+(.+?)\s+→\s+/)
+    if (!m || text === null || /^#/.test(line)) return line
+    const from = m[1]!
+    const bare = from.replace(/^0\./, '.')
+    return text.includes(from) || text.includes(bare) || text.includes(from.replace(/^\./, '0.')) ? line : `${line}   # not in this file as written: a framework default or a computed value; set it where your theme overrides it, or leave it`
+  }).join('\n')
+}
+
 const sentPayload = (p: Loaded) => {
   if (p.pageReport) {
     const r = p.pageReport
-    return { sent: p.sent ? new Date(p.sent).toISOString() : null, project: p.name, turned: r.turned, moved: r.moved, of: r.of, patch: r.patch, next: nextStep(r.turned.length > 0) }
+    return { sent: p.sent ? new Date(p.sent).toISOString() : null, project: p.name, turned: r.turned, moved: r.moved, of: r.of, patch: checkPatch(r.patch), next: nextStep(r.turned.length > 0) }
   }
   const base = p.report.baseline.cfg
   const at = (c: Config, k: string) => k.startsWith('sb.') ? (c.sb as unknown as Record<string, unknown>)[k.slice(3)] : (c as unknown as Record<string, unknown>)[k]
@@ -110,7 +136,7 @@ const sentPayload = (p: Loaded) => {
   const { moved } = summarise(p)
   return {
     sent: p.sent ? new Date(p.sent).toISOString() : null, project: p.name, turned, moved, of: p.project.table.entries.length,
-    patch: genPatch(p.project.table, vars),
+    patch: checkPatch(genPatch(p.project.table, vars)),
     next: nextStep(turned.length > 0),
   }
 }
@@ -148,7 +174,7 @@ server.registerTool('load', {
     const id = `p${(++seq).toString(36)}`
     const p: Loaded = { id, name: new URL(u).host, bytes, project, report, cfg: report.baseline.cfg, archive, live: new URL(u).origin }
     projects.set(id, p)
-    return { content: [{ type: 'text', text: JSON.stringify({ id, live: p.live, note: 'A running dev server, in live mode. Call `open` next: its styles are read as it renders in the browser, so numbers here (values, brand) are only the page\'s static part. Then `wait_for_send`.' }, null, 2) }] }
+    return { content: [{ type: 'text', text: JSON.stringify({ id, live: p.live, note: 'A running dev server, in live mode. Its styles are read as it renders, so the numbers here (values, brand) are only the page\'s static part. `open` it for the user (then `wait_for_send`); or turn knobs yourself: `set`, `export` (patch), `verify` and `screenshot` measure the running app in a headless browser (a few seconds each).' }, null, 2) }] }
   }
   if (zipPath) { const b = readFileSync(zipPath); bytes = new Uint8Array(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer); name = basename(zipPath) }
   else { const res = await fetch(zipUrl!); if (!res.ok) throw new Error(`${res.status} fetching ${zipUrl}`); bytes = new Uint8Array(await res.arrayBuffer()); name = zipUrl!.split('/').pop() || 'archive.zip' }
@@ -201,6 +227,11 @@ server.registerTool('set', {
   const identity = p.project.table.identityVars()
   const changed = Object.keys(vars).filter((k) => vars[k] !== identity[k])
   const sample = changed.slice(0, 12).map((k) => `${identity[k]} → ${vars[k]}`)
+  if (p.live) {
+    const r = await liveReport(p)
+    const lines = r.patch.split('\n').filter((l) => /→/.test(l) && !/^#/.test(l)).slice(0, 12).map((l) => l.replace(/^\S+\s+/, '').trim())
+    return { content: [{ type: 'text', text: JSON.stringify({ moved: r.moved, of: r.of, sample: lines, knobs: summarise(p).knobs, measured: 'in the browser, on the running app' }, null, 2) }] }
+  }
   return { content: [{ type: 'text', text: JSON.stringify({ moved: changed.length, of: Object.keys(vars).length, sample, knobs: summarise(p).knobs }, null, 2) }] }
 })
 
@@ -210,6 +241,8 @@ server.registerTool('export', {
   inputSchema: { id: z.string(), format: z.enum(['sheet-css', 'sheet-json', 'patch', 'tokens-css', 'tokens-json', 'tailwind', 'shadcn', 'swift', 'android-xml', 'android-kotlin']) },
 }, async ({ id, format }) => {
   const p = need(id)
+  // A live app's patch is measured in the browser: its CSS is written at runtime.
+  if (p.live && format === 'patch') return { content: [{ type: 'text', text: checkPatch((await liveReport(p)).patch) }] }
   const vars = computeVars(p.project.table, p.report.baseline, p.cfg, buildTokens(p.cfg))
   const out = format === 'sheet-css' ? genSheetCss(p.project.table, vars) : format === 'sheet-json' ? genSheetJson(p.project.table, vars) : format === 'patch' ? genPatch(p.project.table, vars)
     : format === 'tokens-css' ? genCss(p.cfg) : format === 'tokens-json' ? genJson(p.cfg) : format === 'tailwind' ? genTailwind(p.cfg) : format === 'shadcn' ? genShadcn(p.cfg)
@@ -289,7 +322,15 @@ async function localServer(): Promise<{ port: number }> {
     const st = url.pathname.match(/^\/__state\/([a-z0-9]+)$/)
     if (st && req.method === 'POST') {
       let body = ''; req.on('data', (c) => { body += c })
-      req.on('end', () => { try { const p = projects.get(st[1]!); const j = JSON.parse(body) as { cfg?: Config }; if (p && j.cfg) { p.cfg = j.cfg; p.touchedInBrowser = Date.now() } } catch { /* ignore */ } res.statusCode = 204; res.end() })
+      req.on('end', () => {
+        try {
+          const p = projects.get(st[1]!); const j = JSON.parse(body) as { cfg?: Config; report?: Loaded['pageReport'] }
+          if (p && j.cfg) { p.cfg = j.cfg; p.touchedInBrowser = Date.now() }
+          // a headless page's numbers (quiet): what it measured with the agent's knobs on
+          if (p && j.report && Array.isArray(j.report.turned) && typeof j.report.patch === 'string') { p.pageReport = j.report; p.reportAt = Date.now() }
+        } catch { /* ignore */ }
+        res.statusCode = 204; res.end()
+      })
       return
     }
     // Where Send goes (the page labels its button by it): GET /__session/<id>
@@ -334,7 +375,8 @@ function printSent(p: Loaded): void {
   const s = sentPayload(p)
   p.delivered = true
   console.log(`\n── Sent from the sandbox · ${s.project} · ${s.turned.length ? s.turned.map((t) => `${t.knob}: ${t.from} → ${t.to}`).join(' · ') : 'nothing turned'}`)
-  console.log(`${s.moved} of ${s.of} values moved. The patch (each line: a literal in your CSS and what it becomes):\n`)
+  const lines = s.patch.split('\n').filter((l) => /→/.test(l) && !/^#/.test(l)).length
+  console.log(`${s.moved} of ${s.of} values moved, in ${lines} patch line${lines === 1 ? '' : 's'} (a value used in two places can be one line). Each line: a literal in your CSS, what it becomes, and where it sits:\n`)
   console.log(s.patch)
 }
 
@@ -347,14 +389,14 @@ function openInBrowser(url: string): void {
 server.registerTool('open', {
   title: 'Open the sandbox',
   description: 'Open UISandbox in the user\'s browser with this project loaded — the real, interactive sandbox: the whole app rendered 1:1, every knob there to turn by hand. Use this whenever the user wants to SEE or PLAY with the design themselves ("can I look at this in a sandbox", "let me try some changes"), not only read numbers. Served from 127.0.0.1 by this process; nothing leaves the machine. What the user turns in the browser flows back here: a later `export`, `verify` or `screenshot` uses it.',
-  inputSchema: { id: z.string(), screen: z.string().optional().describe('Screen path to open first') },
-}, async ({ id, screen }) => {
+  inputSchema: { id: z.string(), screen: z.string().optional().describe('Screen path to open first'), carry: z.string().regex(/^[A-Za-z0-9_-]+$/).optional().describe('The knobs the user turned on a kit at uisandbox.org, as the prompt they copied there names it: offered to them when the app opens') },
+}, async ({ id, screen, carry }) => {
   const p = need(id)
   p.via = 'agent'
   if (p.live) liveOrigin = p.live
   const { port } = await localServer()
   const hash = JSON.stringify(p.cfg) === JSON.stringify(p.report.baseline.cfg) ? '' : `#${encode(p.cfg)}`
-  const url = `http://127.0.0.1:${port}/?load=${encodeURIComponent(`/__archive/${id}.zip`)}&sync=${id}${p.live ? '&live=1' : ''}${screen ? `&screen=${encodeURIComponent(screen)}` : ''}${hash}`
+  const url = `http://127.0.0.1:${port}/?load=${encodeURIComponent(`/__archive/${id}.zip`)}&sync=${id}${p.live ? '&live=1' : ''}${screen ? `&screen=${encodeURIComponent(screen)}` : ''}${carry ? `&carry=${carry}` : ''}${hash}`
   if (!argv.includes('--no-browser')) openInBrowser(url)
   return { content: [{ type: 'text', text: JSON.stringify({ opened: url, note: 'The sandbox is open in the browser. Tell the user to press "Send to your agent" there when they are done, then call `wait_for_send`: it returns when they press it, with what they turned and the patch to apply. `state` reads the knobs at any moment.' }, null, 2) }] }
 })
@@ -362,7 +404,13 @@ server.registerTool('open', {
 server.registerTool('state', {
   title: 'Current knobs', description: 'The knobs as they stand now — including what the user turned by hand in an opened sandbox (and when).',
   inputSchema: { id: z.string() },
-}, async ({ id }) => { const p = need(id); return { content: [{ type: 'text', text: JSON.stringify({ ...summarise(p), touchedInBrowser: p.touchedInBrowser ? new Date(p.touchedInBrowser).toISOString() : null }, null, 2) }] } })
+}, async ({ id }) => {
+  const p = need(id)
+  // A live app: the numbers above are the snapshot's static part; what the
+  // browser measured last (set, export, verify on it) is the real count.
+  const inBrowser = p.live && p.pageReport ? { moved: p.pageReport.moved, of: p.pageReport.of, at: p.reportAt ? new Date(p.reportAt).toISOString() : null, note: 'values and baseline above are the static part only; this is the running app, measured in the browser' } : undefined
+  return { content: [{ type: 'text', text: JSON.stringify({ ...summarise(p), touchedInBrowser: p.touchedInBrowser ? new Date(p.touchedInBrowser).toISOString() : null, ...(inBrowser ? { inBrowser } : {}) }, null, 2) }] }
+})
 
 server.registerTool('wait_for_send', {
   title: 'Wait for the user to send it back',
@@ -395,12 +443,27 @@ async function drive(p: Loaded, screenPath: string | undefined, width: number, f
     const page = await context.newPage()
     // The app: UISANDBOX_URL if set, else the bundled app on 127.0.0.1 (offline, fast), else uisandbox.org.
     const APP = APP_ENV ?? (APP_DIR ? `http://127.0.0.1:${(await localServer()).port}` : 'https://uisandbox.org')
-    // The knobs travel in the URL hash — the app's own state encoding.
+    // The knobs travel in the URL hash — the app's own state encoding. A live
+    // app (a dev server) is opened as `open` opens it, through this server's
+    // own address (only it reaches the dev server), and its knobs ride as
+    // --carry does: put on after the page has read its runtime CSS, on the
+    // baseline it measured there, not on the snapshot's (decision 217).
+    // quiet: no What we found, no notes card over what is captured.
     const hash = JSON.stringify(p.cfg) === JSON.stringify(p.report.baseline.cfg) ? '' : `#${encode(p.cfg)}`
-    await page.goto(`${APP}/?load=${encodeURIComponent(FIX)}${hash}`, { waitUntil: 'domcontentloaded' })
+    let started = false
+    if (p.live && !APP_ENV && APP_DIR) {
+      liveOrigin = p.live
+      const { port } = await localServer()
+      const carry = carryToken('the agent', p.report.baseline.cfg, p.cfg)
+      started = true
+      await page.goto(`http://127.0.0.1:${port}/?load=${encodeURIComponent(`/__archive/${p.id}.zip`)}&sync=${p.id}&live=1&quiet=1${carry ? `&carry=${carry}` : ''}`, { waitUntil: 'domcontentloaded' })
+    }
+    if (!started) await page.goto(`${APP}/?load=${encodeURIComponent(FIX)}&quiet=1${hash}`, { waitUntil: 'domcontentloaded' })
     await page.waitForFunction(() => !!document.querySelector('.stage__foot') || !!document.querySelector('.intake__error'), null, { timeout: 180000 })
     if (await page.$('.intake__error')) throw new Error(await page.$eval('.intake__error', (e) => e.textContent || 'refused'))
-    if (hash) { await page.evaluate((h) => { location.hash = h }, hash); await page.waitForTimeout(600) }
+    if (hash && !started) { await page.evaluate((h) => { location.hash = h }, hash); await page.waitForTimeout(600) }
+    // a live app writes its CSS as it renders: let it, and the observer, settle
+    if (started) await page.waitForTimeout(2500)
     if (screenPath) {
       // Pick the screen through the app's own picker state: navigate the frame.
       await page.evaluate((s) => { const f = document.querySelector('.stage__iframe') as HTMLIFrameElement | null; if (f) f.src = f.src.replace(/^[^?]*/, '/' + s.replace(/(^|\/)index\.html?$/i, '$1')) }, screenPath)
@@ -408,6 +471,18 @@ async function drive(p: Loaded, screenPath: string | undefined, width: number, f
     } else await page.waitForTimeout(2000)
     return await fn(page)
   } finally { await browser.close() }
+}
+
+/** A live app's numbers, from a headless page with the agent's knobs on: the
+ *  snapshot holds only its static part (a Vite app: none of its CSS), so
+ *  `set` and `export` asked it read 0 of 0 and an empty patch. */
+async function liveReport(p: Loaded): Promise<NonNullable<Loaded['pageReport']>> {
+  const t0 = Date.now()
+  await drive(p, undefined, 1280, async (page) => {
+    for (let i = 0; i < 40 && !(p.reportAt && p.reportAt > t0); i++) await page.waitForTimeout(250)
+  })
+  if (!p.pageReport || !p.reportAt || p.reportAt <= t0) throw new Error('The live page did not report back. Is the dev server still running?')
+  return p.pageReport
 }
 
 server.registerTool('verify', {
