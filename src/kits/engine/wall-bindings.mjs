@@ -268,7 +268,12 @@ const daisyui = {
   switch:  (n) => `<label class="label"><input type="checkbox" class="toggle"${n.on ? ' checked' : ''}><span>${esc(n.text ?? '')}</span></label>`,
   badge:   (n, k) => A(n, k, 'span', cls('badge badge-soft', DA_TONE[n.tone ?? 'neutral'])),
   alert:   (n, k) => `<div role="alert" class="${cls('alert alert-soft', DA_ALERT[n.tone ?? 'neutral'])}"><span>${n.text != null ? esc(n.text) : k}</span></div>`,
-  stat:    (n) => `<div class="stats bg-base-100"><div class="stat"><div class="stat-title">${esc(n.label)}</div><div class="stat-value text-2xl">${esc(n.value)}</div></div></div>`,
+  /* The trend is the stat's own stat-desc, inside .stat: appended after it,
+     as withTrend does for the others, it landed in .stats, which lays its
+     children out as COLUMNS, and "Up on August" wrapped word by word beside
+     the figure. Bordered like the panels around it, and the width of its cell. */
+  stat:    (n) => `<div class="stats w-full border border-base-200 bg-base-100"><div class="stat"><div class="stat-title">${esc(n.label)}</div><div class="stat-value text-2xl">${esc(n.value)}</div>${
+    n.delta ? `<div class="stat-desc mt-1 flex flex-wrap items-center gap-2 whitespace-normal">${daisyui.badge({ tone: n.tone ?? 'neutral', text: n.delta })}<span>${esc(n.note ?? '')}</span></div>` : ''}</div></div>`,
   table:   (n) => `<div class="overflow-x-auto"><table class="table table-zebra"><thead><tr>${list(n.cols).map((c) => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${list(n.rows).map((r) => `<tr>${list(r).map((c) => `<td>${cellOf(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`,
   avatar:  (n) => `<div class="avatar avatar-placeholder"><div class="bg-primary text-primary-content w-8 rounded-full"><span class="text-xs">${esc(n.text)}</span></div></div>`,
   /* daisyUI ships BOTH of these as real components: .navbar with its three
@@ -312,7 +317,9 @@ const daisyui = {
       ${n.end ? `<li><a>${esc(n.end)}</a></li>` : `<li><a class="text-error">${esc(n.danger ?? 'Delete')}</a></li>`}</ul></div>`,
   sidenav: (n) => `<ul class="menu w-full p-0">${list(n.groups).map((g) => `<li class="menu-title">${esc(g.title)}</li>${
     list(g.items).map((it) => `<li><a${it.on ? ' class="menu-active"' : ''}>${ico(it.icon)}<span>${esc(it.text)}</span>${it.count ? `<span class="badge badge-sm badge-primary badge-soft">${esc(it.count)}</span>` : ''}</a></li>`).join('')}`).join('')}</ul>`,
-  list:    (n) => `<ul class="list bg-base-100">${list(n.rows).map((r) => `<li class="list-row items-center">
+  /* no side padding of its own inside a card (the card body has it): two
+     paddings left a client name 70px in a third-width panel, broken letter by letter */
+  list:    (n) => `<ul class="list bg-base-100">${list(n.rows).map((r) => `<li class="list-row items-center gap-3 px-0">
     <span class="bg-base-200 text-base-content/60 flex size-8 items-center justify-center rounded-box">${ico(r.icon)}</span>
     <div><div class="font-medium">${esc(r.title)}</div><div class="text-xs opacity-60">${esc(r.sub ?? '')}</div></div>
     <span class="text-sm opacity-60 tabular-nums">${esc(r.meta ?? '')}</span></li>`).join('')}</ul>`,
@@ -1528,7 +1535,7 @@ const titledPanel = (bind) => { const plain = bind.panel
 /* a stat's trend: the kit's own badge and a muted line, under the figure */
 const withTrend = (bind) => { const plain = bind.stat
   return (n) => { const html = plain(n)
-    if (!n.delta) return html
+    if (!n.delta || bind === daisyui) return html  // daisyUI's stat carries its own (stat-desc)
     const trend = bind.row({ gap: 2 }, bind.badge({ tone: n.tone ?? 'neutral', text: n.delta }) + bind.muted({ text: n.note ?? '' }))
     /* inside the card, after the figure: the card is the outermost element */
     const at = html.lastIndexOf('</')

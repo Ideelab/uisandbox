@@ -142,6 +142,7 @@ table with its decision.
 | `zip.mjs` | takes bytes as well as text, for the kit fonts | 208 |
 | `scenes.mjs` | the fallback letter in the layer us-fallback, declared before the kit's sheet, so Tailwind's layered base wins | 208 |
 | `generate.test.mjs`, `wall.test.mjs` | shadcn's behaviour is @base-ui/react; its buttons are h-8 | 208 |
+| `wall-bindings.mjs` | daisyUI's stat carries its trend as its own stat-desc inside .stat (withTrend skips it), bordered and full width; its list rows drop their side padding inside a card | 216 |
 
 The byte-for-byte rule above still holds for what it was for: the tests were
 not edited on the way across. A test changed from here on is changed here,

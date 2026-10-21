@@ -3759,3 +3759,21 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     with it (a design system is looked at on a desktop, and a window
     resizes); the stage always fills, and Light and Dark sit left, by the
     screen they change.
+
+    daisyUI's Dashboard, squeezed. The trend under a figure ("+12.4% Up on
+    August") was appended after .stat, inside .stats, which lays its
+    children out as columns: it wrapped word by word beside the figure. It
+    is the stat's own stat-desc now, under it, wrapping (daisyUI sets the
+    stat nowrap), and the stat is bordered like the panels and fills its
+    cell. Its list rows had two paddings inside a card (the card body's and
+    their own), which left a client name 70px in the right-hand panel,
+    broken letter by letter; the row drops its own inside a card.
+
+    And the six carry no colour (Alexander: six colours are compared by
+    colour, and the style under it goes unseen). A look sets fonts, corners,
+    spacing, depth, weight; it never sets the brand or the grey tint, so all
+    six wear the colour the knobs hold. Keep my colour is gone with it;
+    Shuffle moves the type pair. Airy and Bold are described by what they
+    do to space and type now, not by a colour. The tests changed with it:
+    the brand tests are gone, one holds that no look touches a colour dial.
+

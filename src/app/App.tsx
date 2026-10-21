@@ -154,20 +154,19 @@ function Editor() {
   // direction shows, what is locked, and which direction the knobs stand on.
   const [looksOpen, setLooksOpen] = useState(false)
   const [roll, setRoll] = useState<LookRoll>(firstRoll)
-  const [locks, setLocks] = useState<LookLocks>({ colour: false, font: false })
+  const [locks, setLocks] = useState<LookLocks>({ font: false })
   const [lookOn, setLookOn] = useState<string | null>(null)
   // What on this screen reads as the AI look (sandbox/tells.ts), measured
   // again after a load and after every turn, never while the original shows.
   const [tells, setTells] = useState<Tell[] | null>(null)
-  // What a look last set, so its colour and font are not taken for yours.
-  const [lookApplied, setLookApplied] = useState<{ id: string; cfg: Config; setColour: boolean; setFont: boolean } | null>(null)
-  /** A colour or font is yours when you turned it, not when a look did. */
+  // What a look last set, so its fonts are not taken for yours.
+  const [lookApplied, setLookApplied] = useState<{ id: string; cfg: Config; setFont: boolean } | null>(null)
+  /** A font is yours when you turned it, not when a look did. */
   const yours = (): LookLocks => {
-    if (!loaded) return { colour: false, font: false }
+    if (!loaded) return { font: false }
     const b = loaded.report.baseline.cfg, la = lookApplied
-    const colour = cfg.cPrimary !== b.cPrimary && !(la?.setColour && la.cfg.cPrimary === cfg.cPrimary)
     const font = (cfg.fontDisplay !== b.fontDisplay || cfg.fontBody !== b.fontBody) && !(la?.setFont && la.cfg.fontDisplay === cfg.fontDisplay && la.cfg.fontBody === cfg.fontBody)
-    return { colour, font }
+    return { font }
   }
   /** One direction on the knobs as they stand, with the dials a look turns
    *  put back to the app's own first, so one look never inherits another's. */
@@ -178,9 +177,9 @@ function Editor() {
     const reset = Object.fromEntries([...new Set(DIRECTIONS.flatMap((x) => Object.keys(x.sb)))].map((k) => [k, (base.sb as unknown as Record<string, number>)[k]]))
     return applyDirection({ ...cfg, sb: { ...cfg.sb, ...reset } }, d, roll[d.id], lk)
   }
-  // The six open holding on to what was chosen: a colour or a font turned
-  // away from the kit's is kept by default, so the looks vary the style
-  // around it; untouched, they vary the colour too. Unlocking is one click.
+  // The six open holding on to what was chosen: a font turned away from the
+  // kit's is kept by default, so the looks vary the style around it. Colour
+  // a look never sets: all six wear yours. Unlocking the font is one click.
   const openLooks = () => {
     setLocks(yours())
     setLooksOpen(true)
@@ -228,7 +227,7 @@ function Editor() {
     const card = lookCards.find((l) => l.id === id) as (LookCard & { cfg: Config }) | undefined
     if (!card) return
     dispatch({ type: 'REPLACE', cfg: card.cfg })
-    setLookApplied({ id, cfg: card.cfg, setColour: !locks.colour, setFont: !locks.font })
+    setLookApplied({ id, cfg: card.cfg, setFont: !locks.font })
     setLookOn(id)
     setLooksOpen(false)
   }
@@ -238,7 +237,7 @@ function Editor() {
     const next = directionCfg(id, lk)
     if (!next) return
     dispatch({ type: 'REPLACE', cfg: next })
-    setLookApplied({ id, cfg: next, setColour: !lk.colour, setFont: !lk.font })
+    setLookApplied({ id, cfg: next, setFont: !lk.font })
     setLookOn(id)
   }
   const changedCount = useMemo(() => {

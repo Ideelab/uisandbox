@@ -123,7 +123,6 @@ export function LookGrid({ project, screen, looks, current, locks, onLocks, onSh
     <div className="looks" role="dialog" aria-label="Pick a look">
       <div className="looks__bar">
         <h2 className="looks__title">{name}, six ways</h2>
-        <button type="button" className={`btn btn--sm ${locks.colour ? 'btn--primary' : 'btn--secondary'}`} aria-pressed={locks.colour} onClick={() => onLocks({ ...locks, colour: !locks.colour })}><Lock size={13} /> Keep my colour</button>
         <button type="button" className={`btn btn--sm ${locks.font ? 'btn--primary' : 'btn--secondary'}`} aria-pressed={locks.font} onClick={() => onLocks({ ...locks, font: !locks.font })}><Lock size={13} /> Keep my font</button>
         <button type="button" className="btn btn--secondary btn--sm" onClick={onShuffle}><Shuffle size={13} /> Shuffle <kbd>Space</kbd></button>
         <button type="button" className="btn btn--ghost btn--icon" onClick={onClose} aria-label="Close" title="Back to the screen"><X size={15} /></button>
@@ -134,7 +133,7 @@ export function LookGrid({ project, screen, looks, current, locks, onLocks, onSh
       </div>
       {focus && at >= 0 && <Focus project={project} screen={screen} look={looks[at]!} index={at} count={looks.length} picked={current === focus}
         onBack={() => setFocus(null)} onStep={step} onPick={() => onPick(focus)} />}
-      {!focus && <p className="looks__foot">Open one to see it full size, then Pick this one. A look sets {locks.colour && locks.font ? 'corners, spacing and depth around your colour and font' : locks.colour ? 'fonts, corners, spacing and depth around your colour' : locks.font ? 'brand, grey tint, corners, spacing and depth around your font' : 'brand, grey tint, fonts, corners, spacing and depth'} through the knobs: Undo takes it back, and you tune it next.</p>}
+      {!focus && <p className="looks__foot">Open one to see it full size, then Pick this one. A look sets {locks.font ? 'corners, spacing and depth around your font' : 'fonts, corners, spacing and depth'} through the knobs and leaves your colour alone: Undo takes it back, and you tune it next.</p>}
     </div>
   )
 }
