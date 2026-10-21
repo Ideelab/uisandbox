@@ -160,6 +160,10 @@ self.addEventListener('fetch', (event) => {
     const param = url.searchParams.get('__sb')
     let sid = explicit?.sid || param || null
     let path = explicit ? explicit.path : url.pathname.replace(/^\//, '')
+    // The app itself: a top-level load of `/` with no sandbox named is never a
+    // sandbox's, whoever referred it. A tab that had shown a sandboxed screen
+    // full size and then went to the site got "Not in sandbox: index.html".
+    if (!sid && event.request.mode === 'navigate' && event.request.destination === 'document' && (path === '' || path === 'index.html')) return fetch(event.request)
     if (!sid) {
       sid = await sandboxOfRequester(event)
       if (!sid) return fetch(event.request)

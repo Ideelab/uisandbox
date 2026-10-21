@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type RefObject } from 'react'
-import { ExternalLink, Info, RefreshCw, ShieldCheck, Star, X } from 'lucide-react'
+import { Info, ShieldCheck, Star, X } from 'lucide-react'
 import { ScreenPicker } from './ScreenPicker'
 import type { SandboxProject, Screen } from '../sandbox/project'
 import { identitySid, rawSid, sandboxUrl } from '../sandbox/host'
@@ -153,19 +153,15 @@ export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, pi
         )}
         {(!kitName || tab === 'screens') && <ScreenPicker screens={others} current={screen} onPick={onScreen} onPin={onPin} pinnable={pinnable} named={!!kitName} />}
         {!atDoor && <>
+        {/* the width and the mode sit right, over the screen they size;
+            Reload and Open are gone from the bar (Alexander) */}
+        <span className="stage__spacer" style={{ flex: 1 }} />
         <div className="seg" role="group" aria-label="Viewport width">
           {WIDTHS.map((x) => (
             <button key={x.id} className={`seg__opt ${x.id === width ? 'seg__opt--on' : ''}`} onClick={() => setWidth(x.id)}>{x.label}</button>
           ))}
         </div>
         {barExtra}
-        <span className="stage__spacer" style={{ flex: 1 }} />
-        <button type="button" className="btn btn--ghost btn--sm" onClick={() => { const f = frameRef.current; if (f) f.src = src }} title="Reload the screen">
-          <RefreshCw size={13} strokeWidth={2} /> Reload
-        </button>
-        <a className="btn btn--ghost btn--sm" href={src} target="_blank" rel="noreferrer" title="Open this screen in a new tab (same sandbox)">
-          <ExternalLink size={13} strokeWidth={2} /> Open
-        </a>
         </>}
       </div>
       <div className={`stage__frame ${w ? 'stage__frame--w' : ''} ${atDoor ? 'stage__frame--door' : ''}`}>

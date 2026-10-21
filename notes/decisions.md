@@ -3695,3 +3695,19 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     rewrote its sheet only on a shuffle or a lock, so Indigo showed as the
     dots and not on the screens. It keys on everything the card wears now;
     the frames stay loaded, only the sheet is rewritten.
+
+    The stage bar: the width and the mode sit right, where Reload and Open
+    were; those two are gone (Alexander). And a fault found on the way: a tab
+    that had shown a sandboxed screen full size (Open) and then went to the
+    site's root got "Not in sandbox: index.html", because the worker took the
+    referrer's sandbox for it. A top-level load of `/` with no sandbox named
+    is the app's now, always; frames are unchanged. Hold-outs re-run on it.
+
+    One place for every card. The three opened in three places: Take it home
+    in the middle of the window, the door at the top of the stage, How it
+    works at the top. All three are a fixed layer with the card at margin
+    auto now: the middle of the window, and from the top, scrolling, when
+    taller than it (How it works with More open; the door on a phone).
+    Hold-outs after the worker change: 173, ok 153, differs 5, one flagged
+    (s11-ng-bootstrap, one margin-left 0 to 127px), which passes alone three
+    times of three: batch-flaky, like s16-cirrus before it.

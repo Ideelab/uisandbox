@@ -666,7 +666,12 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
 .stage__tabs .stage__tab--on, .stage__tabs .stage__tab--on:hover { background: var(--app-fg); color: var(--app-bg); }
 /* The kit stays rendered and measured under the door, and visible now,
    darkened by the scrim like the page under every other card (the halo). */
-.stage__door { position: absolute; inset: 0; z-index: 40; overflow-y: auto; background: var(--app-scrim); display: flex; justify-content: center; }
+/* Every card over the editor sits in the middle of the WINDOW, the same way:
+   a fixed layer, the card at margin auto. Taller than the window, it scrolls
+   from its top instead of being cut (Alexander: the three opened in three
+   places; the door sat at the top of the stage, How it works at the top). */
+.stage__door { position: fixed; inset: 0; z-index: 100; overflow-y: auto; overscroll-behavior: contain; background: var(--app-scrim); display: grid; padding: 24px; }
+.stage__door > * { margin: auto; }
 .stage__door .intake { padding-top: 28px; padding-bottom: 28px; }
 /* The door alone, without the story around it (that lives on /about). */
 .intake--door { justify-content: flex-start; }
@@ -771,7 +776,7 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
    drew a second scrollbar inside the window. The scrim is the scroller; the
    card is as tall as the story, and the head sticks to the scrim's top. */
 .about-dialog { overflow-y: auto; overscroll-behavior: contain; place-items: start center; padding: 40px 16px; }
-.about-dialog .about-dialog__card { position: relative; width: min(840px, 100%); padding: 0 40px 40px; outline: none; }
+.about-dialog .about-dialog__card { position: relative; width: min(840px, 100%); padding: 0 40px 40px; outline: none; margin-block: auto; }
 .about-dialog__head { position: sticky; top: -40px; /* the scrim's padding: it sticks at the window's edge, not 40px below it */ z-index: 2; display: flex; align-items: center; justify-content: space-between; width: min(760px, 100%); margin: 0 auto; padding: 28px 0 18px; background: var(--app-surface); /* not inherit: the card's background carries the halo's rim */ }
 .about-dialog__mark { display: inline-flex; color: var(--app-fg); }
 .about-dialog__close { margin-right: -8px; }
