@@ -1,7 +1,7 @@
 {
   "name": "uisandbox",
   "owner": { "name": "Alexander Kaan", "url": "https://github.com/AlexanderKaan" },
-  "metadata": { "description": "UISandbox — test your design on the real thing.", "homepage": "https://uisandbox.org" },
+  "metadata": { "description": "UISandbox: play with your app's design, right in the browser.", "homepage": "https://uisandbox.org" },
   "plugins": [
     {
       "name": "uisandbox",

@@ -1,7 +1,7 @@
 {
   "name": "UISandbox",
   "short_name": "UISandbox",
-  "description": "Play with your app's design, right in the browser: your built web app, 1:1, then the knobs.",
+  "description": "Play with your app's design, right in the browser: your own app six ways, tuned 1:1, then one paste for your AI.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#121216",

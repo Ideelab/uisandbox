@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * `public/llms-full.txt` = the agent preamble + the README, assembled.
+ * `public/llms-full.txt` = the agent preamble + the README, assembled;
+ * `public/llms.txt` = the preamble alone.
  *
  * It used to be a hand-kept copy of the README, and it drifted: three days
  * after the copy pass it still carried "Honest by construction", "measured,
@@ -22,3 +23,8 @@ const body = readme.slice(readme.indexOf('\n## '))
 const out = `${pre}\n${body.trimEnd()}\n`
 writeFileSync(join(root, 'public/llms-full.txt'), out)
 console.log(`public/llms-full.txt · ${out.split('\n').length} lines`)
+// and the short one, the same preamble without the README: kept by hand it
+// drifted too (it still said "How honesty is enforced" and the Share button)
+const short = pre.slice(0, pre.indexOf('\n## The full README')).trimEnd() + '\n'
+writeFileSync(join(root, 'public/llms.txt'), short)
+console.log(`public/llms.txt · ${short.split('\n').length} lines`)

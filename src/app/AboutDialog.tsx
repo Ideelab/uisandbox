@@ -101,9 +101,9 @@ export function AboutDialog({ section, onClose }: { section?: string; onClose: (
               loop
               playsInline
               preload="metadata"
-              aria-label="Four builds in the sandbox: a dashboard's brand colour swept through the spectrum, a documentation site switched to its own dark mode, a docs page's hue rotated and its type swapped to monospace, then the 1:1 check reporting no differences and the export panel"
+              aria-label="The four steps on the real app: shadcn/ui's Dashboard, the same screen six ways, Soft picked, the colour turned through five and the dark mode switched, then SB Admin 2 brought in with those knobs, checked 1:1, and Take it home"
             />
-            <figcaption>Four real builds from public repos, one knob each. Nothing staged.</figcaption>
+            <figcaption>The four steps on a kit and on SB Admin 2, a real build from a public repo. Nothing staged.</figcaption>
           </figure>
           {/* The objection an experienced developer reaches for first, with the
               half of it that is true. */}
