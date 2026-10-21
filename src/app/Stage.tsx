@@ -147,8 +147,8 @@ export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, pi
       <div className="stage__bar">
         {kitName && (
           <div className="stage__tabs" role="tablist" aria-label="What the stage shows">
-            <button type="button" role="tab" aria-selected={tab === 'components'} className={`stage__tab ${tab === 'components' ? 'stage__tab--on' : ''}`} onClick={() => pickTab('components')}>Components</button>
             <button type="button" role="tab" aria-selected={tab === 'screens'} className={`stage__tab ${tab === 'screens' ? 'stage__tab--on' : ''}`} onClick={() => pickTab('screens')}>Screens</button>
+            <button type="button" role="tab" aria-selected={tab === 'components'} className={`stage__tab ${tab === 'components' ? 'stage__tab--on' : ''}`} onClick={() => pickTab('components')}>Components</button>
           </div>
         )}
         {(!kitName || tab === 'screens') && <ScreenPicker screens={others} current={screen} onPick={onScreen} onPin={onPin} pinnable={pinnable} named={!!kitName} />}

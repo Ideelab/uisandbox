@@ -3711,3 +3711,8 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     Hold-outs after the worker change: 173, ok 153, differs 5, one flagged
     (s11-ng-bootstrap, one margin-left 0 to 127px), which passes alone three
     times of three: batch-flaky, like s16-cirrus before it.
+
+    Screens first. A kit opens on its Dashboard and the tab reads Screens,
+    Components: a screen says what a kit looks like in use, the sheet of
+    every control (danger buttons and all) is the drill-down (Alexander).
+    Switching kit from the sheet keeps the sheet.

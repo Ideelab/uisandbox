@@ -499,10 +499,14 @@ function Editor() {
       // every kit build has the same pages.
       const stay = kit && prev?.kit && tab === 'screens' ? prev.screen.path : null
       const wanted = extra?.screen ?? stay ?? new URLSearchParams(location.search).get('screen')
-      const first = (wanted && project.screens.find((s) => s.path === wanted || s.label === wanted)) || project.screens[0]!
+      // A kit opens on its Dashboard: a screen says more than the sheet of
+      // every control, which is a drill-down (Alexander). Coming from the
+      // sheet in another kit, the sheet it stays.
+      const kitStart = kit ? (prev?.kit && tab === 'components' ? project.screens.find(isSheet) : project.screens.find((s) => /overview/i.test(s.path))) : undefined
+      const first = (wanted && project.screens.find((s) => s.path === wanted || s.label === wanted)) || kitStart || project.screens[0]!
       setLoaded({ project, report, screen: first, archive, kit, source, pendingCarry, captured: extra?.captured })
       // Their own app is what they came for: show it, and what was read from it.
-      // A kit opens on its sheet, quietly, unless the visitor asked for the door.
+      // A kit opens quietly on its Dashboard, unless the visitor asked for the door.
       if (kit) { setTab(doorFirst.current ? 'app' : isSheet(first) ? 'components' : 'screens'); doorFirst.current = false }
       else { setTab('app'); setShowNotes(true) }
     } catch (err) {
