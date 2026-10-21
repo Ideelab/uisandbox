@@ -3729,3 +3729,25 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     sans (Public Sans, IBM Plex Sans, Figtree, Albert Sans, Manrope, Plus
     Jakarta Sans and their pairs), the difference in corners, density, depth
     and colour. No serif, no mono headings; still no Inter and no indigo.
+
+    Do the six hold on every kit? Measured on all eight kits' Dashboards,
+    each preset against the kit as it ships: both fonts reach every kit;
+    corners scale on every kit (Material by eye, its parts are in shadow
+    DOM); no horizontal scroll, no clipped button. Three faults, fixed:
+    - Contrast. White on Soft's blue was 4.1:1, on Soft's green 3.3, on
+      Bold's orange and teal 3.6 and 3.7. Deeper tints of the same colours;
+      a test holds every brand of the six at 4.5:1 with white.
+    - daisyUI kept its pale lavender --color-primary-content on any brand
+      (grey enough to map as a neutral), 3.8:1 on Bold's red, violet on
+      blue. Text a kit sets ON its brand now stays at 4.5:1 on the brand
+      you picked; a kit as it ships keeps its own pairing (Mantine's 3.6,
+      Ant's 4.1 are theirs).
+    - Sharp took the edge off every Radix card: Radix outlines its cards with
+      a ring, `0 0 0 1px var(--gray-a5)`, and Elevation ×0 removed it. A
+      ring is an outline, not depth: Elevation leaves it alone now, in the
+      rewriter (a ring's spread is no longer tokenised) and in the mapping.
+      One test changed with it, to say exactly that (rewrite.test.ts: the
+      drop shadow's lengths are ours, a ring's spread stays as written).
+    Not the presets' doing, and left for its own pass: daisyUI's Dashboard
+    squeezes the stat descriptions and the client names into narrow columns
+    at this width, with or without a preset.

@@ -45,7 +45,7 @@ export const DIRECTIONS: Direction[] = [
     brands: ['#0f766e', '#1d4ed8', '#be123c'], fonts: [['IBM Plex Sans', 'IBM Plex Sans'], ['Source Sans 3', 'Source Sans 3']],
     neutral: 'neutral', sb: { radius: 0.6, space: 0.85, shadow: 0.2 } },
   { id: 'soft', name: 'Soft', what: 'round corners, roomy, a soft shadow',
-    brands: ['#3b82c4', '#16a34a', '#db2777'], fonts: [['Figtree', 'Figtree'], ['Nunito Sans', 'Nunito Sans']],
+    brands: ['#2f72b3', '#15803d', '#db2777'], fonts: [['Figtree', 'Figtree'], ['Nunito Sans', 'Nunito Sans']],
     neutral: 'auto', sb: { radius: 1.8, space: 1.2, shadow: 0.7 } },
   { id: 'sharp', name: 'Sharp', what: 'square corners, borders instead of shadows',
     brands: ['#111827', '#0057b8', '#c2410c'], fonts: [['Albert Sans', 'Albert Sans'], ['Public Sans', 'Public Sans']],
@@ -54,7 +54,7 @@ export const DIRECTIONS: Direction[] = [
     brands: ['#4a6f8a', '#4f7a65', '#7a6a55'], fonts: [['Manrope', 'Manrope'], ['DM Sans', 'DM Sans']],
     neutral: 'auto', sb: { radius: 1.2, space: 1.3, shadow: 0.3, lineHeight: 1.06 } },
   { id: 'bold', name: 'Bold', what: 'saturated colour, firmer headings, real depth',
-    brands: ['#e11d48', '#ea580c', '#0d9488'], fonts: [['Plus Jakarta Sans', 'Plus Jakarta Sans'], ['Outfit', 'Outfit']],
+    brands: ['#e11d48', '#cf4a0a', '#0b8276'], fonts: [['Plus Jakarta Sans', 'Plus Jakarta Sans'], ['Outfit', 'Outfit']],
     neutral: 'neutral', sb: { radius: 1, weight: 1, shadow: 1.3 } },
 ]
 

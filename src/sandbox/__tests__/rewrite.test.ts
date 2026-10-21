@@ -191,8 +191,13 @@ describe('their variables stay where they are scoped', () => {
     expect(t.ofKind('shadow').map((e) => e.value).sort()).toEqual(['1px', '2px'])
     expect(out).toContain('var(--accD)')
     expect(out).toContain('var(--edge)')
-    expect(out).not.toMatch(/\b1px\b|\b2px\b/)
+    // the drop shadow's lengths are ours; a ring's spread is an outline and
+    // stays as written, so Elevation at ×0 leaves the edge (decision 216)
+    expect(out).not.toMatch(/0 1px 2px/)
+    expect(out).toContain('inset 0 0 0 1px var(--accD)')
+    expect(out).toContain('0 0 0 1px var(--edge)')
   })
+
 })
 
 describe('Tailwind v4, as it writes (decision 216)', () => {

@@ -25,6 +25,7 @@
  * as it was, and what it can parse keeps its bytes.
  */
 import { SubstitutionTable, cssValue, varName, type Kind, type Site } from './table'
+import { shadowLayers, isRing } from './mapping'
 
 // ─────────────────────────── the scanner ───────────────────────────
 
@@ -276,8 +277,11 @@ function findLengths(m: string, kind: Kind, opts: { skipPill?: boolean } = {}): 
 const FOREIGN_VAR = /var\(\s*--(?!us-v)/i
 function shadowLengths(value: string): Splice[] {
   const s: Splice[] = []
+  // a ring's spread is an outline, not depth: not Elevation's (mapping isRing)
+  const rings = shadowLayers(value).filter(([a, b]) => isRing(value.slice(a, b)))
   for (const x of value.matchAll(/(?<![\w.#-])(-?\d*\.?\d+)(px|rem|em)(?![\w%])/g)) {
     if (parseFloat(x[1]!) === 0) continue
+    if (rings.some(([a, b]) => x.index >= a && x.index < b)) continue
     s.push({ start: x.index, end: x.index + x[0].length, kind: 'shadow', raw: x[0] })
   }
   return s

@@ -5,7 +5,7 @@ import { COLOR_THEMES } from '../../tokens/stylesAndThemes'
 import type { Config } from '../../tokens/types'
 import { rewriteCss } from '../rewrite'
 import { SubstitutionTable, varName } from '../table'
-import { computeVars, familiesOf, toPx, type Baseline, type Families } from '../mapping'
+import { computeVars, familiesOf, toPx, legibleOn, type Baseline, type Families } from '../mapping'
 import { parseCssColor, hueDelta, formatCssColor } from '../cssColor'
 import { DEFAULT_DIALS, type Dials } from '../dials'
 
@@ -123,6 +123,32 @@ describe('size dials — ×1 is their code, everything scales relatively', () =>
     expect(flat.out[`--us-v${shadow.id}`]).toBe('none')
     const deep = vars(dial({ shadow: 2 }))
     expect(deep.out[`--us-v${shadow.id}`]).not.toBe(shadow.value)
+  })
+
+  it("text on the brand stays legible on the brand you pick (daisyUI's lavender content)", () => {
+    const table = new SubstitutionTable()
+    rewriteCss(':root{--color-primary:#422ad5;--color-primary-content:oklch(0.93 0.034 272.788)}.btn{background:var(--color-primary);color:var(--color-primary-content)}', table, 'x.css')
+    const base: Config = { ...theirCfg, cPrimary: '#422ad5' }
+    const baseline: Baseline = { cfg: base, tokens: buildTokens(base), families: familiesOf(table, base.cPrimary) }
+    const content = table.entries.find((x) => x.sites.some((st) => st.prop === '--color-primary-content'))!
+    const at = (pick: string, neutral: Config['neutral']) => { const c = { ...base, cPrimary: pick as Config['cPrimary'], neutral }; return computeVars(table, baseline, c, buildTokens(c))[varName(content.id)]! }
+    const lum = (css: string) => { const c = parseCssColor(css)!; return c.L }
+    // as it ships: untouched
+    expect(computeVars(table, baseline, base, buildTokens(base))[varName(content.id)]).toBe(content.value)
+    for (const pick of ['#2563eb', '#e11d48', '#0f766e']) expect(lum(at(pick, 'neutral'))).toBeGreaterThan(0.95)
+    // a light brand gets dark text, not white
+    expect(lum(formatCssColor(legibleOn(parseCssColor('#ffffff')!, parseCssColor('#fde047')!)))).toBeLessThan(0.3)
+  })
+
+  it('Elevation leaves a ring alone: it is an outline, not depth (decision 216)', () => {
+    const table = new SubstitutionTable()
+    rewriteCss('.c{box-shadow:0 0 0 1px rgba(0,0,0,.1), 0 4px 8px rgba(0,0,0,.2)}', table, 'x.css')
+    const baseline: Baseline = { cfg: theirCfg, tokens: buildTokens(theirCfg), families: familiesOf(table, theirCfg.cPrimary) }
+    const e = table.ofKind('shadow')[0]!
+    const at = (x: number) => { const c = dial({ shadow: x }); return computeVars(table, baseline, c, buildTokens(c))[varName(e.id)] }
+    // (the colours are their own entries: var(--us-v…))
+    expect(at(0)).toMatch(/^0 0 0 1px var\(--us-v\d+\)$/)
+    expect(at(0.25)).toMatch(/^0 0 0 1px var\(--us-v\d+\), 0 2px 4px var\(--us-v\d+\)$/)
   })
   it('background and border tone move neutrals by USE', () => {
     const o = vars(dial({ bgTone: -0.05, borderTone: 0.05 }))

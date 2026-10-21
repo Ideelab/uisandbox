@@ -24,7 +24,7 @@
  * knobs bend it. That is what "we don't redesign, we tokenise" has to mean.
  */
 import type { Config, Tokens } from '../tokens/types'
-import { formatLike, hueDelta, parseCssColor, type Okla } from './cssColor'
+import { formatLike, hueDelta, parseCssColor, toSrgb, type Okla } from './cssColor'
 import { cssValue, varName, type Entry, type SubstitutionTable } from './table'
 import type { Dials } from './dials'
 
@@ -329,24 +329,60 @@ function mapNeutral(c: Okla, e: Entry, base: Vars, now: Vars, sb: Dials): Okla {
 
 // ─────────────────────────── shadows ───────────────────────────
 
+/** A shadow's top-level layers, as [start, end) ranges: commas inside
+ *  `rgba(…)` or `var(…)` do not split. */
+export function shadowLayers(value: string): Array<[number, number]> {
+  const out: Array<[number, number]> = []
+  let depth = 0, from = 0
+  for (let i = 0; i < value.length; i++) {
+    const c = value[i]
+    if (c === '(') depth++
+    else if (c === ')') depth = Math.max(0, depth - 1)
+    else if (c === ',' && depth === 0) { out.push([from, i]); from = i + 1 }
+  }
+  out.push([from, value.length])
+  return out
+}
+
+/** A RING: no offset, no blur, only a spread (`0 0 0 1px var(--gray-a5)`).
+ *  It draws an outline, not depth, so Elevation leaves it alone: at ×0 it took
+ *  every card's edge off Radix, whose cards are outlined that way (decision 216). */
+export function isRing(layer: string): boolean {
+  const words: string[] = []
+  let depth = 0, cur = ''
+  for (const c of layer) {
+    if (c === '(') depth++
+    if (c === ')') depth = Math.max(0, depth - 1)
+    if (depth === 0 && /\s/.test(c)) { if (cur) words.push(cur); cur = '' } else cur += c
+  }
+  if (cur) words.push(cur)
+  const lens = words.filter((w) => /^-?\d*\.?\d+(px|rem|em)?$/.test(w) || /^calc\(/i.test(w))
+  if (lens.length < 4) return false
+  const zero = (w: string) => /^-?0*\.?0+(px|rem|em)?$/.test(w)
+  return zero(lens[0]!) && zero(lens[1]!) && zero(lens[2]!) && !zero(lens[3]!)
+}
+
 function mapShadow(value: string, x: number): string {
   if (x === 1) return value
   // one length of a shadow that reads their variable (rewrite.ts shadowLengths)
   const one = /^(-?\d*\.?\d+)(px|rem|em)$/.exec(value.trim())
   if (one) return x <= 0 ? `0${one[2]}` : `${Math.round(parseFloat(one[1]!) * Math.sqrt(x) * 100) / 100}${one[2]}`
-  if (x <= 0) return 'none'
   // Geometry grows with the square root, alpha linearly — a "deeper" shadow is
   // mostly darker and a little wider, which is what elevation looks like.
   const rL = Math.sqrt(x)
   const rA = x
-  let out = value.replace(/(-?\d*\.?\d+)(px|rem|em)/g, (_m, num: string, unit: string) => {
-    const v = parseFloat(num)
-    // Inset/spread of 0 stays 0; a 1px hairline ring should not shrink away.
-    if (v === 0) return `0${unit}`
-    return `${Math.round(v * rL * 100) / 100}${unit}`
-  })
-  out = out.replace(/(\/\s*|,\s*)(0?\.\d+|1(?:\.0+)?)(\s*\))/g, (_m, pre: string, a: string, post: string) => `${pre}${Math.round(clamp(parseFloat(a) * rA, 0, 1) * 1000) / 1000}${post}`)
-  return out
+  const scale = (layer: string) => layer
+    .replace(/(-?\d*\.?\d+)(px|rem|em)/g, (_m, num: string, unit: string) => {
+      const v = parseFloat(num)
+      // Inset/spread of 0 stays 0; a 1px hairline ring should not shrink away.
+      if (v === 0) return `0${unit}`
+      return `${Math.round(v * rL * 100) / 100}${unit}`
+    })
+    .replace(/(\/\s*|,\s*)(0?\.\d+|1(?:\.0+)?)(\s*\))/g, (_m, pre: string, a: string, post: string) => `${pre}${Math.round(clamp(parseFloat(a) * rA, 0, 1) * 1000) / 1000}${post}`)
+  const layers = shadowLayers(value).map(([a, b]) => value.slice(a, b))
+  if (!layers.some((l) => isRing(l))) return x <= 0 ? 'none' : scale(value)
+  const kept = layers.flatMap((l) => isRing(l) ? [l.trim()] : x <= 0 ? [] : [scale(l).trim()])
+  return kept.length ? kept.join(', ') : 'none'
 }
 
 // ─────────────────────────── type ───────────────────────────
@@ -443,6 +479,20 @@ function mapColor(c: Okla, fam: Family, e: Entry | null, base: Vars, now: Vars, 
   return applyGlobal(mapped, sb)
 }
 
+const ON_BRAND = /(primary|brand|accent)[-_]?(content|foreground|contrast|fg)\b|on[-_]primary\b/i
+const luminance = (c: Okla) => {
+  const [r, g, b] = toSrgb({ ...c, a: 1 }).components.map((v) => v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)
+  return 0.2126 * r! + 0.7152 * g! + 0.0722 * b!
+}
+const contrastOf = (x: Okla, y: Okla) => { const a = luminance(x), b = luminance(y); return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05) }
+/** `c` as text on `bg`: kept when it reads at 4.5:1, else the near-white or
+ *  near-black in its own hue that reads best. */
+export function legibleOn(c: Okla, bg: Okla): Okla {
+  if (contrastOf(c, bg) >= 4.5) return c
+  const light = { L: 0.985, C: Math.min(c.C, 0.012), H: c.H, a: c.a }, dark = { L: 0.2, C: Math.min(c.C, 0.02), H: c.H, a: c.a }
+  return contrastOf(light, bg) >= contrastOf(dark, bg) ? light : dark
+}
+
 const FAMILY_DIAL: Partial<Record<Family, keyof Dials>> = { secondary: 'cSecondary', accent: 'cAccent', success: 'cSuccess', warning: 'cWarning', danger: 'cDanger', info: 'cInfo' }
 
 export function mapEntry(e: Entry, base: Vars, now: Vars, baseCfg: Config, cfg: Config, fams: Families): string {
@@ -452,7 +502,16 @@ export function mapEntry(e: Entry, base: Vars, now: Vars, baseCfg: Config, cfg: 
       const c = parseCssColor(e.value)
       if (!c) return e.value
       const fam = fams.of.get(e.id) ?? 'keep'
-      const mapped = mapColor(c, fam, e, base, now, sb, fams, cfg.cPrimary)
+      let mapped = mapColor(c, fam, e, base, now, sb, fams, cfg.cPrimary)
+      // The text a kit sets ON its brand (daisyUI's --color-primary-content,
+      // shadcn's --primary-foreground) stays legible on the brand you picked.
+      // daisyUI's is a pale lavender, grey enough to map as a neutral: on a
+      // blue or red pick it kept its violet tint and fell to 3.8:1. Only
+      // when the brand moved; a kit as it ships keeps its own pairing.
+      if (cfg.cPrimary !== baseCfg.cPrimary && e.sites.some((st) => ON_BRAND.test(st.prop))) {
+        const b = parseCssColor(cfg.cPrimary)
+        if (b) mapped = legibleOn(mapped, b)
+      }
       if (same(mapped, c)) return e.value
       const printed = formatLike(e.value, mapped)
       // The same pixels in another spelling are not a change (a black hairline
