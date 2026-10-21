@@ -16,6 +16,7 @@ import { varsStyleTag } from '../sandbox/project'
 import { sandboxUrl } from '../sandbox/host'
 import { nestedDocs } from '../sandbox/verify'
 import { applyScheme } from '../sandbox/scheme'
+import { observeFrame } from '../sandbox/live'
 import type { LookLocks } from '../sandbox/directions'
 import { SANDBOX_FLAGS } from './Stage'
 
@@ -40,8 +41,19 @@ function writeSheet(doc: Document, project: SandboxProject, sheet: LookSheet) {
   }
 }
 
-function Card({ project, screen, look, picked, onOpen }: { project: SandboxProject; screen: Screen; look: LookCard; picked: boolean; onOpen: () => void }) {
+/** Styles a page writes at runtime (a dev server's injected <style>, CSS-in-JS,
+ *  style="" set by script) are rewritten in each look's frame too, as on the
+ *  stage (sandbox/live.ts): unobserved, they kept their literals and the six
+ *  ignored every knob on a live Vite app (decision 217). */
+function useObserved(project: SandboxProject, onGrow: () => void) {
+  const stop = useRef<(() => void) | null>(null)
+  useEffect(() => () => { stop.current?.() }, [])
+  return (doc: Document) => { stop.current?.(); stop.current = observeFrame(doc, project.table, onGrow) }
+}
+
+function Card({ project, screen, look, picked, onOpen, onGrow }: { project: SandboxProject; screen: Screen; look: LookCard; picked: boolean; onOpen: () => void; onGrow: () => void }) {
   const frame = useRef<HTMLIFrameElement>(null)
+  const observe = useObserved(project, onGrow)
   const box = useRef<HTMLDivElement>(null)
   const [scale, setScale] = useState(0.3)
   const [ready, setReady] = useState(false)
@@ -59,7 +71,7 @@ function Card({ project, screen, look, picked, onOpen }: { project: SandboxProje
       <div className="looks__shot" ref={box} style={{ height: FRAME_H * scale }}>
         <iframe ref={frame} tabIndex={-1} aria-hidden="true" title={look.name} src={sandboxUrl(project.id, screen.path, project.base)}
           sandbox={SANDBOX_FLAGS} style={{ width: FRAME_W, height: FRAME_H, transform: `scale(${scale})` }}
-          onLoad={() => { const doc = frame.current?.contentDocument; if (doc) { writeSheet(doc, project, look.sheet); setReady(true) } }} />
+          onLoad={() => { const doc = frame.current?.contentDocument; if (doc) { writeSheet(doc, project, look.sheet); observe(doc); setReady(true) } }} />
       </div>
       <span className="looks__name"><span className="looks__dot" style={{ background: look.brand }} />{look.name}{picked && <span className="looks__picked">picked</span>}</span>
       <span className="looks__what">{look.what}</span>
@@ -71,11 +83,12 @@ function Card({ project, screen, look, picked, onOpen }: { project: SandboxProje
  *  it as the app it would be, step to the next, go back to all six, and only
  *  Pick this one makes it the choice. One frame for all six, its sheet
  *  rewritten on every step, so stepping through them is instant. */
-function Focus({ project, screen, look, index, count, picked, onBack, onStep, onPick }: {
+function Focus({ project, screen, look, index, count, picked, onBack, onStep, onPick, onGrow }: {
   project: SandboxProject; screen: Screen; look: LookCard; index: number; count: number; picked: boolean
-  onBack: () => void; onStep: (by: number) => void; onPick: () => void
+  onBack: () => void; onStep: (by: number) => void; onPick: () => void; onGrow: () => void
 }) {
   const frame = useRef<HTMLIFrameElement>(null)
+  const observe = useObserved(project, onGrow)
   const [ready, setReady] = useState(false)
   useEffect(() => { const doc = frame.current?.contentDocument; if (ready && doc) writeSheet(doc, project, look.sheet) }, [look.id, look.key, ready]) // eslint-disable-line react-hooks/exhaustive-deps
   return (
@@ -93,15 +106,17 @@ function Focus({ project, screen, look, index, count, picked, onBack, onStep, on
       </div>
       <div className="looks__stage">
         <iframe ref={frame} title={`${look.name}, full size`} src={sandboxUrl(project.id, screen.path, project.base)} sandbox={SANDBOX_FLAGS}
-          onLoad={() => { const doc = frame.current?.contentDocument; if (doc) { writeSheet(doc, project, look.sheet); setReady(true) } }} />
+          onLoad={() => { const doc = frame.current?.contentDocument; if (doc) { writeSheet(doc, project, look.sheet); observe(doc); setReady(true) } }} />
       </div>
     </div>
   )
 }
 
-export function LookGrid({ project, screen, looks, current, locks, onLocks, onShuffle, onPick, onClose }: {
+export function LookGrid({ project, screen, looks, current, locks, onLocks, onShuffle, onPick, onClose, onGrow }: {
   project: SandboxProject; screen: Screen; looks: LookCard[]; current: string | null
   locks: LookLocks; onLocks: (l: LookLocks) => void; onShuffle: () => void; onPick: (id: string) => void; onClose: () => void
+  /** The table grew from a look's frame: the sheets are computed again. */
+  onGrow: () => void
 }) {
   // The look open at full size, or null for all six.
   const [focus, setFocus] = useState<string | null>(null)
@@ -129,10 +144,10 @@ export function LookGrid({ project, screen, looks, current, locks, onLocks, onSh
       </div>
       {/* the six stay loaded while one is open, so going back is instant */}
       <div className="looks__grid" hidden={!!focus}>
-        {looks.map((l) => <Card key={l.id} project={project} screen={screen} look={l} picked={current === l.id} onOpen={() => setFocus(l.id)} />)}
+        {looks.map((l) => <Card key={l.id} project={project} screen={screen} look={l} picked={current === l.id} onOpen={() => setFocus(l.id)} onGrow={onGrow} />)}
       </div>
       {focus && at >= 0 && <Focus project={project} screen={screen} look={looks[at]!} index={at} count={looks.length} picked={current === focus}
-        onBack={() => setFocus(null)} onStep={step} onPick={() => onPick(focus)} />}
+        onBack={() => setFocus(null)} onStep={step} onPick={() => onPick(focus)} onGrow={onGrow} />}
       {!focus && <p className="looks__foot">Open one to see it full size, then Pick this one. A look sets {locks.font ? 'corners, spacing and depth around your font' : 'fonts, corners, spacing and depth'} through the knobs and leaves your colour alone: Undo takes it back, and you tune it next.</p>}
     </div>
   )

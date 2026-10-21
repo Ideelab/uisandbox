@@ -236,10 +236,10 @@ function Editor() {
       const c = directionCfg(d.id, locks)!
       return { id: d.id, name: d.name, what: d.what, brand: c.cPrimary, // the whole of what the card wears: a knob turned while the six are
         // open (the colour, with it kept) rewrites the sheet, not only a shuffle
-        key: JSON.stringify(c),
+        key: `${JSON.stringify(c)}|${loaded.project.table.entries.length}`, // and what a runtime style added to the table since
         sheet: { vars: computeVars(loaded.project.table, loaded.report.baseline, c, buildTokens(c)), fonts: fontCssFor(c, base), dark: c.sb.dark ?? null }, cfg: c }
     })
-  }, [loaded, looksOpen, cfg, roll, locks])
+  }, [loaded, looksOpen, cfg, roll, locks, sheetVersion])
   const pickDirection = (id: string) => {
     const card = lookCards.find((l) => l.id === id) as (LookCard & { cfg: Config }) | undefined
     if (!card) return
@@ -807,7 +807,7 @@ function Editor() {
               tells={tells ?? undefined}
               onLooks={openLooks}
               looks={looksOpen && loaded ? <LookGrid project={loaded.project} screen={loaded.screen} looks={lookCards} current={lookOn} locks={locks} onLocks={setLocks}
-                onShuffle={() => setRoll((r) => reroll(r))} onPick={pickDirection} onClose={() => setLooksOpen(false)} /> : null}
+                onShuffle={() => setRoll((r) => reroll(r))} onPick={pickDirection} onClose={() => setLooksOpen(false)} onGrow={() => setSheetVersion((v) => v + 1)} /> : null}
               warningTitle={!thin && !missingFiles.length && flutterWeb ? 'A Flutter web build' : undefined}
               warning={thin ?? (missingFiles.length ? `${missingFiles.length === 1 ? 'A file' : `${missingFiles.length} files`} this page asked for ${missingFiles.length === 1 ? 'is' : 'are'} not in the archive: ${missingFiles.slice(0, 3).join(', ')}${missingFiles.length > 3 ? '…' : ''}. ${loaded.captured ? 'The page was taken along as it rendered; these it asks for here, and the capture did not see.' : 'That usually means source, not the built output: parts of the page cannot run here.'}` : flutterWeb ? `Flutter paints this app into a <canvas>: there is almost no CSS for the knobs to move (${loaded.project.table.entries.length} values found). The 1:1 check and the reach meter still tell the truth about it; a design pass on a Flutter app belongs in its ThemeData.` : null)}
               coverage={coverage}
