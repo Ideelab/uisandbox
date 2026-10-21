@@ -143,6 +143,7 @@ table with its decision.
 | `scenes.mjs` | the fallback letter in the layer us-fallback, declared before the kit's sheet, so Tailwind's layered base wins | 208 |
 | `generate.test.mjs`, `wall.test.mjs` | shadcn's behaviour is @base-ui/react; its buttons are h-8 | 208 |
 | `wall-bindings.mjs` | daisyUI's stat carries its trend as its own stat-desc inside .stat (withTrend skips it), bordered and full width; its list rows drop their side padding inside a card | 216 |
+| `wall-bindings.mjs`, `parts.mjs`, `antd-tree.mjs`, `build-css.mjs`, `scenes.mjs` | the look-over at 1440: a stat's trend in its innermost box (Bootstrap's card-body) with air above; shadcn's trend badge in the footer; Mantine's Table spacing, Textarea data-multiline and EmptyState data-align (the props their components set); Material's select min-width 0, its inline link, success on the neutral container, its derived DARK scheme written; daisyUI's table cells 12px; Ant's progress without its figure, its Form spaced, several controls stacked, its non-Ant rows laid out, its split label full width; two-column grids at minmax(0, fr); a table names its wrapping column (wrap); the Dashboard table a four-column summary and no row menu on Expenses; the sheet's own .card and .col renamed .sheetcard and .sheetcol (Bootstrap's .card drew round every section) | 216 |
 
 The byte-for-byte rule above still holds for what it was for: the tests were
 not edited on the way across. A test changed from here on is changed here,

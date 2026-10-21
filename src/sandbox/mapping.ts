@@ -468,7 +468,11 @@ function mapColor(c: Okla, fam: Family, e: Entry | null, base: Vars, now: Vars, 
     // A grey brand's dark twin (shadcn's dark --primary, #e5e5e5 against
     // #171717) is the brand in the other scheme, not a lighter member of it:
     // by delta it came out #f3f3f3. It takes the pick itself (decision 216).
-    const darkTwin = !!e && !!b && b.C < NEUTRAL_CHROMA && greyBrandEntry(e) && e.sites.every((st) => DARK_SCOPE.test(st.selector ?? ''))
+    // ...and only when a brand was picked: untouched, the pick IS the light
+    // brand, and shadcn's dark primary went near-black on its dark page
+    // (New invoice and every Sent badge black on black, decision 216)
+    const picked = !!b && !!n && toSrgb(b).hex !== toSrgb(n).hex
+    const darkTwin = picked && !!e && b.C < NEUTRAL_CHROMA && greyBrandEntry(e) && e.sites.every((st) => DARK_SCOPE.test(st.selector ?? ''))
     mapped = b && n ? (darkTwin ? { ...n, a: c.a } : mapByDelta(c, b, n)) : c
   } else {
     const pick = sb[FAMILY_DIAL[fam]!] as string | undefined

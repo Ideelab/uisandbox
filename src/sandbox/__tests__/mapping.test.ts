@@ -125,6 +125,18 @@ describe('size dials — ×1 is their code, everything scales relatively', () =>
     expect(deep.out[`--us-v${shadow.id}`]).not.toBe(shadow.value)
   })
 
+  it("shadcn's dark primary stays its own until a brand is picked, then takes the pick", () => {
+    const table = new SubstitutionTable()
+    rewriteCss(':root{--primary:#171717}.dark{--primary:#e5e5e5}.btn{background:var(--primary)}', table, 'x.css')
+    const base: Config = { ...theirCfg, cPrimary: '#171717' }
+    const baseline: Baseline = { cfg: base, tokens: buildTokens(base), families: familiesOf(table, base.cPrimary) }
+    const dark = table.entries.find((x) => x.sites.every((st) => /\.dark/.test(st.selector ?? '')))!
+    const at = (c: Config) => computeVars(table, baseline, c, buildTokens(c))[varName(dark.id)]
+    // untouched: the dark twin is #e5e5e5, not the light brand (black on black)
+    expect(at(base)).toBe(dark.value)
+    expect(at({ ...base, cPrimary: '#2563eb' })!.toLowerCase()).toBe('#2563eb')
+  })
+
   it("text on the brand stays legible on the brand you pick (daisyUI's lavender content)", () => {
     const table = new SubstitutionTable()
     rewriteCss(':root{--color-primary:#422ad5;--color-primary-content:oklch(0.93 0.034 272.788)}.btn{background:var(--color-primary);color:var(--color-primary-content)}', table, 'x.css')

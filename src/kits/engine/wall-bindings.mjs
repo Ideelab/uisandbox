@@ -274,7 +274,8 @@ const daisyui = {
      the figure. Bordered like the panels around it, and the width of its cell. */
   stat:    (n) => `<div class="stats w-full border border-base-200 bg-base-100"><div class="stat"><div class="stat-title">${esc(n.label)}</div><div class="stat-value text-2xl">${esc(n.value)}</div>${
     n.delta ? `<div class="stat-desc mt-1 flex flex-wrap items-center gap-2 whitespace-normal">${daisyui.badge({ tone: n.tone ?? 'neutral', text: n.delta })}<span>${esc(n.note ?? '')}</span></div>` : ''}</div></div>`,
-  table:   (n) => `<div class="overflow-x-auto"><table class="table table-zebra"><thead><tr>${list(n.cols).map((c) => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${list(n.rows).map((r) => `<tr>${list(r).map((c) => `<td>${cellOf(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`,
+  /* 12px a side, not daisyUI's 16: six columns in two thirds of a 1440 window cut "Unreadable" */
+  table:   (n) => `<div class="overflow-x-auto"><table class="table table-zebra [&_:is(th,td)]:px-3"><thead><tr>${list(n.cols).map((c) => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${list(n.rows).map((r) => `<tr>${list(r).map((c) => `<td>${cellOf(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`,
   avatar:  (n) => `<div class="avatar avatar-placeholder"><div class="bg-primary text-primary-content w-8 rounded-full"><span class="text-xs">${esc(n.text)}</span></div></div>`,
   /* daisyUI ships BOTH of these as real components: .navbar with its three
      regions, and .footer with .footer-title. Nothing here is composed by hand. */
@@ -582,9 +583,12 @@ const shadcn = {
   alert:   (n, k) => `<div role="alert" data-slot="alert" class="${sCva('alert', 'alertVariants', { variant: n.tone === 'danger' ? 'destructive' : 'default' })}"><div data-slot="alert-description" class="${sSlot('alert-description')}">${n.text != null ? esc(n.text) : k}</div></div>`,
   /* dashboard-01's SectionCards: a card in the brand at 5%, fading up, the
      figure at text-2xl semibold, 3xl once the card is 250px wide */
-  stat:    (n) => `<div data-slot="card" class="${twMerge(sSlot('card'), '@container/card bg-linear-to-t from-primary/5 to-card shadow-xs dark:bg-card')}"><div data-slot="card-header" class="${sSlot('card-header')}"><div data-slot="card-description" class="${sSlot('card-description')}">${esc(n.label)}</div><div data-slot="card-title" class="${twMerge(sSlot('card-title'), 'text-2xl font-semibold tabular-nums @[250px]/card:text-3xl')}">${esc(n.value)}</div>${
-    n.delta ? `<div data-slot="card-action" class="${sSlot('card-action')}"><span data-slot="badge" class="${sCva('badge', 'badgeVariants', { variant: 'outline' })}">${ico(String(n.delta).startsWith('-') ? 'trending-down' : 'trending-up')}${esc(n.delta)}</span></div>` : ''}</div>${
-    n.note ? `<div data-slot="card-footer" class="${twMerge(sSlot('card-footer'), 'flex-col items-start gap-1.5 text-sm')}"><div class="text-muted-foreground">${esc(n.note)}</div></div>` : ''}</div>`,
+  /* the trend badge in the footer, beside the note: in the card-action slot,
+     top right, a card a quarter of the content wide cut it to "+12." */
+  stat:    (n) => `<div data-slot="card" class="${twMerge(sSlot('card'), '@container/card bg-linear-to-t from-primary/5 to-card shadow-xs dark:bg-card')}"><div data-slot="card-header" class="${sSlot('card-header')}"><div data-slot="card-description" class="${sSlot('card-description')}">${esc(n.label)}</div><div data-slot="card-title" class="${twMerge(sSlot('card-title'), 'text-2xl font-semibold tabular-nums @[250px]/card:text-3xl')}">${esc(n.value)}</div></div>${
+    n.delta || n.note ? `<div data-slot="card-footer" class="${twMerge(sSlot('card-footer'), 'flex-wrap items-center gap-2 text-sm')}">${
+      n.delta ? `<span data-slot="badge" class="${sCva('badge', 'badgeVariants', { variant: 'outline' })}">${ico(String(n.delta).startsWith('-') ? 'trending-down' : 'trending-up')}${esc(n.delta)}</span>` : ''}${
+      n.note ? `<span class="text-muted-foreground">${esc(n.note)}</span>` : ''}</div>` : ''}</div>`,
   table:   (n) => `<div data-slot="table-container" class="${sSlot('table-container')}"><table data-slot="table" class="${sSlot('table')}"><thead data-slot="table-header" class="${sSlot('table-header')}"><tr data-slot="table-row" class="${sSlot('table-row')}">${
     list(n.cols).map((c) => `<th data-slot="table-head" class="${sSlot('table-head')}">${esc(c)}</th>`).join('')}</tr></thead><tbody data-slot="table-body" class="${sSlot('table-body')}">${
     list(n.rows).map((r) => `<tr data-slot="table-row" class="${sSlot('table-row')}">${list(r).map((c) => `<td data-slot="table-cell" class="${sSlot('table-cell')}">${cellOf(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`,
@@ -720,7 +724,8 @@ const material = {
   },
   /* their text field carries its own error state and error text */
   input:   (n) => `<md-outlined-text-field${secretAttr(n)} style="width:100%" label="${esc(n.placeholder ?? '')}" value="${esc(n.value ?? '')}"${n.error ? ` error error-text="${esc(n.error)}"` : ''}></md-outlined-text-field>`,
-  select:  (n) => `<md-outlined-select style="width:100%">${list(n.options).map((o, i) =>
+  /* min-width 0: the element's own 210px pushed This quarter out of the card */
+  select:  (n) => `<md-outlined-select style="width:100%;min-width:0">${list(n.options).map((o, i) =>
     `<md-select-option${i === 0 ? ' selected' : ''} value="${esc(o)}"><div slot="headline">${esc(o)}</div></md-select-option>`).join('')}</md-outlined-select>`,
   checkbox: (n) => `<label class="md-typescale-body-medium" style="display:inline-flex;align-items:center;gap:8px"><md-checkbox${n.on ? ' checked' : ''} touch-target="wrapper"></md-checkbox>${esc(n.text ?? '')}</label>`,
   switch:  (n) => `<label class="md-typescale-body-medium" style="display:inline-flex;align-items:center;gap:8px"><md-switch${n.on ? ' selected' : ''}></md-switch>${esc(n.text ?? '')}</label>`,
@@ -730,8 +735,11 @@ const material = {
   },
   /* Material ships no inline alert or banner, so this is their card re-toned
      with their own container token — the closest thing their kit really has. */
+  /* Material 3 has no success role: tertiary-container is the seed's
+     complement, pink on a violet seed, and "Saved" read as an error. A
+     success note is the neutral container. */
   alert:   (n, k) => `<md-filled-card class="md-typescale-body-medium" style="padding:12px 16px;--md-filled-card-container-color:var(--md-sys-color-${
-    { danger: 'error-container', warning: 'secondary-container', success: 'tertiary-container' }[n.tone] ?? 'surface-container-high'})">${n.text != null ? esc(n.text) : k}</md-filled-card>`,
+    { danger: 'error-container', warning: 'secondary-container' }[n.tone] ?? 'surface-container-high'})">${n.text != null ? esc(n.text) : k}</md-filled-card>`,
   stat:    (n) => `<md-outlined-card style="padding:16px"><div class="md-typescale-label-medium" style="color:var(--md-sys-color-on-surface-variant)">${esc(n.label)}</div><div class="md-typescale-headline-medium">${esc(n.value)}</div></md-outlined-card>`,
   /* Material 3 specifies a data table; @material/web does not ship one. */
   table:   (n) => `<table class="md-typescale-body-medium" style="width:100%;border-collapse:collapse"><thead><tr>${list(n.cols).map((c) =>
@@ -1107,7 +1115,10 @@ const mantine = {
     return `<div class="${mc('Alert')}" data-variant="light" style="--alert-bg:${t[0]};--alert-color:${t[1]};--alert-bd:1px solid transparent;--alert-radius:var(--mantine-radius-default)"><div class="${mc('Alert', 'body')}"><div class="${mc('Alert', 'message')}">${n.text != null ? esc(n.text) : k}</div></div></div>`
   },
   stat:    (n) => `<div class="${cls(mc('Paper'), mc('Card'))}" data-with-border="true" data-orientation="vertical" style="--card-padding:var(--mantine-spacing-lg)"><p class="${mc('Text')}" style="--text-color:var(--mantine-color-dimmed);--text-fz:var(--mantine-font-size-sm)">${esc(n.label)}</p><p class="${mc('Title')}" data-order="2" style="--title-fz:var(--mantine-h2-font-size);--title-fw:var(--mantine-h2-font-weight);--title-lh:var(--mantine-h2-line-height)">${esc(n.value)}</p></div>`,
-  table:   (n) => `<table class="${mc('Table', 'table')}" data-with-table-border="true" data-with-row-border="true"><thead class="${mc('Table', 'thead')}"><tr class="${mc('Table', 'tr')}">${
+  /* the spacing Table's own props set as variables (verticalSpacing 7px,
+     horizontalSpacing xs): without --table-vertical-spacing its cell padding
+     is invalid as a whole, and every cell sat flush against the next */
+  table:   (n) => `<table class="${mc('Table', 'table')}" data-with-table-border="true" data-with-row-border="true" style="--table-vertical-spacing:calc(0.4375rem * var(--mantine-scale));--table-horizontal-spacing:var(--mantine-spacing-xs)"><thead class="${mc('Table', 'thead')}"><tr class="${mc('Table', 'tr')}">${
     list(n.cols).map((c) => `<th class="${mc('Table', 'th')}">${esc(c)}</th>`).join('')}</tr></thead><tbody class="${mc('Table', 'tbody')}">${
     list(n.rows).map((r) => `<tr class="${mc('Table', 'tr')}" data-with-row-border="true">${list(r).map((c) => `<td class="${mc('Table', 'td')}">${cellOf(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`,
   avatar:  (n) => `<div class="${mc('Avatar')}"><span class="${mc('Avatar', 'placeholder')}">${esc(n.text)}</span></div>`,
@@ -1141,7 +1152,9 @@ const mantine = {
   /* Mantine ships a component for every one of these but the chart: Slider,
      Progress, Radio, Breadcrumbs, ActionIcon, NavLink, DataList and EmptyState
      are all its own, by the same name→hash map as everything above. */
-  textarea: (n) => `<div class="${mc('Input', 'wrapper')}" data-variant="default" data-size="sm" style="${MN_INPUT_VARS}"><textarea rows="3" class="${cls(MN_FOCUS, mc('Input', 'input'))}" data-variant="default" data-multiline="true" placeholder="${esc(n.placeholder ?? '')}">${esc(n.value ?? '')}</textarea></div>`,
+  /* data-multiline on the WRAPPER too, where Mantine's rules read it: on the
+     textarea alone it stood one line high, the note cut off */
+  textarea: (n) => `<div class="${mc('Input', 'wrapper')}" data-variant="default" data-size="sm" data-multiline="true" style="${MN_INPUT_VARS}"><textarea rows="3" class="${cls(MN_FOCUS, mc('Input', 'input'))}" data-variant="default" data-multiline="true" placeholder="${esc(n.placeholder ?? '')}">${esc(n.value ?? '')}</textarea></div>`,
   radio:   (n) => `<div class="${mc('Stack')}" style="--stack-gap:var(--mantine-spacing-xs)">${list(n.items).map((t, i) => mnInline(mc('Radio'), ' data-variant="filled" data-size="sm"',
     `--radio-size:var(--radio-size-sm);--radio-radius:var(--mantine-radius-xl);--radio-color:var(--mantine-primary-color-filled);${MN_LABEL_VARS}`,
     `<div class="${mc('Radio', 'inner')}" data-label-position="right"><input type="radio" name="${esc(n.name ?? 'g')}" class="${cls(MN_FOCUS, mc('Radio', 'radio'))}"${i === (n.on ?? 0) ? ' checked' : ''}><svg class="${mc('Radio', 'icon')}" viewBox="0 0 5 5" aria-hidden="true"><circle cx="2.5" cy="2.5" r="2.5" fill="currentColor"/></svg></div>`,
@@ -1195,7 +1208,9 @@ const mantine = {
     <div style="display:flex;align-items:flex-end;justify-content:center;gap:2px;width:100%;height:${chartH(n) - 16}px"><div style="width:45%;height:${b.a}%;border-radius:var(--mantine-radius-sm) var(--mantine-radius-sm) 0 0;background:var(--mantine-primary-color-filled)"></div><div style="width:45%;height:${b.b}%;border-radius:var(--mantine-radius-sm) var(--mantine-radius-sm) 0 0;background:var(--mantine-primary-color-light)"></div></div>
     <span class="${mc('Text')}" style="--text-fz:var(--mantine-font-size-xs);--text-color:var(--mantine-color-dimmed)">${esc(b.label)}</span></div>`).join('')}</div>
     <div class="${mc('Group')}" style="--group-gap:var(--mantine-spacing-md)">${list(n.legend).map((t, i) => `<span class="${mc('Text')}" style="--text-fz:var(--mantine-font-size-xs);--text-color:var(--mantine-color-dimmed);display:inline-flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:var(--mantine-${i ? 'primary-color-light' : 'primary-color-filled'})"></span>${esc(t)}</span>`).join('')}</div></div>`,
-  empty:   (n, k) => `<div class="${mc('EmptyState')}"><div class="${mc('EmptyState', 'indicator')}">${ico(n.icon, 18)}</div>
+  /* data-align, which EmptyState's own props set (center by default): without
+     it the state fell back to a row, icon, text and button side by side */
+  empty:   (n, k) => `<div class="${mc('EmptyState')}" data-align="center"><div class="${mc('EmptyState', 'indicator')}">${ico(n.icon, 18)}</div>
     <div class="${mc('EmptyState', 'body')}"><p class="${mc('EmptyState', 'title')}">${esc(n.title)}</p><p class="${mc('EmptyState', 'description')}">${esc(n.text)}</p></div>
     <div class="${mc('EmptyState', 'actions')}">${k}</div></div>`,
   swatches: (n) => `<div style="display:grid;gap:var(--mantine-spacing-sm);grid-template-columns:repeat(auto-fill,minmax(88px,1fr))">${swatchRows('mantine', n.roles).map((r) => `<div style="display:flex;flex-direction:column;gap:6px">
@@ -1241,7 +1256,7 @@ const antd = {
      :root: without it every gap was an undefined var, so buttons touched
      and cards sat edge to edge (decision 213). */
   stack:   (n, k) => `<div class="antd" style="display:flex;flex-direction:column;gap:calc(var(--ant-margin-xs) * ${Math.max(1, n.gap ?? 3) / 2})">${k}</div>`,
-  row:     (n, k) => `<div class="antd" style="display:flex;flex-wrap:wrap;align-items:center;gap:calc(var(--ant-margin-xs) * ${Math.max(1, n.gap ?? 2) / 2})${n.between ? ';justify-content:space-between' : ''}">${k}</div>`,
+  row:     (n, k) => `<div class="antd" style="display:flex;flex-wrap:${n.wrap === false ? 'nowrap' : 'wrap'};align-items:center;gap:calc(var(--ant-margin-xs) * ${Math.max(1, n.gap ?? 2) / 2})${n.between ? ';justify-content:space-between' : ''}">${k}</div>`,
   grid:    (n, k) => `<div class="antd" style="display:grid;gap:var(--ant-margin);grid-template-columns:${tracks(n)}${n.align ? `;align-items:${n.align}` : ''}">${k}</div>`,
   /* every part they DO ship — answered by the render, never by a string */
   ...Object.fromEntries([...ANTD_OWNS].map((part) => [part, antHole])),
@@ -1382,6 +1397,9 @@ Object.assign(shadcn, {
    those five are its own tokens on plain markup (COMPONENT_GAPS). */
 Object.assign(material, {
   link:    (n, k) => `<md-text-button href="#">${n.text != null ? esc(n.text) : k}</md-text-button>`,
+  /* inside running text: a text button there sat off the line (New to
+     Ledgeway? Create an account); M3's link colour is its primary */
+  inlineLink: (n, k) => `<a href="#" style="color:var(--md-sys-color-primary);font-weight:500;text-decoration:none">${n.text != null ? esc(n.text) : k}</a>`,
   pagination: (n) => `<nav aria-label="Pages" style="display:flex;align-items:center;gap:4px"><md-icon-button aria-label="Previous page">${ico('chevron-left', 20)}</md-icon-button>${
     pagesOf(n).map((i) => i === (n.on ?? 1) ? `<md-filled-tonal-icon-button aria-current="page">${i}</md-filled-tonal-icon-button>` : `<md-icon-button>${i}</md-icon-button>`).join('')}<md-icon-button aria-label="Next page">${ico('chevron-right', 20)}</md-icon-button></nav>`,
   segmented: (n) => `<md-outlined-segmented-button-set>${list(n.items).map((t, i) => `<md-outlined-segmented-button label="${esc(t)}"${i === (n.on ?? 0) ? ' selected' : ''}></md-outlined-segmented-button>`).join('')}</md-outlined-segmented-button-set>`,
@@ -1525,7 +1543,8 @@ shadcn.command = (n) => `<div role="dialog" aria-modal="true" data-slot="dialog-
  * as a heading and a muted line over its content. */
 const fieldOf = (bind) => (n, k) => {
   const label = n.label ? (n.link ? bind.row({ between: true }, bind.label({ text: n.label }) + bind.link({ text: n.link })) : bind.label({ text: n.label })) : ''
-  const hint = n.hint ? bind.muted({}, esc(n.hint) + (n.hintLink ? ' ' + bind.link({ text: n.hintLink }) : '')) : ''
+  // a link in a sentence: a kit's inline link where its link is a button (Material)
+  const hint = n.hint ? bind.muted({}, esc(n.hint) + (n.hintLink ? ' ' + (bind.inlineLink ?? bind.link)({ text: n.hintLink }) : '')) : ''
   return bind.stack({ gap: 1 }, label + k + hint)
 }
 const fieldsOf = (bind) => (n, k) => bind.stack({ gap: 4 }, k)
@@ -1536,9 +1555,14 @@ const titledPanel = (bind) => { const plain = bind.panel
 const withTrend = (bind) => { const plain = bind.stat
   return (n) => { const html = plain(n)
     if (!n.delta || bind === daisyui) return html  // daisyUI's stat carries its own (stat-desc)
-    const trend = bind.row({ gap: 2 }, bind.badge({ tone: n.tone ?? 'neutral', text: n.delta }) + bind.muted({ text: n.note ?? '' }))
-    /* inside the card, after the figure: the card is the outermost element */
-    const at = html.lastIndexOf('</')
+    /* with air above it: right under the figure it touched it (Material) */
+    const trend = `<div style="margin-top:8px">${bind.row({ gap: 2 }, bind.badge({ tone: n.tone ?? 'neutral', text: n.delta }) + bind.muted({ text: n.note ?? '' }))}</div>`
+    /* right after the figure, in the box that holds it: past the FIRST of
+       the closing tags at the end (the figure's own). Before the last one, as
+       it was, it fell outside Bootstrap's card-body, against the card's
+       bottom edge with no padding. */
+    const close = /(<\/[a-z][\w-]*>)(?:\s*<\/[a-z][\w-]*>)*\s*$/i.exec(html)
+    const at = close ? close.index + close[1].length : html.length
     return html.slice(0, at) + trend + html.slice(at) } }
 /* a top-bar frame: who is signed in is an avatar at the bar's end */
 const userAtEnd = (bind) => { const bar = bind.navbar

@@ -124,11 +124,18 @@ export async function buildCss(VALUES, IDS, kits, body, log = console.log, extra
   if (IDS.includes('material')) {
   log('deriving the Material scheme with its own generator…')
   let mt = Object.entries(kits.material.modes.light).map(([k, v]) => `${k}:${v}`).join(';')
+  let mtDark = ''
   try {
     execFileSync('npm', ['install', '--silent', '--no-audit', '--no-fund', '@material/material-color-utilities'], { cwd: dir, stdio: 'pipe' })
     const derived = deriveMaterial(VALUES.brand, dir)
     if (derived.error) throw new Error(derived.error)
     mt = `${mt};${Object.entries(derived.light).map(([k, v]) => `${k}:${v}`).join(';')}`
+    /* AND ITS DARK HALF. The generator answers both modes; only the light one
+       was written, so in the dark only the roles our theme block routes
+       (primary, error) moved: a dark page under light cards, the figures
+       light on light (decision 216). Before our block, so its routed dark
+       values still win. */
+    if (derived.dark) mtDark = Object.entries(derived.dark).map(([k, v]) => `${k}:${v}`).join(';')
     /* WHICH ROLES THE GENERATOR DID NOT ANSWER.
      *
      * Our line goes after theirs, so anything the generator leaves out keeps
@@ -145,7 +152,7 @@ export async function buildCss(VALUES, IDS, kits, body, log = console.log, extra
   /* Their typography stylesheet ships in the package: real md-typescale-*
      classes, so the text on the page is theirs too and not our font sizes. */
   const mdw = materialElements()
-  css.material = `:root{${mt}}\n${mdw.typeTokens}\n${mdw.typescale}\n` + files._blocks.material
+  css.material = `:root{${mt}}\n${mtDark ? `@media (prefers-color-scheme: dark){:root{${mtDark}}}\n` : ''}${mdw.typeTokens}\n${mdw.typescale}\n` + files._blocks.material
   }
 
   /* ANT DESIGN HAS TO BE RUN.

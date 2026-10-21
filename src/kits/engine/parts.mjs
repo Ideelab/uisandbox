@@ -78,13 +78,19 @@ export function render(node, bind) {
    * empty box. Everything the table still answers falls through unchanged. */
   if (bind._pre) {
     const html = bind._pre[JSON.stringify(node)]
-    if (html != null) return html.replace('<div data-antd-kids=""></div>', kids)
+    if (html != null) return wrapCol(node, html.replace('<div data-antd-kids=""></div>', kids))
   }
   const fn = bind[node.p]
   if (fn) node = inProps(node, bind)
   if (!fn) return `<span data-missing="${esc(node.p)}" style="display:inline-block;padding:4px 8px;border:1px dashed currentColor;opacity:.6;font-size:12px">${esc(node.p)} — not in ${esc(bind._id)}</span>`
-  return fn(node, kids)
+  return wrapCol(node, fn(node, kids))
 }
+
+/* Which column of a table holds the NAME, the one that may wrap (scenes.mjs
+   SHELL_CSS keeps the rest to one line). It sat at the second for every
+   table; the Dashboard's names are in the first, the Invoices' in the third,
+   and a name on one line pushed Amount out of the panel on five kits. */
+const wrapCol = (node, html) => node.p === 'table' && node.wrap ? html.replace('<table', `<table data-wrap="${Number(node.wrap)}"`) : html
 
 /**
  * A NODE INSIDE A PROP, rendered before the part sees it.

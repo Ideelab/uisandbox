@@ -368,9 +368,10 @@ const STATUS = { Overdue: 'danger', Sent: 'brand', Paid: 'success', Draft: 'neut
 const status = (t) => ({ p: 'badge', tone: STATUS[t], text: t })
 const ROW_ACTION = { p: 'iconrow', items: ['ellipsis-vertical'] }
 /* a member: their initials and their name */
-const member = (initials, name) => ({ p: 'row', gap: 2, kids: [{ p: 'avatar', text: initials }, { p: 'text', text: name }] })
+// one line: an avatar and its name (Ant's row wraps, and put the name under it)
+const member = (initials, name) => ({ p: 'row', gap: 2, wrap: false, kids: [{ p: 'avatar', text: initials }, { p: 'text', text: name }] })
 const pick = (on) => ({ p: 'checkbox', on, text: '' })
-const INVOICES = { p: 'table', cols: ['', 'Number', 'Client', 'Status', 'Issued', 'Due', 'Amount', ''], rows: [
+const INVOICES = { p: 'table', wrap: 3, cols: ['', 'Number', 'Client', 'Status', 'Issued', 'Due', 'Amount', ''], rows: [
   [pick(true), 'INV-1042', 'Halden & Rowe', status('Overdue'), '12 Aug', '12 Sep', '€4,820.00', ROW_ACTION],
   [pick(true), 'INV-1041', 'Northfield Studio', status('Sent'), '29 Aug', '28 Sep', '€1,250.00', ROW_ACTION],
   [pick(false), 'INV-1040', 'Vandermeer Architecten & Partners', status('Paid'), '10 Aug', '9 Sep', '€18,374.65', ROW_ACTION],
@@ -567,7 +568,7 @@ export const SCREENS = [
         { p: 'stat', label: 'Overdue', value: '€4,820.00', delta: '+1', tone: 'danger', note: 'Halden & Rowe, 8 days' },
         { p: 'stat', label: 'Paid on time', value: '94%', delta: '+2 pts', tone: 'success', note: 'The best quarter so far' },
       ] },
-      { p: 'grid', tracks: '2fr 1fr', kids: [
+      { p: 'grid', tracks: 'minmax(0,2fr) minmax(0,1fr)', kids: [
         { p: 'panel', title: 'Revenue', text: 'Paid and outstanding, April to September', aside: { p: 'segmented', items: ['6 months', '12 months'], on: 0 }, kids: [
           { p: 'chart', height: 250, legend: ['Paid', 'Outstanding'], bars: [
             { label: 'Apr', a: 82, b: 34 }, { label: 'May', a: 96, b: 30 }, { label: 'Jun', a: 74, b: 41 },
@@ -585,14 +586,17 @@ export const SCREENS = [
           ] },
         ] }] },
       ] },
-      { p: 'grid', tracks: '3fr 2fr', kids: [
+      { p: 'grid', tracks: 'minmax(0,3fr) minmax(0,2fr)', kids: [
         { p: 'panel', title: 'Due this week', text: 'Five invoices, €26,862.80 in all', link: 'All invoices', kids: [
-          { p: 'table', cols: ['Invoice', 'Client', 'Status', 'Due', 'Amount', ''], rows: [
-            ['INV-1042', 'Halden & Rowe', status('Overdue'), '12 Sep', '€4,820.00', ROW_ACTION],
-            ['INV-1041', 'Northfield Studio', status('Sent'), '28 Sep', '€1,250.00', ROW_ACTION],
-            ['INV-1043', 'Vandermeer Architecten & Partners', status('Sent'), '29 Sep', '€18,374.65', ROW_ACTION],
-            ['INV-1044', 'Brightwater Dental Care', status('Draft'), '30 Sep', '€2,105.40', ROW_ACTION],
-            ['INV-1037', 'Orchard Lane Bakery', status('Sent'), '30 Sep', '€312.75', ROW_ACTION],
+          /* a summary, four columns: six (with the number and the row menu,
+             which Invoices has) did not fit two thirds of a 1440 window on any
+             kit with its own cell padding (shadcn hid Amount, Radix cut the menu) */
+          { p: 'table', wrap: 1, cols: ['Client', 'Status', 'Due', 'Amount'], rows: [
+            ['Halden & Rowe', status('Overdue'), '12 Sep', '€4,820.00'],
+            ['Northfield Studio', status('Sent'), '28 Sep', '€1,250.00'],
+            ['Vandermeer Architecten & Partners', status('Sent'), '29 Sep', '€18,374.65'],
+            ['Brightwater Dental Care', status('Draft'), '30 Sep', '€2,105.40'],
+            ['Orchard Lane Bakery', status('Sent'), '30 Sep', '€312.75'],
           ] },
         ] },
         { p: 'panel', title: 'Recent activity', text: 'Payments, reminders and new clients', link: 'View all', kids: [
@@ -637,7 +641,7 @@ export const SCREENS = [
         ] },
         { p: 'row', kids: [{ p: 'button', tone: 'ghost', text: 'Save draft' }, { p: 'button', tone: 'outline', text: 'Preview' }, { p: 'button', tone: 'brand', text: 'Send invoice' }] },
       ] },
-      { p: 'grid', tracks: '2fr 1fr', kids: [
+      { p: 'grid', tracks: 'minmax(0,2fr) minmax(0,1fr)', kids: [
         { p: 'stack', gap: 4, kids: [
           { p: 'panel', title: 'Client and dates', text: 'Who it is for and when it is due.', kids: [
             { p: 'grid', cols: 2, kids: [
@@ -650,7 +654,7 @@ export const SCREENS = [
           { p: 'panel', title: 'Lines', text: 'What you are charging for, before VAT.', link: 'Add from your catalogue', kids: [{ p: 'stack', gap: 3, kids: [
             /* a grid, not a table: the description takes the room, the
                figures keep theirs, as an invoice editor lays its lines out */
-            { p: 'grid', tracks: 'minmax(0,1fr) 72px 112px 104px 40px', align: 'center', kids: [
+            { p: 'grid', tracks: 'minmax(0,1fr) 60px 100px 100px 36px', align: 'center', kids: [
               { p: 'label', text: 'Description' }, { p: 'label', text: 'Qty' }, { p: 'label', text: 'Rate' }, { p: 'label', text: 'Amount' }, { p: 'text', text: '' },
               ...[['Brand identity, phase two', '1', '3,200.00', '€3,200.00'], ['Signage drawings, ground floor', '12', '95.00', '€1,140.00'], ['Print proofs', '4', '65.00', '€260.00']]
                 .flatMap(([what, qty, rate, sum]) => [{ p: 'input', value: what }, { p: 'input', value: qty }, { p: 'input', value: rate }, { p: 'text', text: sum }, { p: 'iconrow', items: ['trash-2'] }]),
@@ -696,7 +700,7 @@ export const SCREENS = [
       ] },
       { p: 'tabs', items: ['Workspace', 'Billing', 'Notifications', 'Members', 'Integrations'] },
       { p: 'alert', tone: 'success', text: 'Saved. Your changes are live.' },
-      { p: 'grid', tracks: '3fr 2fr', kids: [
+      { p: 'grid', tracks: 'minmax(0,3fr) minmax(0,2fr)', kids: [
         { p: 'panel', title: 'Workspace', text: 'How Ledgeway signs and sends your invoices.', kids: [{ p: 'fields', kids: [
           { p: 'field', label: 'Company name', kids: [{ p: 'input', value: 'Okafor Design Studio' }] },
           { p: 'field', label: 'Billing email', hint: 'Clients reply to this address.', kids: [{ p: 'input', value: 'accounts@okafor-studio.example' }] },
@@ -765,15 +769,17 @@ export const SCREENS = [
         { p: 'stat', label: 'To pay back', value: '€286.40', delta: '2', tone: 'neutral', note: 'To Tomás, for two trips' },
       ] },
       { p: 'alert', tone: 'danger', text: 'Two receipts could not be read: they are blurred or cut off. Take a new photo, or type them in.' },
-      { p: 'grid', tracks: '2fr 1fr', kids: [
+      { p: 'grid', tracks: 'minmax(0,2fr) minmax(0,1fr)', kids: [
         { p: 'panel', title: 'This month', text: 'Matched against your bank feed.', aside: { p: 'segmented', items: ['All', 'No receipt'], on: 0 }, kids: [
-          { p: 'table', cols: ['Date', 'Merchant', 'Category', 'Amount', 'Receipt', ''], rows: [
-            ['19 Sep', 'Drukkerij Vermeulen', { p: 'badge', tone: 'neutral', text: 'Printing' }, '€418.20', { p: 'badge', tone: 'success', text: 'Matched' }, { p: 'iconrow', items: ['ellipsis'] }],
-            ['18 Sep', 'NS, Utrecht to Rotterdam', { p: 'badge', tone: 'neutral', text: 'Travel' }, '€24.60', { p: 'badge', tone: 'warning', text: 'Missing' }, { p: 'iconrow', items: ['ellipsis'] }],
-            ['16 Sep', 'Figma', { p: 'badge', tone: 'neutral', text: 'Software' }, '€45.00', { p: 'badge', tone: 'success', text: 'Matched' }, { p: 'iconrow', items: ['ellipsis'] }],
-            ['15 Sep', 'Café de Zwaan', { p: 'badge', tone: 'neutral', text: 'Meals' }, '€38.50', { p: 'badge', tone: 'danger', text: 'Unreadable' }, { p: 'iconrow', items: ['ellipsis'] }],
-            ['12 Sep', 'Coolblue', { p: 'badge', tone: 'neutral', text: 'Equipment' }, '€1,249.00', { p: 'badge', tone: 'brand', text: 'Reading' }, { p: 'iconrow', items: ['ellipsis'] }],
-            ['9 Sep', 'KPN', { p: 'badge', tone: 'neutral', text: 'Phone' }, '€62.15', { p: 'badge', tone: 'success', text: 'Matched' }, { p: 'iconrow', items: ['ellipsis'] }],
+          /* no row menu here (Invoices has one): six columns did not fit two
+             thirds of a 1440 window with daisyUI's padding */
+          { p: 'table', cols: ['Date', 'Merchant', 'Category', 'Amount', 'Receipt'], rows: [
+            ['19 Sep', 'Drukkerij Vermeulen', { p: 'badge', tone: 'neutral', text: 'Printing' }, '€418.20', { p: 'badge', tone: 'success', text: 'Matched' }],
+            ['18 Sep', 'NS, Utrecht to Rotterdam', { p: 'badge', tone: 'neutral', text: 'Travel' }, '€24.60', { p: 'badge', tone: 'warning', text: 'Missing' }],
+            ['16 Sep', 'Figma', { p: 'badge', tone: 'neutral', text: 'Software' }, '€45.00', { p: 'badge', tone: 'success', text: 'Matched' }],
+            ['15 Sep', 'Café de Zwaan', { p: 'badge', tone: 'neutral', text: 'Meals' }, '€38.50', { p: 'badge', tone: 'danger', text: 'Unreadable' }],
+            ['12 Sep', 'Coolblue', { p: 'badge', tone: 'neutral', text: 'Equipment' }, '€1,249.00', { p: 'badge', tone: 'brand', text: 'Reading' }],
+            ['9 Sep', 'KPN', { p: 'badge', tone: 'neutral', text: 'Phone' }, '€62.15', { p: 'badge', tone: 'success', text: 'Matched' }],
           ] },
         ] },
         { p: 'stack', gap: 4, kids: [
@@ -968,8 +974,8 @@ export const wallMarkup = (bind, boards = BOARDS) => `<main id="strip">${boards.
   ? `<section class="board" id="b_${b.id}" data-board="${b.id}" data-shot data-page>${pageMarkup(b, bind)}</section>`
   : `<section class="board" id="b_${b.id}" data-board="${b.id}"${b.shot ? ' data-shot' : ''}${b.dark ? ' data-screen-dark' : ''}${b.caps ? '' : b.shot ? ' data-nocaps' : ''}>
     <header class="board__top"><h2 class="board__name">${b.label}</h2><p class="board__note">${b.note}</p></header>
-    <div class="board__cols">${b.shot ? '<div class="shotbox">' : ''}${b.cols.map((c) => `<div class="col" style="width:${c.w}px">${c.cards.map((card) =>
-      `<figure class="card" data-card="${card.id}"><figcaption class="cap">${card.title}</figcaption>${render(nodeOf(card), bind)}</figure>`).join('')}</div>`).join('')}${b.shot ? '</div>' : ''}</div>
+    <div class="board__cols">${b.shot ? '<div class="shotbox">' : ''}${b.cols.map((c) => `<div class="sheetcol" style="width:${c.w}px">${c.cards.map((card) =>
+      `<figure class="sheetcard" data-card="${card.id}"><figcaption class="cap">${card.title}</figcaption>${render(nodeOf(card), bind)}</figure>`).join('')}</div>`).join('')}${b.shot ? '</div>' : ''}</div>
   </section>`).join('')}</main>
 <style>/* NO font-family here. The wrapper setting one hard-coded our chrome over
    every kit's own typography, so the font knobs moved the card and nothing
@@ -991,8 +997,8 @@ body{margin:0;overflow:hidden}
      glass it is the board's width, so the kit's OWN responsive rules can
      fold its rows and grids the way they do on any phone (decision 206:
      from 35-133 elements past the edge per screen to 0 on 38 of 48). */
-  .board .col{width:auto!important;max-width:100%;flex:1 1 auto;min-width:0}
-  .board .card{max-width:100%;min-width:0}
+  .board .sheetcol{width:auto!important;max-width:100%;flex:1 1 auto;min-width:0}
+  .board .sheetcard{max-width:100%;min-width:0}
 }
 #strip.pan{cursor:grabbing;user-select:none}
 .board{flex:none;display:flex;flex-direction:column;gap:16px;padding:22px 26px;scroll-snap-align:start;border-inline-end:1px solid rgb(128 128 128 / .16)}
@@ -1001,8 +1007,8 @@ body{margin:0;overflow:hidden}
 .board__name{margin:0;font-size:13px;font-weight:650;letter-spacing:.01em;opacity:.9;line-height:1.2}
 .board__note{margin:0;font-size:11.5px;line-height:1.45;opacity:.5}
 .board__cols{flex:1;min-height:0;display:flex;gap:20px;align-items:flex-start}
-.col{flex:none;display:flex;flex-direction:column;gap:20px;min-width:0}
-.card{margin:0;display:flex;flex-direction:column;gap:8px;cursor:auto}
+.sheetcol{flex:none;display:flex;flex-direction:column;gap:20px;min-width:0}
+.sheetcard{margin:0;display:flex;flex-direction:column;gap:8px;cursor:auto}
 .cap{margin:0;font-size:10px;letter-spacing:.1em;text-transform:uppercase;opacity:.42;font-weight:600}
 /* ── A PAGE IS THE APP (decision 212) ─────────────────────────────────────
  * The shell is ours, the way a layout is ours everywhere on this wall: a top
@@ -1016,8 +1022,13 @@ body{margin:0;overflow:hidden}
 [data-shell-main]{display:flex;flex-direction:column;gap:20px;padding:28px 32px 40px;min-width:0;max-width:1240px}
 [data-layer-id][hidden]{display:none!important}
 /* a number, a date or a status in a table keeps to one line, as an app's
-   table does (shadcn's TableCell is whitespace-nowrap); a name may wrap */
-[data-shell-main] td:not(:nth-child(2)){white-space:nowrap}
+   table does (shadcn's TableCell is whitespace-nowrap); the name may wrap:
+   the table's data-wrap column (parts.mjs wrapCol), else the second */
+/* Ant's label with a link on its far side: the label is inline-flex at its
+   content's width, so the link sat against the word (antd-tree data-split) */
+.ant-form-item-label>label:has(>[data-split]){width:100%}
+[data-shell-main] td{white-space:nowrap}
+[data-shell-main] table:not([data-wrap]) td:nth-child(2),[data-shell-main] table[data-wrap="1"] td:nth-child(1),[data-shell-main] table[data-wrap="2"] td:nth-child(2),[data-shell-main] table[data-wrap="3"] td:nth-child(3){white-space:normal}
 [data-shell][data-frame=side]{display:flex;align-items:flex-start}
 [data-frame=side]>[data-shell-side]{flex:none;padding:0;border:0;position:sticky;top:0;height:100vh}
 [data-frame=side]>[data-shell-body]{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;align-self:stretch}
@@ -1047,8 +1058,9 @@ body{margin:0;overflow:hidden}
  * data-pick   this frame is being compared, so a card can be chosen
  * data-solo   one card is chosen; it carries data-solo too */
 /* BY ATTRIBUTE AND BY PATH, NEVER BY CLASS NAME.
- * .card is this wall's own class AND daisyUI's component class AND
- * Bootstrap's — so a rule hiding every .card without data-solo reached inside
+ * .card WAS this wall's own class AND daisyUI's component class AND
+ * Bootstrap's (it is .sheetcard now, and .col .sheetcol: Bootstrap's .card
+ * drew its border round every section of the sheet, caption and all) — so a rule hiding every .card without data-solo reached inside
  * the one card it meant to keep and hid the daisyUI card in it. Two of the six
  * panes came up as a caption over nothing. .col is Bootstrap's grid class for
  * the same reason. Everything below is addressed by data-card, which only this
@@ -1078,9 +1090,9 @@ html[data-quiet] #strip{scrollbar-width:none;-ms-overflow-style:none}
    the right half empty on a wide screen. The column wrappers dissolve and the
    cards flow into as many masonry columns as the width affords. */
 html[data-quiet] #strip{display:block;height:auto;overflow:visible;columns:330px;column-gap:20px;padding:26px;cursor:default}
-html[data-quiet] .board,html[data-quiet] .board__cols,html[data-quiet] .board__cols .col{display:contents}
+html[data-quiet] .board,html[data-quiet] .board__cols,html[data-quiet] .board__cols .sheetcol{display:contents}
 html[data-quiet] .board__top{break-inside:avoid;margin:6px 0 14px}
-html[data-quiet] .card{break-inside:avoid;margin:0 0 20px;width:auto}
+html[data-quiet] .sheetcard{break-inside:avoid;margin:0 0 20px;width:auto}
 html[data-quiet] #strip::-webkit-scrollbar{width:0;height:0}
 html[data-quiet] #strip{cursor:default}
 /* and it starts lower, because a quiet wall is being used as a picture that
@@ -1239,7 +1251,7 @@ html[data-solo] #strip > .board:not(:has([data-card][data-solo])){display:none}<
     if(H.hasAttribute('data-shot-solo')){
       if(e.target.closest('input,select,textarea,button,a,label,summary,[role=radio],[role=checkbox],[role=switch],[role=slider],[role=tab],[role=menuitem]'))return
       var s=m.querySelector('.board.shotsolo')
-      if(s&&e.target.closest('.card'))return
+      if(s&&e.target.closest('.sheetcard'))return
       H.removeAttribute('data-shot-solo')
       if(s)s.classList.remove('shotsolo')
       return

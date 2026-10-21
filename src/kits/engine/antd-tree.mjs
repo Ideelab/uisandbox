@@ -141,18 +141,25 @@ const PART = {
     e('div', { 'data-antd-kids': '' })),
   /* their Form, vertical: Form.Item puts the label over the control and the
      error under it (validateStatus and help), at their own spacing */
-  fields: (n, kids) => e(Form, { layout: 'vertical', component: 'div', requiredMark: false }, kids),
+  /* the space between items: each Form.Item has marginBottom 0 (so a grid can
+     place it), and inside their Form nothing else spaced them: the labels sat
+     on the control above */
+  fields: (n, kids) => e(Form, { layout: 'vertical', component: 'div', requiredMark: false, style: { display: 'flex', flexDirection: 'column', gap: 16 } }, kids),
   field: (n) => {
     const bad = list(n.kids).find((c) => c?.error)
     const label = n.label ? (n.link
-      ? e('span', { style: { display: 'flex', width: '100%', justifyContent: 'space-between' } }, text(n.label), e(Typography.Link, { href: '#' }, text(n.link)))
+      ? e('span', { 'data-split': '', style: { display: 'flex', width: '100%', gap: 12, justifyContent: 'space-between' } }, text(n.label), e(Typography.Link, { href: '#' }, text(n.link)))
       : text(n.label)) : undefined
     /* vertical on the item too: a field outside their Form (in a grid of
        two) otherwise puts its label beside the control, with a colon */
     return e(Form.Item, { layout: 'vertical', colon: false, label, validateStatus: bad ? 'error' : undefined, help: bad ? text(bad.error) : undefined,
       extra: n.hint ? e('span', null, text(n.hint), n.hintLink ? e(React.Fragment, null, ' ', e(Typography.Link, { href: '#' }, text(n.hintLink))) : null) : undefined,
       style: { marginBottom: 0 } },
-      ...list(n.kids).map((c, i) => element(c && c.error ? { ...c, error: undefined } : c, i)))
+      /* more than one control (Sign in and single sign-on) stacked, the width
+         of the field, as every other kit lays them; the item set them inline */
+      ...(list(n.kids).length > 1
+        ? [e(Flex, { vertical: true, gap: 8 }, ...list(n.kids).map((c, i) => element(c && c.error ? { ...c, error: undefined } : c, i)))]
+        : list(n.kids).map((c, i) => element(c && c.error ? { ...c, error: undefined } : c, i))))
   },
   divider: () => e(Divider, { style: { margin: 0 } }),
 
@@ -188,7 +195,8 @@ const PART = {
     n.delta ? e(Flex, { align: 'center', gap: 8, style: { marginTop: 8 } },
       e(Tag, { color: TAG[n.tone ?? 'neutral'], style: { marginInlineEnd: 0 } }, text(n.delta)),
       e(Typography.Text, { type: 'secondary' }, text(n.note))) : null),
-  progress: (n) => e(Progress, { percent: n.value ?? 60 }),
+  // the bar only, as on every other kit: the screen writes the figure beside it (80% twice on the Dashboard)
+  progress: (n) => e(Progress, { percent: n.value ?? 60, showInfo: false }),
   table: (n) => e(Table, {
     size: 'small', pagination: false,
     columns: list(n.cols).map((c, i) => ({ title: c, dataIndex: String(i), key: String(i) })),
@@ -309,7 +317,14 @@ const element = (node, i) => {
   if (typeof node === 'string') return node
   const fn = PART[node.p]
   const kids = list(node.kids).map(element)
-  if (!fn) return e('div', { key: i, 'data-not-antd': node.p }, ...kids)
+  /* not theirs, but laid out as the binding table lays it: a bare div put a
+     member's avatar over the name in their Table */
+  if (!fn) {
+    const gap = `calc(var(--ant-margin-xs) * ${Math.max(1, node.gap ?? (node.p === 'stack' ? 3 : 2)) / 2})`
+    const style = node.p === 'row' ? { display: 'flex', alignItems: 'center', gap, flexWrap: node.wrap === false ? 'nowrap' : 'wrap', ...(node.between ? { justifyContent: 'space-between' } : {}) }
+      : node.p === 'stack' ? { display: 'flex', flexDirection: 'column', gap } : undefined
+    return e('div', { key: i, 'data-not-antd': node.p, style }, ...kids)
+  }
   return e(React.Fragment, { key: i }, fn(node, kids))
 }
 

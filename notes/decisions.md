@@ -3781,3 +3781,35 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     (s12-fundamental-styles, the runner's own click on the Check 1:1 chip
     before the foot had rendered, while the app was being edited under the
     run); alone it is ok. The new daisyUI build loads 1:1 (kit-daisyui).
+
+    A look-over of every screen of every kit, at 1440 and in the dark
+    (Alexander: "alles doorlopen zodat alles er optimaal uitziet"). 56 shots,
+    read on sheets of four, the faults fixed at their cause and shot again:
+    - Bootstrap's trend sat outside card-body, on the card's edge; Material's
+      touched the figure. The trend goes in the box that holds the figure,
+      8px under it. shadcn's badge, top right, was cut to "+12." in a card a
+      quarter wide; it sits in the footer with the note.
+    - The Dashboard's bottom row was 3fr 2fr, which a table's min-content
+      widened: Amount went out of the panel on five kits, daisyUI's activity
+      list broke by letters. Every two-column grid is minmax(0, fr) now; the
+      table there is a summary (Client, Status, Due, Amount), and each table
+      names the column that may wrap, since the name is not always second.
+    - Kit props our markup left out: Mantine's Table spacing (cells flush),
+      Textarea data-multiline on the wrapper (one line high), EmptyState
+      data-align (a row); Material's select min-width (cut off the card);
+      Ant's progress figure (80% twice), Form spacing, stacked controls, the
+      layout of a non-Ant row inside their Table (avatar over the name).
+    - Material's "Saved" was pink (no success role; tertiary is the seed's
+      complement): the neutral container now. Its link in a sentence was a
+      text button off the line: an inline link in its primary.
+    - Bootstrap drew a border round every section of the sheet, caption and
+      all: our own class was .card, which is Bootstrap's.
+    - Dark: shadcn's New invoice and Sent badges were black on black, with
+      nothing turned: the dark twin took "the pick", and untouched the pick
+      is the light brand. It takes it only when a brand was picked (a test
+      holds both). Material's dark mode moved only primary: the generator's
+      dark half was computed and never written; it is now. Tailwind and Ant
+      offer no dark mode, and the knob does not show for them.
+    The kit builds, their fixtures and the /kits/ shots are rebuilt; all
+    eight kit hold-outs load 1:1.
+
