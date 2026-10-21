@@ -619,9 +619,10 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
   .ebar__engine { padding-left: 6px; }
   .ebar__engine select { max-width: 140px; }
 }
-/* A phone: "How it works" is the intro's link and /about's own address; Light /
-   Dark is the Dark mode knob in the sheet. Neither control is lost. */
-@media (max-width: 560px) { .app__group .ebar__scheme { display: none; } }
+/* A phone: Light / Dark and 1 | 6 sit over the screen, the top bar keeps the
+   name, the icon of How it works, and the two buttons in short. */
+@media (max-width: 560px) { .app__how span { display: none; } .app__try-long { display: none; } }
+@media (min-width: 561px) { .app__try-short { display: none; } }
 @media (max-width: 420px) {
   .app__brand-name { display: none; }
   .app__group { gap: 4px; }
@@ -666,7 +667,9 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
    a fixed layer, the card at margin auto. Taller than the window, it scrolls
    from its top instead of being cut (Alexander: the three opened in three
    places; the door sat at the top of the stage, How it works at the top). */
-.stage__door { position: fixed; inset: 0; z-index: 100; overflow-y: auto; overscroll-behavior: contain; background: var(--app-scrim); display: grid; padding: 24px; }
+.stage__door { position: fixed; inset: 0; z-index: 100; overflow-y: auto; overscroll-behavior: contain; background: var(--app-scrim); display: grid; grid-template-columns: minmax(0, 1fr); padding: 24px; }
+/* the card never wider than the window: one track, as wide as the window, not as the longest line */
+.stage__door > .intake { min-width: 0; width: 100%; box-sizing: border-box; }
 .stage__door > * { margin: auto; }
 .stage__door .intake { padding-top: 28px; padding-bottom: 28px; }
 /* The door alone, without the story around it (that lives on /about). */
@@ -701,18 +704,8 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
 .way--main .install--compact { margin: 0 0 10px; }
 .way--main .install__pill { width: 100%; max-width: none; }
 .way__fine { font-size: 12px !important; margin-bottom: 4px !important; }
-.way--next { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--app-border); }
 .way__chip { display: grid; gap: 8px; justify-items: start; margin: 0 0 12px; }
 .way__fine a { color: var(--app-fg); }
-.way__fold { width: 100%; display: flex; align-items: center; gap: 12px; margin-top: 10px; padding: 12px 14px; border: 1px solid var(--app-border); border-radius: 10px; background: var(--app-surface); text-align: left; color: var(--app-fg); }
-.way__fold:hover { background: var(--app-hover); }
-.way__fold:first-of-type { margin-top: 18px; }
-.way__icon { color: var(--app-fg-muted); display: inline-flex; }
-.way__text { flex: 1; display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
-.way__text span { color: var(--app-fg-muted); font-size: 12px; }
-.way__chev { color: var(--app-fg-faint); transition: transform .15s; }
-.way__fold--open .way__chev { transform: rotate(90deg); }
-.way__body { margin-top: 12px; }
 .intake__error--top { margin: 0 0 16px; text-align: left; }
 .chip--on { border-color: var(--app-fg); color: var(--app-fg); }
 .foot__name { color: #ececf1; font-weight: 600; }
@@ -832,18 +825,6 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
 .looks__what { font-size: 12px; color: var(--app-fg-muted); padding: 0 2px; }
 .looks__foot { margin: 0; font-size: 12px; color: var(--app-fg-muted); }
 
-/* The four steps (decision 216): centred in the top bar, numbered, the one
-   you are on dark, the ones behind you ticked. On a phone only the numbers. */
-.steps { flex: 1; display: flex; justify-content: center; align-items: center; gap: 2px; min-width: 0; }
-.steps__step { display: inline-flex; align-items: center; gap: 7px; height: 30px; padding: 0 11px 0 6px; border: 0; border-radius: 999px; background: none; color: var(--app-fg-muted); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; }
-.steps__step:hover { background: var(--app-hover); color: var(--app-fg); }
-.steps__n { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 99px; border: 1px solid var(--app-border); font-size: 11px; font-weight: 650; }
-.steps__step--done { color: var(--app-fg); }
-.steps__step--done .steps__n { border-color: var(--app-fg); }
-.steps__step--on, .steps__step--on:hover { background: var(--app-fg); color: var(--app-bg); }
-.steps__step--on .steps__n { border-color: transparent; background: var(--app-bg); color: var(--app-fg); }
-@media (max-width: 860px) { .steps__label { display: none; } .steps__step { padding: 0 5px; } }
-
 /* Take it home (decision 216): the one thing to do, then what changed, then
    the other formats folded. */
 .exp__h2sub { margin-left: 8px; font-size: 12.5px; font-weight: 450; color: var(--app-fg-muted); }
@@ -866,12 +847,6 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
 .tells__fine { margin: 4px 0 10px; font-size: 12px; color: var(--app-fg-muted); line-height: 1.45; }
 
 /* The way in (decision 216): what it is for, the bookmarklet, the rest folded. */
-.intake__card .door__head { margin-bottom: 18px; }
-.intake__card .door__head h2 { margin: 0 0 6px; font-size: 22px; font-weight: 650; letter-spacing: -0.01em; }
-.intake__card .door__head p { margin: 0; color: var(--app-fg-muted); font-size: 14.5px; }
-.door__try { display: block; margin: 6px auto 0; border: 0; background: none; font: inherit; font-size: 13px; color: var(--app-fg-muted); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
-.door__try:hover { color: var(--app-fg); }
-.intake__card .door__others { margin: 26px 0 8px; font-size: 11px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; color: var(--app-fg-muted); text-align: left; }
 
 /* One look at full size, in the looks' own room (decision 216). */
 .looks:has(.looks__focus) { height: 100%; box-sizing: border-box; }
@@ -892,11 +867,6 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
 .intake__card.door__card { width: 100%; padding: 0; text-align: left; overflow: hidden; }
 .door__bar { display: flex; align-items: center; gap: 10px; padding: 14px 18px 14px 22px; border-bottom: 1px solid var(--app-border); }
 .door__bar h2 { flex: 1; margin: 0; font-size: 15px; font-weight: 650; }
-.door__grid { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 26px; padding: 22px 24px 24px; align-items: start; }
-.door__main { margin: 0; }
-.intake__card .door__side .door__others { margin: 2px 0 8px; }
-.door__side .door__try { margin: 14px 0 0; }
-@media (max-width: 760px) { .door__grid { grid-template-columns: minmax(0, 1fr); gap: 18px; padding: 18px 16px 20px; } }
 
 /* How it works (decision 216): four steps at a glance, the rest folded. */
 .steps4 { margin: 14px 0 0; padding: 0; list-style: none; counter-reset: s4; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
@@ -919,3 +889,62 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
 
 /* text for search and screen readers only */
 .vh { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* Try it on your own app (decision 217): the takeover's three steps in its
+   head, one way first (the line), the others as two quiet links under it. */
+.door__bar .bring__steps { margin: 0 6px 0 0; }
+.bring__steps { display: flex; align-items: center; gap: 14px; padding: 0; list-style: none; font-size: 12px; color: var(--app-fg-faint); }
+.bring__steps li { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.bring__n { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 99px; border: 1px solid var(--app-border); font-size: 10.5px; font-weight: 650; }
+.bring__step--on, .bring__step--done { color: var(--app-fg); }
+.bring__step--on .bring__n, .bring__step--done .bring__n { border-color: transparent; background: var(--app-fg); color: var(--app-bg); }
+@media (max-width: 640px) { .bring__steps li:not(.bring__step--on) { font-size: 0; gap: 0; } }
+.bring { display: flex; flex-direction: column; gap: 14px; padding: 26px 28px 26px; text-align: left; }
+.bring__head h3 { margin: 0 0 6px; font-size: 22px; font-weight: 650; letter-spacing: -0.01em; }
+.bring__head p { margin: 0; color: var(--app-fg-muted); font-size: 14.5px; line-height: 1.5; }
+.bring .localcmd { margin: 4px 0 0; grid-template-columns: minmax(0, 1fr); }
+.bring .install--compact { max-width: none; margin: 0; }
+.bring .install__pill { min-width: 0; }
+.bring .install__cmd { min-width: 0; }
+.bring p { max-width: none; margin: 0; text-align: left; }
+.bring .install__pill { width: 100%; max-width: none; border-radius: 10px; }
+.bring__agent, .bring__fine { margin: 0; font-size: 13px; line-height: 1.5; color: var(--app-fg-muted); }
+.bring__agent b { color: var(--app-fg); }
+.bring__agent a, .bring__fine a { color: var(--app-fg); }
+.bring__fine { font-size: 12px; }
+.bring__else { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; padding-top: 16px; border-top: 1px solid var(--app-border); font-size: 13px; color: var(--app-fg-muted); }
+.bring__links { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.bring__link { text-align: left; display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; background: none; font: inherit; font-size: 13px; color: var(--app-fg); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.bring__link--on { text-decoration-thickness: 2px; }
+.bring__hint { font-size: 12px; color: var(--app-fg-faint); }
+.bring__more { margin: 0; padding: 16px; border: 1px solid var(--app-border); border-radius: 12px; }
+.bring__more.way--main p { margin: 0 0 12px; }
+.app__try { font-weight: 600; }
+.ebar__view .seg__opt { min-width: 28px; font-variant-numeric: tabular-nums; font-weight: 650; }
+.stage__bar .ebar__view + .ebar__scheme { margin-left: 0; }
+
+/* What we found (decision 217), step 2: four numbers and the one choice. */
+.found__facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 2px 0 0; }
+.found__facts > div { padding: 12px 14px; border-radius: 10px; background: var(--app-surface-2); min-width: 0; }
+.found__facts dt { display: flex; align-items: center; gap: 7px; font-size: 17px; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.found__facts dd { margin: 2px 0 0; font-size: 12px; color: var(--app-fg-muted); }
+.found__swatch { flex: none; width: 14px; height: 14px; border-radius: 4px; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15); }
+@media (max-width: 640px) { .found__facts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.found__carry { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 4px 0 0; padding: 0; border: 0; }
+.found__carry legend { grid-column: 1 / -1; padding: 0; margin-bottom: 8px; font-size: 14px; font-weight: 650; }
+.found__opt { position: relative; display: flex; flex-direction: column; gap: 4px; padding: 14px 14px 14px 40px; border: 1px solid var(--app-border); border-radius: 10px; cursor: pointer; font-size: 13.5px; }
+.found__opt span { font-size: 12.5px; color: var(--app-fg-muted); line-height: 1.45; }
+.found__opt input { position: absolute; left: 14px; top: 15px; margin: 0; accent-color: var(--app-fg); }
+.found__opt--on { border: 2px solid var(--app-fg); padding: 13px 13px 13px 39px; }
+.found__opt--on input { left: 13px; top: 14px; }
+@media (max-width: 640px) { .found__carry { grid-template-columns: minmax(0, 1fr); } }
+.found__go { display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px; }
+@media (max-width: 560px) {
+  .door__bar { flex-wrap: wrap; row-gap: 8px; }
+  .door__bar .bring__steps { order: 3; flex-basis: 100%; }
+  .stage__door { padding: 12px; }
+  .stage__door .intake { padding-left: 0; padding-right: 0; }
+  .bring { padding: 20px 16px 22px; }
+  .bring__head h3 { font-size: 19px; }
+}
+

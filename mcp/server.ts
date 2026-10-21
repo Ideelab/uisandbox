@@ -128,7 +128,7 @@ When to use it — and offer it without being asked:
 
 Rules: never claim more than \`verify\` and the reach meter report — quote the numbers; if a load is refused (iOS/Android/source-only), relay the reason and suggest building first; \`verify\`/\`screenshot\` need Chromium (npx playwright install chromium once) — \`open\`, \`load\`, \`set\`, \`export\` do not.`
 
-const server = new McpServer({ name: 'uisandbox', version: '0.5.1' }, { instructions: INSTRUCTIONS })
+const server = new McpServer({ name: 'uisandbox', version: '0.5.2' }, { instructions: INSTRUCTIONS })
 
 server.registerTool('load', {
   title: 'Load a built web app',
@@ -480,7 +480,10 @@ if (argv[0] === 'open') {
   const id = 'cli'
   projects.set(id, { id, name: live ? new URL(liveUrl).host : archive.rootName, bytes, project, report, cfg: report.baseline.cfg, archive, via: 'cli', live: live ? liveOrigin! : undefined })
   const { port } = await localServer()
-  const url = `http://127.0.0.1:${port}/?load=${encodeURIComponent(`/__archive/${id}.zip`)}&sync=${id}${live ? '&live=1' : ''}`
+  // `--carry=<token>`: what was turned on a kit at uisandbox.org, copied into
+  // the line there (src/state/carry.ts); the page reads it, nothing else does.
+  const carry = argv.find((a) => a.startsWith('--carry='))?.slice(8).replace(/[^A-Za-z0-9_-]/g, '')
+  const url = `http://127.0.0.1:${port}/?load=${encodeURIComponent(`/__archive/${id}.zip`)}&sync=${id}${live ? '&live=1' : ''}${carry ? `&carry=${carry}` : ''}`
   if (!argv.includes('--no-browser')) openInBrowser(url)
   console.log(live
     ? `UISandbox is open: ${url}\nLive: ${liveOrigin}, through this sandbox. Turn the knobs, press Send to the terminal, and the patch prints here.\nCtrl-C to stop.`

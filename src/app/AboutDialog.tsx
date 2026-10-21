@@ -41,12 +41,13 @@ export function AboutDialog({ section, onClose }: { section?: string; onClose: (
           <button type="button" className="btn btn--ghost btn--icon about-dialog__close" onClick={onClose} aria-label="Close"><X size={16} /></button>
         </div>
         <div className="landing">
-          {/* Four steps, the same four as the top bar (decision 216): what to
-              do, at a glance. The rest is one click further down. */}
+          {/* Four steps (decision 216), now the controls themselves rather than
+              a bar (decision 217): what to do, at a glance. The rest is one
+              click further down. */}
           <section className="landing__sec">
             <h2>How it works</h2>
             <ol className="steps4">
-              <li><b>Bring your app.</b> Drag <em>Take this screen along</em> to your bookmarks bar and click it on your app.</li>
+              <li><b>Bring your app.</b> Run one line next to your dev server: <code>npx uisandbox-mcp open</code>.</li>
               <li><b>Pick a look.</b> See your screen six ways and pick the one that fits.</li>
               <li><b>Tune it.</b> Colour, Type, Shape and Space. Hold Space to see your original.</li>
               <li><b>Take it home.</b> Copy it for your AI, or send it to your agent.</li>
@@ -63,8 +64,8 @@ export function AboutDialog({ section, onClose }: { section?: string; onClose: (
             {/* the same four as above, said in full, in the same 2x2: as
                 .steps it took the top bar's flex row and ran four across */}
             <ol className="steps4 steps4--long">
-              <li><b>Bring your app.</b> The editor opens on a kit, shadcn/ui as it ships with seven more one pick away, so there is something to turn before you bring anything. Then open <em>Your app</em> and click the bookmark on any screen your browser shows, run <code>npx uisandbox-mcp open</code> for a build or a running dev server, or drop a zip, a folder or a public repo. What you turned on the kit comes along.</li>
-              <li><b>Pick a look.</b> Your own screen six ways, side by side: Classic, Compact, Soft, Sharp, Airy and Bold. They differ in corners, spacing, depth and type, never in colour, so you compare the style and not the paint. Open one full size, then <em>Pick this one</em>. The same six are the Preset list on the left.</li>
+              <li><b>Bring your app.</b> The editor opens on a kit, shadcn/ui as it ships with seven more one pick away, so there is something to turn before you bring anything. Then <em>Try it on your own app</em>: run <code>npx uisandbox-mcp open http://localhost:3000</code> in your project, or tell your agent to open it, and your running app opens live, every screen, hot reload included. No terminal? Click the bookmark on any screen your browser shows, or bring a zip, a folder or a public repo. What you turned on the kit comes along if you want it to.</li>
+              <li><b>Pick a look.</b> 6 over the screen shows it six ways, side by side: Classic, Compact, Soft, Sharp, Airy and Bold. They differ in corners, spacing, depth and type, never in colour, so you compare the style and not the paint. Open one full size, then <em>Pick this one</em>. The same six are the Preset list on the left.</li>
               <li><b>Tune it.</b> One knob moves every place a value is used: a colour used 144 times moves once. Colour, Type, Shape and Space come first, the rest is under More, and every dial has <em>×1 = as in your code</em> at its centre. It is your actual app and not a preview of one. Every CSS literal becomes a variable with the same value, and <em>Check 1:1</em> proves the page renders as it was. Hold Space to see it.</li>
               <li><b>Take it home.</b> <em>Copy for your AI</em> puts the design system and how to apply it in one paste. On a kit, the zip keeps the design system and a <code>SKILL.md</code> in your repo, in the kit's own names; on your own app, you get your files patched in place, or tokens for CSS, Tailwind, shadcn, Swift and Android. <em>Copy link</em> shares the same build with the same knobs. Or close the tab, and nothing happened.</li>
             </ol>

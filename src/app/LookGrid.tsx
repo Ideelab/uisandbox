@@ -10,7 +10,7 @@
  * look on the knobs, where Undo, Reset and Export treat it like any turn.
  */
 import { useEffect, useRef, useState } from 'react'
-import { Check, ChevronLeft, ChevronRight, Lock, Shuffle, X } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, Lock, Shuffle } from 'lucide-react'
 import type { SandboxProject, Screen } from '../sandbox/project'
 import { varsStyleTag } from '../sandbox/project'
 import { sandboxUrl } from '../sandbox/host'
@@ -125,7 +125,7 @@ export function LookGrid({ project, screen, looks, current, locks, onLocks, onSh
         <h2 className="looks__title">{name}, six ways</h2>
         <button type="button" className={`btn btn--sm ${locks.font ? 'btn--primary' : 'btn--secondary'}`} aria-pressed={locks.font} onClick={() => onLocks({ ...locks, font: !locks.font })}><Lock size={13} /> Keep my font</button>
         <button type="button" className="btn btn--secondary btn--sm" onClick={onShuffle}><Shuffle size={13} /> Shuffle <kbd>Space</kbd></button>
-        <button type="button" className="btn btn--ghost btn--icon" onClick={onClose} aria-label="Close" title="Back to the screen"><X size={15} /></button>
+        {/* no cross: 1 in the bar above goes back to the screen, as Escape does */}
       </div>
       {/* the six stay loaded while one is open, so going back is instant */}
       <div className="looks__grid" hidden={!!focus}>

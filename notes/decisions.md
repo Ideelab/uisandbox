@@ -3840,3 +3840,41 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     nothing), and the classic-token way works but leaves a token to revoke.
     The job publishes only once npm has the version and skips a version the
     registry already lists; after a human npm publish, run the workflow by hand.
+
+217. One or six, and Try it on your own app (2026-10-21).
+    The four-step bar was easy to miss (Alexander): four pills in the middle
+    of the top bar read as navigation nobody needed. The steps are the
+    controls now. A first visit lands on the six: the kit's Dashboard in the
+    six looks, the first thing to see (not for a link that names what to
+    open: `?load`, `?tab`, `?screen`, a hash). 1 | 6 over the screen switches
+    between the screen and the six, on a kit and on your app; the six lost
+    their cross, 1 and Escape close them. The panel's Dark mode row was the
+    Light / Dark switch twice and is gone; what the switch turns on is in its
+    title.
+
+    Try it on your own app, top right beside Export, is a takeover of three
+    steps: Bring it, What we found, Six ways. Bring it offers one way first,
+    the one a builder has (Alexander, after shadcn create puts its CLI line
+    up front): `npx uisandbox-mcp open http://localhost:3000`, live, every
+    screen, from 127.0.0.1, or the same said to an agent. A page on
+    uisandbox.org cannot read somebody's localhost itself: the dev server
+    sends no CORS for another origin, which is what the line is for. Under it,
+    two quiet links for who has no terminal or no localhost (Lovable, v0,
+    Bolt, a login): the bookmarklet, and a zip, a folder, a public repo or a
+    running app (the script line of decision 197, a tab there now, so the
+    live-bridge gate still drives it). Pasting URLs for uisandbox.org to open
+    was weighed and left out: it needs a server-side browser, costs per
+    browser-hour, cannot see localhost or a login, and "your files never
+    leave this tab" would no longer hold for it.
+
+    The line opens another origin, so what was turned on the kit cannot
+    reach it from this tab: it rides in the line, `--carry=<token>`
+    (state/carry.ts: the knobs that differ from the kit, lz-string base64url,
+    no character a shell reads as its own), and the CLI hands it to the page
+    as `&carry=`, read once and taken off the address. uisandbox-mcp 0.5.2
+    carries it; 0.5.1 ignores the flag (it starts with --, so it is never
+    taken for the target). What we found then asks, only when something was
+    turned: start from your app as it is (the default), or bring what you
+    tuned; the kit's knobs are no longer put on unasked. One more screen
+    taken along with the bookmarklet keeps what was turned, unasked, as
+    before. Test: carry.test.ts, the token round trip and its refusals.

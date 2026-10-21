@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { carryOver } from '../carry'
+import { carryOver, carryToken, readCarryToken, withKeys } from '../carry'
 import { DEFAULT_CONFIG } from '../../tokens/defaults'
 import type { Config } from '../../tokens/types'
 
@@ -27,5 +27,24 @@ describe('carryOver', () => {
     const r = carryOver(kitBase, kitBase, appBase)
     expect(r.keys).toEqual([])
     expect(r.cfg).toEqual(appBase)
+  })
+})
+
+describe('the carry token on the command line', () => {
+  it('takes what was turned on a kit to the app the line opens', () => {
+    const turned: Config = { ...kitBase, cPrimary: '#e11d48' as Config['cPrimary'], fontBody: 'Figtree', sb: { ...kitBase.sb, radius: 1.8 } }
+    const t = carryToken('shadcn/ui', kitBase, turned)!
+    // safe in any shell: no $, no quotes, no spaces, no + or /
+    expect(t).toMatch(/^[A-Za-z0-9_-]+$/)
+    const r = readCarryToken(t)!
+    expect(r.name).toBe('shadcn/ui')
+    expect(r.keys.sort()).toEqual(['cPrimary', 'fontBody', 'sb.radius'])
+    const onApp = withKeys(appBase, r.cfg, r.keys)
+    expect(onApp).toEqual(carryOver(kitBase, turned, appBase).cfg)
+  })
+  it('has nothing to carry from an untouched kit, and refuses a broken token', () => {
+    expect(carryToken('shadcn/ui', kitBase, kitBase)).toBeNull()
+    expect(readCarryToken('not-a-token')).toBeNull()
+    expect(readCarryToken('')).toBeNull()
   })
 })

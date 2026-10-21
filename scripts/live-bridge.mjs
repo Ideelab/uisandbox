@@ -57,11 +57,11 @@ const ctx = await browser.newContext({ viewport: { width: 1280, height: 1000 }, 
 
 async function door() {
   const page = await ctx.newPage()
-  // The door is the "Your app" tab of the editor now (merge phase 3), over
-  // the default kit; `?tab=app` opens on it.
+  // The door is Try it on your own app, over the default kit (decision 217);
+  // `?tab=app` opens on it. A running app is a tab under the build link.
   await page.goto(`${sandbox}/?tab=app`, { waitUntil: 'networkidle' })
-  // …folded under "Already running? Add one line" since decision 197.
-  await page.click('.stage__door .way__fold:has-text("Deployed somewhere")')
+  await page.click('.stage__door .bring__link:has-text("running app")')
+  await page.click('.stage__door .intake__way:has-text("running app")')
   await page.waitForSelector('.live__snippet')
   return page
 }

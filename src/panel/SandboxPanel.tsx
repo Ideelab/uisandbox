@@ -12,7 +12,6 @@ import { DEFAULT_DIALS, DIALS, fmtDial, nearestSnap, type DialSpec, type Dials }
 import { DIRECTIONS } from '../sandbox/directions'
 import type { Families, Family } from '../sandbox/mapping'
 import { formatCssColor } from '../sandbox/cssColor'
-import type { Scheme } from '../sandbox/scheme'
 
 interface Props {
   cfg: Config
@@ -20,7 +19,6 @@ interface Props {
   /** The stand their code implied — every knob's "as is". */
   base: Config
   families?: Families
-  scheme?: Scheme
   /** Families their sheet carries (knob names) — the picker's "In your code". */
   codeFonts?: string[]
   /** The sheet holds a linear/conic gradient — the angle dial has something to turn. */
@@ -63,7 +61,7 @@ const FAMILY_ROWS: Array<{ fam: Family; key: keyof Dials; label: string }> = [
  *
  * At rest a row shows a quiet dot — "as in your code"; once turned, "changed".
  */
-export function SandboxPanel({ cfg, tokens, base, families, scheme, codeFonts = [], hasGradients = false, varNow, dispatch, onCollapse, onRandomize, onReset, history, radiiOnScreen, kitName, head }: Props) {
+export function SandboxPanel({ cfg, tokens, base, families, codeFonts = [], hasGradients = false, varNow, dispatch, onCollapse, onRandomize, onReset, history, radiiOnScreen, kitName, head }: Props) {
   const asIs = kitName ? 'as the kit ships it' : 'as in your code'
   const [openKey, setOpenKey] = useState<string | null>(null)
   // One colour picker open at a time. A flyout that IS one colour (the page
@@ -241,22 +239,8 @@ export function SandboxPanel({ cfg, tokens, base, families, scheme, codeFonts = 
   // (MERGE-INTO-UISANDBOX.md); shown anyway when a shared link turned one.
   const ownBuildOnly = (key: string) => (key === 'hue' || key === 'sat' || key === 'contrast') && !!kitName && (cfg.sb[key] ?? DEFAULT_DIALS[key]) === (base.sb[key] ?? DEFAULT_DIALS[key])
   for (const spec of DIALS.filter((d) => d.section === 'Colour' && (d.key !== 'gradAngle' || hasGradients) && !ownBuildOnly(d.key))) rows.push(dialRow(spec))
-  if (scheme && (scheme.media || scheme.hooks.length)) {
-    const cur = cfg.sb.dark
-    rows.push({
-      key: 'dark', label: 'Dark mode', changed: cur !== base.sb.dark, value: cur === 'dark' ? 'Dark' : cur === 'light' ? 'Light' : 'as is',
-      body: () => (
-        <div className="fmpop__list">
-          {([[undefined, 'as is', 'whatever your page does on its own'], ['dark', 'Dark', 'your own dark scheme, switched on'], ['light', 'Light', 'your own light scheme, forced']] as const).map(([id, label, sub]) => (
-            <button key={String(id)} type="button" className={`menu__item fmopt ${cur === id ? 'menu__item--on' : ''}`} onClick={() => { setDial('dark', id); close() }} title={sub}>
-              <span className="fmopt__label">{label}</span>{cur === id && <Check size={14} strokeWidth={2.5} className="fmopt__check" />}
-            </button>
-          ))}
-          <p className="sbp__hint">Found in your CSS: {[scheme.media ? 'prefers-color-scheme' : null, ...scheme.hooks.map(([a, d]) => (a === 'class' ? `.${d}` : `[${a}="${d}"]`))].filter(Boolean).join(' · ')}.</p>
-        </div>
-      ),
-    })
-  }
+  // Dark mode is the Light / Dark switch above the screen (EditorBar SchemeSwitch):
+  // a row here was the same setting twice (decision 217).
   rows.push({
     key: 'neutral', label: 'Grey tint', changed: cfg.neutral !== base.neutral, value: cfg.neutral === 'auto' ? 'Follows brand' : 'Neutral',
     body: () => (

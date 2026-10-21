@@ -1,6 +1,6 @@
 import { DropGlyph } from './Mark'
 import { useEffect, useRef, useState } from 'react'
-import { FileArchive, FolderOpen, GitBranch, Check, Copy, ShieldCheck, X, Plug, ChevronRight, Laptop, Bookmark } from 'lucide-react'
+import { FileArchive, FolderOpen, GitBranch, Check, Copy, ShieldCheck, X, Bookmark, Plug } from 'lucide-react'
 import { archiveFromFiles, isZip, openZip, type Archive } from '../audit/intake/readZip'
 import { filesFromDrop } from '../audit/intake/readFiles'
 import { STAGES, fmtBytes, type Progress } from './progress'
@@ -17,13 +17,15 @@ interface DoorProps {
   onClose?: () => void
   /** No kit stands behind the door (a load failed): offer the kits here too. */
   standalone?: boolean
+  /** What was turned on the kit, for the command line (state/carry.ts). */
+  carry?: { token: string; kit: string; names: string[] } | null
 }
-type Way = 'zip' | 'folder' | 'repo'
+type Way = 'zip' | 'folder' | 'repo' | 'live'
 
 /** Three real open-source builds (MIT) served from this origin — names people know, with colour everywhere the knobs reach. */
 import DOOR from '../kits/door.json'
-import { LiveAppDoor } from './LiveAppDoor'
 import { BookmarkletChip, CaptureStepsDialog } from './CaptureDoor'
+import { LiveAppDoor } from './LiveAppDoor'
 
 const SAMPLES = [
   { path: '/samples/bootstrap-docs.zip', label: 'Bootstrap docs', title: 'getbootstrap.com: the Bootstrap 5.3 docs build (114 screens, 8 MB)' },
@@ -32,21 +34,21 @@ const SAMPLES = [
 ]
 
 /**
- * The door: the empty state of the stage's "Your app" tab, and what a failed
- * load falls back to; the story around it lives on /about.
+ * The door: "Try it on your own app", a takeover over the kit (decision 217),
+ * and what a failed load falls back to; the story around it lives on /about.
  *
- * First the easiest way (decision 209): a bookmarklet that copies the screen
- * the visitor's own browser shows into a UISandbox tab, any app, any address,
- * logged in or not, tab to tab. Then in the order people trust it (decision
- * 197): the way where nothing leaves their machine at all, one command in their project, the sandbox
- * served from 127.0.0.1. Then the running app, one script line. Then, folded
- * away, loading a build into this page (zip, folder, repo): it never leaves
- * the tab either, but "drop your code on a website" is what people hear, and
- * the samples, Share links and agents' `?load=` still need it.
+ * One way first: the app a builder has running, through one line in their
+ * project (`npx uisandbox-mcp open http://localhost:3000`), live, every
+ * screen, served from 127.0.0.1, with what was turned on the kit in the line.
+ * A page on uisandbox.org cannot read their localhost itself: the dev server
+ * sends no CORS for another origin, which is what the line is for. Then, for
+ * who has no terminal or no localhost (Lovable, v0, Bolt, a login), the
+ * bookmarklet (decision 209), and a build read into this tab (zip, folder,
+ * repo), which the samples, Share links and agents' `?load=` still need.
  */
-export function Door({ onArchive, onUrl, onSample, busy, error, standalone, onClose }: DoorProps) {
+export function Door({ onArchive, onUrl, onSample, busy, error, standalone, onClose, carry }: DoorProps) {
   const [way, setWay] = useState<Way>('zip')
-  const [more, setMore] = useState<'local' | 'running' | 'build' | null>(error || standalone ? 'build' : null)
+  const [more, setMore] = useState<'bookmark' | 'build' | null>(error || standalone ? 'build' : null)
   const [showPrivacy, setShowPrivacy] = useState(false)
   const [showSteps, setShowSteps] = useState(false)
   const [over, setOver] = useState(false)
@@ -82,60 +84,56 @@ export function Door({ onArchive, onUrl, onSample, busy, error, standalone, onCl
     { id: 'zip', label: <><span className="intake__way-long">Upload a </span>zip</>, icon: <FileArchive size={14} strokeWidth={1.75} /> },
     { id: 'folder', label: <><span className="intake__way-long">Upload a </span>codebase</>, icon: <FolderOpen size={14} strokeWidth={1.75} /> },
     { id: 'repo', label: <><span className="intake__way-long">Connect a </span>repo</>, icon: <GitBranch size={14} strokeWidth={1.75} /> },
+    // Deployed somewhere, with one script line: its design system, no knobs (LiveAppDoor).
+    { id: 'live', label: <><span className="intake__way-long">A </span>running app</>, icon: <Plug size={14} strokeWidth={1.75} /> },
   ]
-  const fold = (id: 'local' | 'running' | 'build', title: string, sub: string, icon: React.ReactNode) => (
-    <button type="button" className={`way__fold ${more === id ? 'way__fold--open' : ''}`} aria-expanded={more === id} onClick={() => setMore(more === id ? null : id)}>
-      <span className="way__icon">{icon}</span>
-      <span className="way__text"><b>{title}</b><span>{sub}</span></span>
-      <ChevronRight size={15} className="way__chev" />
-    </button>
-  )
-
   return (
     <div className="intake intake--door">
       {showPrivacy && <PrivacyCard onClose={() => setShowPrivacy(false)} />}
       {showSteps && <CaptureStepsDialog onClose={() => setShowSteps(false)} />}
       <div className="door">
       <div className="card intake__card door__card">
-        {/* A head like Take it home's: the step's name and the cross (decision 216) */}
         <div className="door__bar">
-          <h2>Bring your app</h2>
+          <h2>Try it on your own app</h2>
+          <BringSteps at={1} />
           {onClose && <button type="button" className="btn btn--ghost btn--icon" onClick={onClose} aria-label="Close" title="Back to the kit"><X size={15} /></button>}
         </div>
 
         {/* A failed load says why first, above every way to try again. */}
         {error && !busy && <div className="intake__error intake__error--top">{error}</div>}
         {busy ? (
-          <LoadStages busy={busy} />
+          <div className="bring"><LoadStages busy={busy} /></div>
         ) : (
-          <>
-            {/* Landscape, as Take it home is (decision 216): the one way on the
-                left, the others folded on the right. */}
-            <div className="door__grid">
-            <section className="way way--main way--capture door__main">
-              <h3><Bookmark size={16} strokeWidth={1.75} /> Any screen, in one click</h3>
-              <p>Drag <b>Take this screen along</b> to your bookmarks bar, open your app (live, staging, localhost, behind a login) and click it. Your browser copies the screen into this tab. Nothing goes to a server.</p>
+          <div className="bring">
+            {/* One way first (Alexander): the app a builder has running,
+                live, every screen. The others are for who has no terminal. */}
+            <div className="bring__head">
+              <h3>Open your app here, live</h3>
+              <p>Run this in your project, next to your dev server. Every screen comes along, clickable, with hot reload.</p>
+            </div>
+            <LocalCommand carry={carry?.token} />
+            <p className="bring__agent">Or tell your agent: <b>open this app in UISandbox</b>. When you are done, <i>Send to your agent</i> hands it the change. <a href="/about#agents">How</a></p>
+            <p className="bring__fine">A new tab opens with your app in it, served from <code>127.0.0.1</code>: your code never leaves your machine, not even to this site. Without an address the line finds your build (<code>dist/</code>, <code>build/</code>, <code>out/</code>). Needs Node 20.{carry ? ` What you turned on ${carry.kit} goes along in the line: ${carry.names.join(', ')}.` : ''}</p>
+            <div className="bring__else">
+              <span>No terminal, or not on localhost?</span>
+              <div className="bring__links">
+                <button type="button" className={`bring__link ${more === 'bookmark' ? 'bring__link--on' : ''}`} aria-expanded={more === 'bookmark'} onClick={() => setMore(more === 'bookmark' ? null : 'bookmark')}><Bookmark size={14} strokeWidth={1.75} /> Take a screen along with a bookmark</button>
+                <button type="button" className={`bring__link ${more === 'build' ? 'bring__link--on' : ''}`} aria-expanded={more === 'build'} onClick={() => setMore(more === 'build' ? null : 'build')}><FileArchive size={14} strokeWidth={1.75} /> Bring a zip, a folder, a public repo or a running app</button>
+              </div>
+              <span className="bring__hint">Lovable, v0 or Bolt: open your app's preview and use the bookmark there.</span>
+            </div>
+            {more === 'bookmark' && <section className="way way--main way--capture bring__more">
+              <p>Drag <b>Take this screen along</b> to your bookmarks bar, open your app (live, staging, localhost, behind a login) and click it. Your browser copies the screen into a UISandbox tab; click it on another page and that one joins it. Nothing goes to a server.</p>
               <div className="way__chip"><BookmarkletChip /></div>
               <p className="way__fine"><a href="/?capture=1" onClick={(e) => { if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return; e.preventDefault(); setShowSteps(true) }}>Step by step</a></p>
-            </section>
-            <div className="door__side">
-            <p className="door__others">Other ways in</p>
-            {fold('local', 'Run it on your machine', 'One line in your project: your live app or its build, served from 127.0.0.1', <Laptop size={15} strokeWidth={1.75} />)}
-            {more === 'local' && <section className="way__body way--next">
-              <p>Is your dev server running? Paste its address and run the line in your project's terminal: the sandbox opens on your live app, hot reload included. Without an address it finds your build (<code>dist/</code>, <code>build/</code>, <code>out/</code>). Served from <code>127.0.0.1</code>: your code never leaves your machine, not even to this site. Needs Node 20.</p>
-              <LocalCommand />
-              <p className="way__fine">From Claude Code, Cursor or any MCP client: say "open this app in UISandbox". <a href="/about#agents">How</a></p>
             </section>}
-            {fold('running', 'Deployed somewhere? Add one line', 'Your app on any address: we read which kit it runs on and write its design system', <Plug size={15} strokeWidth={1.75} />)}
-            {more === 'running' && <div className="way__body"><LiveAppDoor /></div>}
-            {fold('build', 'Or load a build here', 'A zip, a folder or a public repo, read into this tab. Or try a sample', <FileArchive size={15} strokeWidth={1.75} />)}
-            {more === 'build' && <div className="way__body">
+            {more === 'build' && <div className="bring__more">
             <div className="intake__ways" role="tablist">
               {ways.map((w) => (
                 <button key={w.id} type="button" role="tab" aria-selected={way === w.id} className={`intake__way ${way === w.id ? 'intake__way--on' : ''}`} onClick={() => { setWay(w.id); setLocalError(null) }}>{w.icon} {w.label}</button>
               ))}
             </div>
-            {way !== 'repo' ? (
+            {way === 'live' ? <LiveAppDoor /> : way !== 'repo' ? (
               <div
                 className={`intake__drop ${over ? 'intake__drop--over' : ''}`}
                 onDragOver={(e) => { e.preventDefault(); setOver(true) }}
@@ -179,7 +177,7 @@ export function Door({ onArchive, onUrl, onSample, busy, error, standalone, onCl
                 <div className="intake__note">GitHub and GitLab do not allow the browser to fetch a repo zip directly, so the URL goes through uisandbox.org to fetch it. Public repos only, nothing stored. Everything else stays in your browser.</div>
               </div>
             )}
-            {way !== 'repo' && (
+            {(way === 'zip' || way === 'folder') && (
               <button type="button" className="intake__privacy" onClick={() => setShowPrivacy(true)}>
                 <ShieldCheck size={13} strokeWidth={2} /> Loaded into this tab, never sent to a server. No database, no account, no analytics. <u>How to verify</u>
               </button>
@@ -203,12 +201,9 @@ export function Door({ onArchive, onUrl, onSample, busy, error, standalone, onCl
               </div>}
             </>)}
             </div>}
-            {onClose && <button type="button" className="door__try" onClick={onClose}>No app at hand? Try it on the kit first</button>}
-            </div>
-            </div>
             <input ref={zipRef} type="file" accept=".zip,application/zip" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) void takeFiles([f]); e.target.value = '' }} />
             <input ref={dirRef} type="file" hidden {...({ webkitdirectory: '', directory: '' } as Record<string, string>)} onChange={(e) => { const fs = Array.from(e.target.files ?? []); if (fs.length) void takeFiles(fs); e.target.value = '' }} />
-          </>
+          </div>
         )}
         {localError && <div className="intake__error">{localError}</div>}
       </div>
@@ -217,20 +212,34 @@ export function Door({ onArchive, onUrl, onSample, busy, error, standalone, onCl
   )
 }
 
+/** Where the takeover is: what you bring, what was read from it, the six.
+ *  The last step is the editor itself, so the flow ends where work starts. */
+export function BringSteps({ at }: { at: 1 | 2 | 3 }) {
+  return (
+    <ol className="bring__steps" aria-label="Steps">
+      {['Bring it', 'What we found', 'Six ways'].map((label, i) => (
+        <li key={label} className={i + 1 === at ? 'bring__step--on' : i + 1 < at ? 'bring__step--done' : ''} aria-current={i + 1 === at ? 'step' : undefined}>
+          <span className="bring__n">{i + 1 < at ? <Check size={10} strokeWidth={3} /> : i + 1}</span>{label}
+        </li>
+      ))}
+    </ol>
+  )
+}
+
 /** The one line to run: with a dev server's address in it, live mode (the
  *  running app, hot reload included); without one, the build. The address is
  *  only put into the line; nothing here connects to it. */
-function LocalCommand() {
-  const [addr, setAddr] = useState('')
+function LocalCommand({ carry }: { carry?: string }) {
+  const [addr, setAddr] = useState('localhost:3000')
   const [copied, setCopied] = useState(false)
   const clean = addr.trim().replace(/\/+$/, '')
   const ok = !clean || /^(https?:\/\/)?(localhost|127\.0\.0\.1|\[::1\]|[\w-]+\.(localhost|test))(:\d+)?(\/[^\s]*)?$/i.test(clean)
   const url = clean && ok ? (/^https?:/i.test(clean) ? clean : `http://${clean}`) : ''
-  const cmd = `npx uisandbox-mcp open${url ? ` ${url}` : ''}`
+  const cmd = `npx uisandbox-mcp open${url ? ` ${url}` : ''}${carry ? ` --carry=${carry}` : ''}`
   const copy = async () => { try { await navigator.clipboard.writeText(cmd); setCopied(true); setTimeout(() => setCopied(false), 1400) } catch { /* the line is on screen to select */ } }
   return (
     <div className="localcmd">
-      <input className="intake__input" type="text" inputMode="url" placeholder="http://localhost:3000 (optional)" value={addr} onChange={(e) => setAddr(e.target.value)} aria-label="Your dev server's address, if it is running" spellCheck={false} />
+      <input className="intake__input" type="text" inputMode="url" placeholder="your dev server, e.g. localhost:5173 (empty: your build)" value={addr} onChange={(e) => setAddr(e.target.value)} aria-label="Your dev server's address, if it is running" spellCheck={false} />
       <div className="install install--compact">
         <div className="install__pill">
           <span className="install__prompt" aria-hidden>$</span>

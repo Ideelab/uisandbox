@@ -1,6 +1,6 @@
 import DOOR from '../kits/door.json'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Check, Download, PanelLeftOpen, X, BookOpen } from 'lucide-react'
+import { ArrowLeft, Download, PanelLeftOpen, X, BookOpen } from 'lucide-react'
 import { SandboxPanel } from '../panel/SandboxPanel'
 import type { Config } from '../tokens/types'
 import { useConfig } from '../state/useConfig'
@@ -28,14 +28,15 @@ import { LookGrid, type LookCard } from './LookGrid'
 import { measureTells, type Tell } from '../sandbox/tells'
 import { DIRECTIONS, applyDirection, firstRoll, reroll, type LookLocks, type LookRoll } from '../sandbox/directions'
 import { Door, LoadStages } from './Intake'
+import { Found } from './Found'
 import { CaptureDoor } from './CaptureDoor'
 import { captureArchive, readCapture, sanitizeHtml, screenPath, type CapturedScreen } from '../capture/receive'
 import { AboutDialog } from './AboutDialog'
 import { Stage, isSheet, type StageTab } from './Stage'
 import { ExportDialog } from './ExportDialog'
-import { EngineSelect, PresetSelect, SchemeSwitch, SendButton } from './EditorBar'
+import { EngineSelect, PresetSelect, SchemeSwitch, SendButton, ViewSwitch } from './EditorBar'
 import { encode, readHash } from '../state/hash'
-import { carryOver, differingKeys, isShownKnob, knobLabel, withKeys } from '../state/carry'
+import { carryOver, carryToken, differingKeys, isShownKnob, knobLabel, readCarryToken, withKeys } from '../state/carry'
 import { genPatch, genPatchedFiles } from '../export/genSheet'
 
 interface Loaded {
@@ -52,7 +53,7 @@ interface Loaded {
   /** Knobs carried over from the kit it was brought after (state/carry.ts),
    *  waiting for the first render: the baseline is corrected from the
    *  UNTOUCHED page, and only then are they put on top, as a hand would. */
-  pendingCarry?: { cfg: Config; keys: string[] }
+  pendingCarry?: { cfg: Config; keys: string[]; from: string; ask?: boolean }
   /** What `?load=` would need to open this build again (a zip URL, a repo
    *  URL); none for a build dropped from somebody's machine. Share uses it. */
   source?: string
@@ -60,6 +61,8 @@ interface Loaded {
    *  a snapshot, so no routes to discover; the origin they came from. */
   captured?: { origin: string }
 }
+
+const carryNote = (from: string, keys: string[]) => `Carried over from ${from}: ${keys.filter(isShownKnob).map(knobLabel).join(', ')}. Every other knob starts where your code puts it; Reset puts it all back.`
 
 /** Where a visitor lands: the editor, on this kit as it ships (merge phase 3).
  *  Nothing to upload before the first knob; their own app is a tab away. */
@@ -110,9 +113,13 @@ function Editor() {
   const [panelOpen, setPanelOpen] = useState(() => typeof window === 'undefined' || window.innerWidth > 820)
   const [showExport, setShowExport] = useState(false)
   const [showNotes, setShowNotes] = useState(false)
-  // The stage's tabs. On a kit: its components sheet, its screens, and the
-  // door to your own app. `?tab=app` (from /about) opens on the door.
-  const [tab, setTab] = useState<StageTab>(() => new URLSearchParams(location.search).get('tab') === 'app' ? 'app' : 'components')
+  // The stage's tabs, on a kit: its screens and its components sheet.
+  const [tab, setTab] = useState<StageTab>('screens')
+  // Try it on your own app (decision 217): the takeover over the kit, step 1
+  // of three; What we found is step 2, once an app is in; the six are step 3.
+  // `?tab=app` (from /about) opens on it.
+  const [bringOpen, setBringOpen] = useState(() => new URLSearchParams(location.search).get('tab') === 'app')
+  const [foundOpen, setFoundOpen] = useState(false)
   // A shared link's knobs: read before the first load resets them, applied
   // once that load is in (onArchive), then forgotten.
   const sharedCfg = useRef<Config | null>(readHash())
@@ -120,8 +127,18 @@ function Editor() {
   // open http://localhost:3000`). Only the first load, only from 127.0.0.1:
   // the files it lacks are fetched from the dev server behind /__dev/.
   const liveFirst = useRef(new URLSearchParams(location.search).get('live') === '1' && /^(127\.0\.0\.1|localhost)$/.test(location.hostname))
-  // Only the very first load honours `?tab=app`; a kit loaded later opens on its sheet.
-  const doorFirst = useRef(new URLSearchParams(location.search).get('tab') === 'app')
+  // What was turned on a kit at uisandbox.org, brought along in the command
+  // line (`--carry=`, state/carry.ts): offered on the first load, as a kit's
+  // knobs are when an app is brought after it in the same tab.
+  const carryFirst = useRef(new URLSearchParams(location.search).get('carry'))
+  // Read once, then off the address: a reload or a copied link must not offer it again.
+  useEffect(() => {
+    const u = new URL(location.href)
+    if (u.searchParams.has('carry')) { u.searchParams.delete('carry'); history.replaceState(history.state, '', u.pathname + u.search + u.hash) }
+  }, [])
+  // A first visit lands on the six (decision 217): the kit, six ways, is the
+  // first thing to see. Not for a link that names what to open.
+  const sixFirst = useRef(!['load', 'tab', 'capture', 'live', 'screen'].some((k) => new URLSearchParams(location.search).has(k)) && !location.hash)
   // `?capture=1`: the tab the bookmarklet opened (capture/grab.ts). It waits
   // for screens instead of loading a kit, and every screen that arrives is
   // added to the same project.
@@ -451,7 +468,7 @@ function Editor() {
     // The knobs carried from a kit land now: after the untouched page had its
     // chance to correct the baseline, on top of the corrected one.
     const cur = loadedRef.current
-    if (cur?.pendingCarry) {
+    if (cur?.pendingCarry && !cur.pendingCarry.ask) {
       const { cfg: carried, keys } = cur.pendingCarry
       cur.pendingCarry = undefined
       dispatch({ type: 'REPLACE', cfg: withKeys(cur.report.baseline.cfg, carried, keys) })
@@ -494,6 +511,12 @@ function Editor() {
       // A screen taken along after others keeps what was turned on them.
       const prev = loadedRef.current
       const from = prev && (prev.kit || (extra?.captured && prev.captured)) ? { name: prev.kit?.name ?? 'the screens taken before', base: prev.report.baseline.cfg, cfg: cfgRef.current } : null
+      // The knobs from the command line, on the first load only.
+      const token = !kit && carryFirst.current ? readCarryToken(carryFirst.current) : null
+      carryFirst.current = null
+      // What we found: for an app that came in now, not for one more screen
+      // taken along to the ones before it.
+      const ask = !kit && !(extra?.captured && prev?.captured)
       if (loaded) disown(loaded.project)
       // A previous tenant's leftovers, before the next one renders: the frame
       // is same-origin, so what the last app wrote to localStorage is still
@@ -504,14 +527,17 @@ function Editor() {
       // A fresh project is a fresh start: no history, no hash from the last one.
       reset(report.baseline.cfg)
       setLookOn(null)
-      // A shared link's knobs, once; else what was turned on the kit before.
+      // A shared link's knobs, once; else what was turned on the kit before
+      // (in this tab, or in the command line). An app that came in now is
+      // asked first, in What we found; one more screen keeps what was turned.
       let pendingCarry: Loaded['pendingCarry']
       if (sharedCfg.current) { dispatch({ type: 'REPLACE', cfg: sharedCfg.current }); sharedCfg.current = null }
-      else if (from && !kit) {
-        const carried = carryOver(from.base, from.cfg, report.baseline.cfg)
-        if (carried.keys.length) {
-          pendingCarry = { cfg: carried.cfg, keys: carried.keys }
-          report.notes.unshift(`Carried over from ${from.name}: ${carried.keys.filter(isShownKnob).map(knobLabel).join(', ')}. Every other knob starts where your code puts it; Reset puts it all back.`)
+      else if ((from || token) && !kit) {
+        const carried = token ? { cfg: withKeys(report.baseline.cfg, token.cfg, token.keys), keys: token.keys } : carryOver(from!.base, from!.cfg, report.baseline.cfg)
+        const name = token?.name ?? from!.name
+        if (carried.keys.some(isShownKnob)) {
+          pendingCarry = { cfg: carried.cfg, keys: carried.keys, from: name, ask }
+          if (!ask) report.notes.unshift(carryNote(name, carried.keys))
         }
       }
       if (extra?.notes) report.notes.push(...extra.notes)
@@ -519,6 +545,8 @@ function Editor() {
       // the same Dashboard in another kit is the comparison worth making, and
       // every kit build has the same pages.
       const stay = kit && prev?.kit && tab === 'screens' ? prev.screen.path : null
+      if (sixFirst.current && kit) { setLocks({ font: false }); setLooksOpen(true) }
+      sixFirst.current = false
       const wanted = extra?.screen ?? stay ?? new URLSearchParams(location.search).get('screen')
       // A kit opens on its Dashboard: a screen says more than the sheet of
       // every control, which is a drill-down (Alexander). Coming from the
@@ -526,10 +554,10 @@ function Editor() {
       const kitStart = kit ? (prev?.kit && tab === 'components' ? project.screens.find(isSheet) : project.screens.find((s) => /overview/i.test(s.path))) : undefined
       const first = (wanted && project.screens.find((s) => s.path === wanted || s.label === wanted)) || kitStart || project.screens[0]!
       setLoaded({ project, report, screen: first, archive, kit, source, pendingCarry, captured: extra?.captured })
-      // Their own app is what they came for: show it, and what was read from it.
-      // A kit opens quietly on its Dashboard, unless the visitor asked for the door.
-      if (kit) { setTab(doorFirst.current ? 'app' : isSheet(first) ? 'components' : 'screens'); doorFirst.current = false }
-      else { setTab('app'); setShowNotes(true) }
+      // Their own app is what they came for: what was read from it, step 2.
+      // A kit opens quietly on its Dashboard.
+      if (kit) setTab(isSheet(first) ? 'components' : 'screens')
+      else { setBringOpen(false); setLooksOpen(false); setShowExport(false); if (ask) setFoundOpen(true); else setShowNotes(true) }
     } catch (err) {
       setError((err as Error).message)
     } finally {
@@ -664,7 +692,7 @@ function Editor() {
   // read as the old landing page flashing past).
   const startOver = () => {
     if (location.search || location.hash) history.replaceState(null, '', '/')
-    if (loaded?.kit?.id === DEFAULT_KIT && !busy) { setTab('components'); dispatch({ type: 'REPLACE', cfg: loaded.report.baseline.cfg }); return }
+    if (loaded?.kit?.id === DEFAULT_KIT && !busy) { dispatch({ type: 'REPLACE', cfg: loaded.report.baseline.cfg }); return }
     void loadFromUrl(`/kits/${DEFAULT_KIT}.zip`)
   }
   const closeProject = startOver
@@ -678,7 +706,7 @@ function Editor() {
     return same ? base : `${base}#${encode(cfg)}`
   })()
   const pickKit = (id: string) => {
-    if (loaded && !loaded.kit && !confirm(`Switch to ${DOOR.find((d) => d.id === id)?.name ?? id}? Your app was only in this tab: switching closes it, and you can bring it again from the Your app tab.`)) return
+    if (loaded && !loaded.kit && !confirm(`Switch to ${DOOR.find((d) => d.id === id)?.name ?? id}? Your app was only in this tab: switching closes it, and you can bring it again with Try it on your own app.`)) return
     void loadFromUrl(`/kits/${id}.zip`)
   }
   useEffect(() => { setLookApplied(null) }, [loaded?.project.id])
@@ -686,26 +714,30 @@ function Editor() {
   // baseline; "Custom" once something was turned on top of a look.
   const lookNow = !loaded || encode(cfg) === encode(loaded.report.baseline.cfg) ? null : lookApplied && encode(lookApplied.cfg) === encode(cfg) ? lookApplied.id : lookApplied ? '' : null
   const hasScheme = !!loaded && (loaded.project.scheme.media || loaded.project.scheme.hooks.length > 0)
-  // The four steps (decision 216), each opening what it names. Opening one
-  // closes the others: one card over the canvas at a time.
-  const step = tab === 'app' && loaded?.kit ? 1 : looksOpen ? 2 : showExport ? 4 : 3
-  const steps: Array<{ n: number; label: string; title: string; on: boolean; done: boolean; go: () => void }> = [
-    { n: 1, label: 'Your app', title: loaded?.kit ? 'Connect your app: any screen your browser shows, your dev server, or a build' : 'Your app is in',
-      on: step === 1, done: !!loaded && !loaded.kit, go: () => { if (loaded?.kit) { setLooksOpen(false); tab === 'app' ? closeDoor() : openDoor() } } },
-    { n: 2, label: lookOn ? DIRECTIONS.find((d) => d.id === lookOn)?.name ?? 'Pick a look' : 'Pick a look', title: 'Your screen in six directions, side by side',
-      on: step === 2, done: !!lookOn, go: () => { if (tab === 'app') closeDoor(); if (looksOpen) setLooksOpen(false); else openLooks() } },
-    { n: 3, label: 'Tune', title: 'The knobs on the left, on your screen', on: step === 3, done: changedCount > 0,
-      go: () => { if (tab === 'app') closeDoor(); setLooksOpen(false); setShowExport(false) } },
-    { n: 4, label: 'Take it home', title: 'To your agent, or as code', on: step === 4, done: false, go: () => { setLooksOpen(false); setShowExport(true) } },
-  ]
-  // The door opens over the kit and closes back to the tab of the screen under
-  // it: read from the screen, so the two can never disagree.
-  const openDoor = () => setTab('app')
-  const closeDoor = () => setTab(loaded && !isSheet(loaded.screen) ? 'screens' : 'components')
   // One card at a time: Export or How it works, opened from the top bar or
-  // the footer the door leaves uncovered, closes the door under it.
-  useEffect(() => { if ((showExport || aboutOpen) && tab === 'app' && loaded?.kit) closeDoor() }, [showExport, aboutOpen]) // eslint-disable-line react-hooks/exhaustive-deps
-  const makeDoor = (standalone = false) => <Door standalone={standalone} onClose={!standalone && loaded?.kit ? closeDoor : undefined} onArchive={onArchive} onUrl={(u) => void loadFromUrl(`/__repo/?u=${encodeURIComponent(u)}`)} onSample={(p) => void loadFromUrl(p)} busy={busy} error={error} />
+  // the footer, closes the takeover under it.
+  useEffect(() => { if (showExport || aboutOpen) setBringOpen(false) }, [showExport, aboutOpen])
+  // What was turned on the kit, for the command line in the takeover.
+  const kitCarry = (() => {
+    if (!loaded?.kit) return null
+    const token = carryToken(loaded.kit.name, loaded.report.baseline.cfg, cfg)
+    return token ? { token, kit: loaded.kit.name, names: differingKeys(loaded.report.baseline.cfg, cfg).filter(isShownKnob).map(knobLabel) } : null
+  })()
+  const foundDone = (bring: boolean, six: boolean) => {
+    const cur = loadedRef.current
+    const pc = cur?.pendingCarry
+    setFoundOpen(false)
+    if (cur && pc) {
+      cur.pendingCarry = undefined
+      if (bring) {
+        dispatch({ type: 'REPLACE', cfg: withKeys(cur.report.baseline.cfg, pc.cfg, pc.keys) })
+        cur.report.notes.unshift(carryNote(pc.from, pc.keys))
+      }
+    }
+    if (six) { setLocks({ font: bring && !!pc?.keys.some((k) => k === 'fontDisplay' || k === 'fontBody') }); setLooksOpen(true) }
+  }
+  const schemeHooks = loaded ? [loaded.project.scheme.media ? 'prefers-color-scheme' : null, ...loaded.project.scheme.hooks.map(([a, d]) => (a === 'class' ? `.${d}` : `[${a}="${d}"]`))].filter(Boolean).join(' · ') : ''
+  const makeDoor = (standalone = false) => <Door standalone={standalone} onClose={!standalone && loaded ? () => setBringOpen(false) : undefined} carry={standalone ? null : kitCarry} onArchive={onArchive} onUrl={(u) => void loadFromUrl(`/__repo/?u=${encodeURIComponent(u)}`)} onSample={(p) => void loadFromUrl(p)} busy={busy} error={error} />
   return (
     <div className="app">
       <header className="app__topbar">
@@ -713,24 +745,17 @@ function Editor() {
         {/* Beside the name, where "Design System Generator" stood (it lives in
             the footer): the one link a newcomer looks for first. */}
         <a className="app__how" href="/about" title="How it works" onClick={openAbout}><BookOpen size={14} /> <span>How it works</span></a>
-        {/* The four steps (decision 216): where a maker is, and the way on.
-            Each opens what it names: the door, the looks, the canvas, Export.
-            Your app replaces the Connect button that stood here. */}
-        {loaded ? (
-          <nav className="steps" aria-label="Steps">
-            {steps.map((st) => (
-              <button key={st.n} type="button" className={`steps__step ${st.on ? 'steps__step--on' : ''} ${st.done ? 'steps__step--done' : ''}`} aria-current={st.on ? 'step' : undefined} onClick={st.go} title={st.title}>
-                <span className="steps__n">{st.done && !st.on ? <Check size={11} strokeWidth={3} /> : st.n}</span><span className="steps__label">{st.label}</span>
-              </button>
-            ))}
-          </nav>
-        ) : <span className="app__spacer" />}
+        {/* No step bar (decision 217): the steps are the controls themselves,
+            1 | 6 over the screen, the knobs, and these two. */}
+        <span className="app__spacer" />
         <div className="app__group">
           {!loaded && <><McpButton /><StarButton /></>}
           {loaded && <>
+            {loaded.kit
+              ? <button type="button" className="btn btn--secondary btn--sm app__try" onClick={() => { setLooksOpen(false); setBringOpen(true) }} aria-haspopup="dialog"><span className="app__try-long">Try it on your own app</span><span className="app__try-short">Your app</span></button>
+              : <button type="button" className="btn btn--ghost btn--sm" onClick={closeProject} title="Close your app and go back to the kit"><ArrowLeft size={14} /> Back to the kits</button>}
             <button type="button" className={`btn ${sendTo ? 'btn--secondary' : 'btn--primary'} btn--sm`} onClick={() => setShowExport(true)}><Download size={14} /> Export</button>
             {sendTo && !loaded.kit && <SendButton to={sendTo} onSend={sendBack} />}
-            {!loaded.kit && <button type="button" className="btn btn--ghost btn--sm" onClick={closeProject} title="Close your app and go back to the kit"><X size={14} /> Close</button>}
           </>}
         </div>
       </header>
@@ -750,7 +775,6 @@ function Editor() {
                 tokens={tokens}
                 base={loaded.report.baseline.cfg}
                 families={loaded.report.baseline.families}
-                scheme={loaded.project.scheme}
                 codeFonts={codeFonts(loaded.project.table)}
                 hasGradients={loaded.project.table.ofKind('angle').length > 0}
                 varNow={(id) => vars[varName(id)]}
@@ -781,7 +805,7 @@ function Editor() {
               peek={peek}
               onPeek={setPeek}
               tells={tells ?? undefined}
-              onLooks={() => { if (tab === 'app') closeDoor(); openLooks() }}
+              onLooks={openLooks}
               looks={looksOpen && loaded ? <LookGrid project={loaded.project} screen={loaded.screen} looks={lookCards} current={lookOn} locks={locks} onLocks={setLocks}
                 onShuffle={() => setRoll((r) => reroll(r))} onPick={pickDirection} onClose={() => setLooksOpen(false)} /> : null}
               warningTitle={!thin && !missingFiles.length && flutterWeb ? 'A Flutter web build' : undefined}
@@ -790,8 +814,10 @@ function Editor() {
               tab={tab}
               onTab={setTab}
               kitName={loaded.kit?.name}
-              door={makeDoor()}
-              barExtra={hasScheme ? <SchemeSwitch value={cfg.sb.dark ?? 'light'} onChange={(v) => dispatch({ type: 'SET', patch: { sb: { ...cfg.sb, dark: v } } })} /> : null}
+              barExtra={<>
+                <ViewSwitch six={looksOpen} onChange={(six) => (six ? openLooks() : setLooksOpen(false))} />
+                {hasScheme && <SchemeSwitch value={cfg.sb.dark ?? 'light'} hooks={schemeHooks} onChange={(v) => dispatch({ type: 'SET', patch: { sb: { ...cfg.sb, dark: v } } })} />}
+              </>}
               onToggleNotes={() => setShowNotes((v) => !v)}
               notesOpen={showNotes}
               notesLabel={loaded.kit ? `What UISandbox read from ${loaded.kit.name}: its files, its brand, its fonts, its values` : 'What UISandbox read from your code: the files, the brand, the fonts, the values'}
@@ -828,6 +854,9 @@ function Editor() {
         ))}
       </div>
       {(loaded || !error) && <Footer onAbout={(section) => aboutDialog.open(section)} />}
+      {bringOpen && loaded && <div className="stage__door">{makeDoor()}</div>}
+      {foundOpen && loaded && !loaded.kit && <Found facts={{ name: loaded.project.name, kit: coverage ? coverage.kit : undefined, screens: loaded.project.screens.length, values: loaded.project.table.entries.length, brand: loaded.report.baseline.cfg.cPrimary, font: loaded.report.baseline.cfg.fontBody }}
+        carry={loaded.pendingCarry?.ask ? { from: loaded.pendingCarry.from, names: loaded.pendingCarry.keys.filter(isShownKnob).map(knobLabel) } : null} onDone={foundDone} />}
       {aboutDialog.about && <AboutDialog section={aboutDialog.about.section} onClose={aboutDialog.close} />}
       {showExport && loaded && (
         <ExportDialog cfg={cfg} base={loaded.report.baseline.cfg} table={loaded.project.table} vars={vars} projectName={loaded.project.name} kitDoorName={loaded.kit?.name} shareUrl={shareUrl} files={loaded.project.raw} fontCss={fontCss} notes={loaded.report.notes} painted={coverage?.painted} anchors={coverage?.anchors} kit={coverage ? coverage.kit : undefined} kitValues={coverage?.kitValues} readPageVars={readPageVars} send={sendTo ? { to: sendTo, onSend: sendBack } : undefined} tells={tells ?? []} onClose={() => setShowExport(false)} />

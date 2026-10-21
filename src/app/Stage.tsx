@@ -28,13 +28,13 @@ interface StageProps {
    *  whenever the 1:1 check is not; one card at a time, never two on top of
    *  each other. */
   notes?: React.ReactNode
-  /** The tabs (merge phase 3). On a kit: its components sheet, its screens,
-   *  and "Your app", whose empty state is the door. */
+  /** The tabs (merge phase 3). On a kit: its screens and its components
+   *  sheet; your own app is Try it on your own app, over the stage (decision 217). */
   tab?: StageTab
   /** The AI tells measured on this screen, and the way out of them (decision 216). */
   tells?: Tell[]
   onLooks?: () => void
-  /** Pick a look: the grid over the frame; step 2 in the top bar opens it (decision 216). */
+  /** The six looks over the frame; the 1 | 6 switch in the bar opens it (decision 217). */
   looks?: React.ReactNode
   /** Held: the frame shows the original values (decision 216). */
   peek?: boolean
@@ -42,9 +42,7 @@ interface StageProps {
   onTab?: (t: StageTab) => void
   /** Set when the stage shows a kit build of ours, not somebody's app. */
   kitName?: string
-  /** The ways in, shown on the "Your app" tab while a kit is on the stage. */
-  door?: React.ReactNode
-  /** Canvas controls that sit with the screen picker (Light / Dark). */
+  /** Canvas controls that sit with the screen picker (1 | 6, Light / Dark). */
   barExtra?: React.ReactNode
   /** The "What we read" card: shown or not, and its toggle in the foot. */
   onToggleNotes?: () => void
@@ -52,7 +50,7 @@ interface StageProps {
   notesLabel?: string
 }
 
-export type StageTab = 'components' | 'screens' | 'app'
+export type StageTab = 'components' | 'screens'
 
 /** A kit build's components sheet is its index page; every other page is a screen. */
 export const isSheet = (s: Screen) => /^(index\.html?)?$/i.test(s.path.replace(/^\//, ''))
@@ -75,7 +73,7 @@ function reportUrl(project: SandboxProject, detail: string): string {
   return `https://github.com/Ideelab/uisandbox/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}&labels=build-report`
 }
 
-export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, pinnable, changedCount, peek, onPeek, looks, tells, onLooks, warning, warningTitle, coverage, notes, tab = 'app', onTab, kitName, door, barExtra, onToggleNotes, notesOpen, notesLabel }: StageProps) {
+export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, pinnable, changedCount, peek, onPeek, looks, tells, onLooks, warning, warningTitle, coverage, notes, tab = 'screens', onTab, kitName, barExtra, onToggleNotes, notesOpen, notesLabel }: StageProps) {
   const [showCov, setShowCov] = useState(false)
   const [showTells, setShowTells] = useState(false)
   const [verify, setVerify] = useState<VerifyResult | { busy: true } | null>(null)
@@ -124,14 +122,13 @@ export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, pi
   // On a kit the tabs pick the screen: the sheet, or one of the others.
   const sheet = kitName ? project.screens.find(isSheet) : undefined
   const others = kitName ? project.screens.filter((s) => !isSheet(s)) : project.screens
-  const atDoor = !!kitName && tab === 'app'
   const pickTab = (t: StageTab) => {
     onTab?.(t)
     if (t === 'components' && sheet && screen !== sheet) onScreen(sheet)
     if (t === 'screens' && isSheet(screen) && others.length) onScreen(others.find((s) => /overview/i.test(s.path)) ?? others[0]!)
   }
   // Whatever the screen picker lands on decides the tab it belongs to.
-  useEffect(() => { if (kitName && tab !== 'app') onTab?.(isSheet(screen) ? 'components' : 'screens') }, [screen, kitName]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (kitName) onTab?.(isSheet(screen) ? 'components' : 'screens') }, [screen, kitName]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <section className="stage">
@@ -145,17 +142,13 @@ export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, pi
         {(!kitName || tab === 'screens') && <ScreenPicker screens={others} current={screen} onPick={onScreen} onPin={onPin} pinnable={pinnable} named={!!kitName} />}
         {/* the mode sits with the screen it shows; no widths (Alexander: a
             design system is looked at on a desktop, and a window resizes) */}
-        {!atDoor && barExtra}
+        {barExtra}
       </div>
-      <div className={`stage__frame ${atDoor ? 'stage__frame--door' : ''}`}>
-        {/* The door sits OVER the kit, which stays loaded and measured under
-            it: the knobs, the reach and the export keep working while a
-            visitor decides what to bring. */}
-        {atDoor && <div className="stage__door">{door}</div>}
-        {!atDoor && looks && <div className="stage__looks">{looks}</div>}
+      <div className="stage__frame">
+        {looks && <div className="stage__looks">{looks}</div>}
         {/* Hold to see your original: the comparison a maker actually wants,
             their screen now against their screen restyled, on the same page. */}
-        {!atDoor && !looks && onPeek && changedCount > 0 && (
+        {!looks && onPeek && changedCount > 0 && (
           <button type="button" className={`peek ${peek ? 'peek--on' : ''}`} aria-pressed={!!peek}
             onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); onPeek(true) }}
             onPointerUp={() => onPeek(false)} onPointerCancel={() => onPeek(false)} onLostPointerCapture={() => onPeek(false)}
@@ -185,9 +178,9 @@ export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, pi
           }}
         />
         {/* The door is its own card; nothing lies on top of it. */}
-        {!showVerify && !atDoor && notes}
+        {!showVerify && notes}
         <div className="stage__low">
-        {showTells && tells && !atDoor && !looks && (
+        {showTells && tells && !looks && (
           <div className="card popcard popcard--low verify tells" role="dialog" aria-label="Why it looks generic">
             <button type="button" className="btn btn--ghost btn--icon popcard__x" onClick={() => setShowTells(false)} aria-label="Close" title="Close"><X size={15} /></button>
             <h3>{tells.length ? 'Why it looks generic' : 'No AI tells on this screen'}</h3>

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * THE CLIP: the four steps, on the real app, frame by frame.
+ * THE CLIP: the editor and Try it on your own app, on the real app, frame by frame.
  *
  *   node scripts/og/clip.mjs [base]        dev server on :5190 by default
  *
@@ -9,10 +9,11 @@
  * CAPTURED one at a time and held for a set time, so every cut is exact and
  * the pace is a choice, the way launch-clip.mjs did it for the old door.
  *
- * The story is the top bar's: a kit as it ships, its Dashboard six ways, one
- * picked, the colour turned and the dark mode switched, then a real build of
- * somebody else's (SB Admin 2, from fixtures/) brought in with those knobs
- * along, checked 1:1, and taken home.
+ * The story (decision 217): a kit's Dashboard six ways, as the editor opens,
+ * one picked, the colour turned and the dark mode switched, then Try it on
+ * your own app with a real build of somebody else's (SB Admin 2, from
+ * fixtures/), what we found, those knobs brought along, the six again,
+ * checked 1:1, and taken home.
  */
 import { chromium } from 'playwright'
 import { execFileSync } from 'node:child_process'
@@ -31,20 +32,19 @@ const p = await (await b.newContext({ viewport: { width: W, height: H }, deviceS
 const frames = []
 const shot = async (hold) => { const f = join(tmp, `f${String(frames.length).padStart(3, '0')}.png`); await p.screenshot({ path: f }); frames.push([f, hold]) }
 const wait = (ms) => p.waitForTimeout(ms)
-// exact first, then contains: the step buttons read "1Your app", number and name
+// exact first, then contains
 const click = (text) => p.evaluate((t) => { const all = [...document.querySelectorAll('button')]; const b = all.find((x) => x.textContent.trim() === t) ?? all.find((x) => x.textContent.includes(t)); b?.click(); return !!b }, text)
 const set = (patch) => p.evaluate((x) => { const u = window.__us; u.dispatch({ type: 'SET', patch: { ...x, sb: { ...u.cfg.sb, ...(x.sb ?? {}) } } }) }, patch)
 
-// 1. a kit as it ships: shadcn/ui, its Dashboard
+// 1. a kit as it ships, its Dashboard six ways: where the editor opens
 await p.goto(base, { waitUntil: 'domcontentloaded' })
 // the hint pill is for a person at the keys, not for a clip
 await p.addStyleTag({ content: '.peek{display:none!important}' }).catch(() => {})
-await p.waitForSelector('.stage__foot', { timeout: 90000 }); await wait(5000)
+await p.waitForSelector('.stage__foot', { timeout: 90000 }); await wait(7000)
 await p.evaluate(() => document.querySelector('.popcard button')?.click())
-await shot(2.2)
+await shot(2.4)
 
-// 2. Pick a look: the screen six ways, one opened, picked
-await click('Pick a look'); await wait(7000); await shot(2.4)
+// 2. one opened, picked
 await p.evaluate(() => [...document.querySelectorAll('.looks__card')].find((c) => /^Soft/.test(c.textContent.trim()))?.click()); await wait(2500); await shot(1.4)
 await click('Pick this one'); await wait(2500); await shot(1.4)
 
@@ -53,13 +53,15 @@ for (const c of ['#2f72b3', '#0f766e', '#c2410c', '#be123c', '#4f46e5']) { await
 await set({ sb: { dark: 'dark' } }); await wait(1600); await shot(1.6)
 await set({ sb: { dark: 'light' } }); await wait(1200)
 
-// 1 again, for real: their own build, with the knobs along
-await click('Your app'); await wait(1200)
+// Try it on your own app: their own build, what we found, the knobs along
+await click('Try it on your own app'); await wait(1000); await shot(2.0)
+await click('Bring a zip'); await wait(400)
 await p.setInputFiles('input[type=file][accept*="zip"]', join(root, 'fixtures', 'startbootstrap-sb-admin-2-master.zip'))
-await p.waitForFunction(() => /sb-admin|SB Admin|startbootstrap/i.test(document.querySelector('.stage__foot')?.textContent ?? ''), null, { timeout: 120000 })
-await wait(6000)
-await p.evaluate(() => document.querySelectorAll('.popcard .popcard__x').forEach((b) => b.click()))
-await wait(1500); await shot(2.2)
+await p.waitForSelector('.found__facts', { timeout: 120000 }); await wait(2500)
+await p.evaluate(() => document.querySelectorAll('.found__opt input')[1]?.click()); await wait(400); await shot(2.2)
+await click('See it six ways'); await wait(7000); await shot(2.2)
+await p.evaluate(() => document.querySelector('.ebar__view button[title^="One"]')?.click())
+await wait(1500); await shot(1.6)
 
 // the 1:1 check
 await p.evaluate(() => [...document.querySelectorAll('.stage__foot .chip, .stage__foot button')].find((x) => /Check 1:1/.test(x.textContent))?.click())

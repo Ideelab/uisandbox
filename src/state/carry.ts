@@ -7,6 +7,7 @@
  * corners. Only what was turned travels; every knob left alone starts where
  * the new build's own code puts it.
  */
+import LZString from 'lz-string'
 import { DIALS } from '../sandbox/dials'
 import type { Config } from '../tokens/types'
 
@@ -51,4 +52,31 @@ export function withKeys(target: Config, source: Config, keys: Iterable<string>)
 export function carryOver(fromBase: Config, fromCfg: Config, toBase: Config): { cfg: Config; keys: string[] } {
   const keys = differingKeys(fromBase, fromCfg)
   return { cfg: withKeys(toBase, fromCfg, keys), keys }
+}
+
+/* ── The knobs on the command line ─────────────────────────────────────────
+ * `npx uisandbox-mcp open http://localhost:3000` opens the app on 127.0.0.1,
+ * another origin than the kit it was turned on: nothing of this tab reaches
+ * it. So what was turned rides in the line itself, as `--carry=<token>`, and
+ * the local server hands the token to the page as `&carry=`. Only the knobs
+ * that differ from the kit, with the kit's name for the note. Base64url, so
+ * no shell (sh, zsh, PowerShell, cmd) reads a character of it as its own. */
+export function carryToken(kitName: string, fromBase: Config, fromCfg: Config): string | null {
+  const keys = differingKeys(fromBase, fromCfg)
+  if (!keys.some(isShownKnob)) return null
+  const picked = withKeys({ sb: {} } as unknown as Config, fromCfg, keys)
+  const b64 = LZString.compressToBase64(JSON.stringify({ n: kitName, k: keys, c: picked }))
+  return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
+export function readCarryToken(token: string): { name: string; keys: string[]; cfg: Config } | null {
+  try {
+    const b64 = token.replace(/-/g, '+').replace(/_/g, '/')
+    const json = LZString.decompressFromBase64(b64 + '='.repeat((4 - (b64.length % 4)) % 4))
+    if (!json) return null
+    const j = JSON.parse(json) as { n?: unknown; k?: unknown; c?: unknown }
+    if (typeof j.n !== 'string' || !Array.isArray(j.k) || !j.k.every((x) => typeof x === 'string' && /^(sb\.)?[A-Za-z]+$/.test(x)) || typeof j.c !== 'object' || !j.c) return null
+    const c = j.c as Config
+    return { name: j.n.slice(0, 60), keys: j.k as string[], cfg: { ...c, sb: { ...(c.sb ?? {}) } } as Config }
+  } catch { return null }
 }

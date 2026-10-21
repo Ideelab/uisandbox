@@ -1,5 +1,5 @@
 // The stills from the LIVE app, as it opens now (decision 216): the editor on a
-// kit's Dashboard, and that Dashboard six ways in Pick a look.
+// kit's Dashboard, and that Dashboard six ways (the editor's first view).
 //
 //   node scripts/og/og-from-site.mjs [base]       dev server on :5190 by default
 //
@@ -25,8 +25,9 @@ const open = async (w, h, scheme, dsf = 2) => {
   await p.evaluate(() => document.querySelectorAll('.popcard .popcard__x').forEach((x) => x.click()))
   return p
 }
+// The editor lands on the six (decision 217); 6 in the bar, should it not have.
 const looks = async (p) => {
-  await p.evaluate(() => [...document.querySelectorAll('button')].find((x) => x.textContent.includes('Pick a look'))?.click())
+  await p.evaluate(() => document.querySelector('.ebar__view button[title^="Six"]')?.click())
   await p.waitForTimeout(7000)
 }
 
@@ -44,6 +45,8 @@ for (const scheme of ['light', 'dark']) {
 }
 copyFileSync(join(out, 'og-site-light.png'), join(root, 'public', 'og.png'))
 
+// the hero is the one screen the six open on
 const hero = await open(1440, 900, 'light')
+await hero.evaluate(() => document.querySelector('.ebar__view button[title^="One"]')?.click()); await hero.waitForTimeout(1500)
 await hero.screenshot({ path: join(out, 'site-hero-light-1440.png') })
 await b.close(); console.log('ok')

@@ -33,17 +33,20 @@ something to turn before you bring anything.
 
 ## The four steps
 
-1. **Bring your app.** The editor opens on shadcn/ui as it ships, with seven more
-   kits one pick away (Tailwind CSS, daisyUI, Bootstrap, Material 3, Radix Themes,
-   Mantine, Ant Design), each dressed as the same seven-screen invoicing app. Then
-   bring yours: drag *Take this screen along* to your bookmarks bar and click it on
-   any screen your browser shows (live, staging, localhost, behind a login); or run
-   `npx uisandbox-mcp open` in your project for a build or a running dev server; or
-   drop a zip, a folder or a public repo. What you turned on the kit comes along.
-2. **Pick a look.** Your own screen six ways, side by side: Classic, Compact, Soft,
-   Sharp, Airy and Bold. They differ in corners, spacing, depth and type and never
-   in colour, so you compare the style and not the paint. Open one full size, then
-   *Pick this one*. The same six are the Preset list.
+1. **Bring your app.** The editor opens on shadcn/ui as it ships, six ways, with
+   seven more kits one pick away (Tailwind CSS, daisyUI, Bootstrap, Material 3,
+   Radix Themes, Mantine, Ant Design), each dressed as the same seven-screen
+   invoicing app. Then *Try it on your own app*: run
+   `npx uisandbox-mcp open http://localhost:3000` next to your dev server, or tell
+   your agent to open it, and your running app opens live, every screen, hot reload
+   included. No terminal? Drag *Take this screen along* to your bookmarks bar and
+   click it on any screen your browser shows (staging, behind a login, a Lovable or
+   v0 preview), or bring a zip, a folder or a public repo. What you turned on the
+   kit comes along if you want it to.
+2. **Pick a look.** *6* over the screen shows it six ways, side by side: Classic,
+   Compact, Soft, Sharp, Airy and Bold. They differ in corners, spacing, depth and
+   type and never in colour, so you compare the style and not the paint. Open one
+   full size, then *Pick this one*. The same six are the Preset list.
 3. **Tune it.** Colour, Type, Shape and Space first; text size, line height,
    letter spacing, weight, border width, elevation, motion, grey tint and the rest
    under More. Every dial has **×1 = as in your code** at its centre. Your own dark

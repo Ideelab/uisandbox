@@ -89,11 +89,26 @@ export function EngineSelect({ kitId, ownApp, detected, onPick }: {
 
 /** Light / Dark, through the page's OWN scheme: the same switch as the Dark
  *  mode knob, shown only when the CSS has a scheme to switch. */
-export function SchemeSwitch({ value, onChange }: { value: 'light' | 'dark'; onChange: (v: 'light' | 'dark') => void }) {
+/** Light / Dark: the page's own dark mode, switched on its own hooks. The one
+ *  place it is turned (the panel's Dark mode row was the same setting twice);
+ *  what it switches on is said in the title. */
+export function SchemeSwitch({ value, onChange, hooks }: { value: 'light' | 'dark'; onChange: (v: 'light' | 'dark') => void; hooks?: string }) {
+  const of = hooks ? ` (found in the CSS: ${hooks})` : ''
   return (
     <div className="seg ebar__scheme" role="group" aria-label="Colour scheme">
-      <button type="button" className={`seg__opt ${value === 'light' ? 'seg__opt--on' : ''}`} aria-pressed={value === 'light'} onClick={() => onChange('light')} title="Light"><Sun size={13} strokeWidth={2} /></button>
-      <button type="button" className={`seg__opt ${value === 'dark' ? 'seg__opt--on' : ''}`} aria-pressed={value === 'dark'} onClick={() => onChange('dark')} title="Dark"><Moon size={13} strokeWidth={2} /></button>
+      <button type="button" className={`seg__opt ${value === 'light' ? 'seg__opt--on' : ''}`} aria-pressed={value === 'light'} onClick={() => onChange('light')} title={`Light${of}`}><Sun size={13} strokeWidth={2} /></button>
+      <button type="button" className={`seg__opt ${value === 'dark' ? 'seg__opt--on' : ''}`} aria-pressed={value === 'dark'} onClick={() => onChange('dark')} title={`Dark${of}`}><Moon size={13} strokeWidth={2} /></button>
+    </div>
+  )
+}
+
+/** One or six (decision 217): the screen at full size, or the same screen in
+ *  the six looks side by side. Six is where a first visit lands. */
+export function ViewSwitch({ six, onChange }: { six: boolean; onChange: (six: boolean) => void }) {
+  return (
+    <div className="seg ebar__view" role="group" aria-label="One screen or six looks">
+      <button type="button" className={`seg__opt ${!six ? 'seg__opt--on' : ''}`} aria-pressed={!six} onClick={() => onChange(false)} title="One screen, full size">1</button>
+      <button type="button" className={`seg__opt ${six ? 'seg__opt--on' : ''}`} aria-pressed={six} onClick={() => onChange(true)} title="Six looks side by side">6</button>
     </div>
   )
 }
