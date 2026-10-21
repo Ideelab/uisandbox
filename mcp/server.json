@@ -8,12 +8,12 @@
     "source": "github"
   },
   "websiteUrl": "https://uisandbox.org",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "uisandbox-mcp",
-      "version": "0.5.0",
+      "version": "0.5.1",
       "transport": {
         "type": "stdio"
       },
