@@ -22,7 +22,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with: { fetch-depth: 0 }
       - id: v
         run: |
@@ -45,14 +45,15 @@ jobs:
     defaults:
       run: { working-directory: mcp }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - id: v
         run: |
           V=$(node -p "require('./package.json').version")
           N=$(node -p "require('./server.json').name")
           echo "version=$V" >> "$GITHUB_OUTPUT"
           npm view "uisandbox-mcp@$V" version >/dev/null 2>&1 && echo "npm=true" >> "$GITHUB_OUTPUT" || echo "npm=false" >> "$GITHUB_OUTPUT"
-          curl -s "https://registry.modelcontextprotocol.io/v0/servers?search=$N" | grep -q "\"version\":\"$V\"" && echo "listed=true" >> "$GITHUB_OUTPUT" || echo "listed=false" >> "$GITHUB_OUTPUT"
+          # the server's own version list: the search pages, and showed 0.5.0 after 0.5.1 was in
+          curl -s "https://registry.modelcontextprotocol.io/v0/servers/${N/\//%2F}/versions" | grep -q "\"version\":\"$V\"" && echo "listed=true" >> "$GITHUB_OUTPUT" || echo "listed=false" >> "$GITHUB_OUTPUT"
       - if: steps.v.outputs.npm == 'false'
         run: echo "::notice::uisandbox-mcp@${{ steps.v.outputs.version }} is not on npm yet. Publish it, then run this workflow by hand."
       - if: steps.v.outputs.npm == 'true' && steps.v.outputs.listed == 'false'
