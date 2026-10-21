@@ -184,7 +184,7 @@ export async function deriveBaseline(archive: Archive, table: SubstitutionTable)
     inferred = result.inferredConfig ?? null
     audit = { filesRead: result.meta?.files ?? scan.files.length, parsed: result.meta?.parsed ?? null, refused: Boolean(result.refused) }
     cfg = configFromAudit(inferred ?? {})
-    notes.push(`Read ${audit.filesRead} source files${audit.parsed != null ? ` (${Math.round(audit.parsed * 100)}% parsed)` : ''}.`)
+    notes.push(`Read ${audit.filesRead} source file${audit.filesRead === 1 ? "" : "s"}${audit.parsed != null ? ` (${Math.round(audit.parsed * 100)}% parsed)` : ''}.`)
   } catch (err) {
     cfg = configFromAudit({})
     notes.push(`The source scan failed (${(err as Error).message}); the knobs start from the stylesheet census only.`)

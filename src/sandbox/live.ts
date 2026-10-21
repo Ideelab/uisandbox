@@ -14,9 +14,17 @@
  */
 import { rewriteCss, rewriteInlineStyle } from './rewrite'
 import { defineNewVars, type SubstitutionTable } from './table'
+import { detectScheme, type Scheme } from './scheme'
 
-/** Watch a document; call `onGrow` whenever the sheet gained entries. Returns a stop(). */
-export function observeFrame(doc: Document, table: SubstitutionTable, onGrow: () => void): () => void {
+/** What a runtime <style> also tells, beyond its literals (decision 217): the
+ *  dark-mode hooks it carries (Vite injects ALL of a Tailwind app's CSS at
+ *  runtime, so the static read saw no `.dark` and the Light / Dark switch
+ *  never showed), and its size, per source. */
+export interface ObserveExtra { scheme?: Scheme; css?: (source: string, bytes: number) => void }
+
+/** Watch a document; call `onGrow` whenever the sheet gained entries (or the
+ *  scheme gained a hook). Returns a stop(). */
+export function observeFrame(doc: Document, table: SubstitutionTable, onGrow: () => void, extra: ObserveExtra = {}): () => void {
   let muted = false
   const before = () => table.entries.length
   // The frame is ANOTHER realm: its nodes are not instances of this window's
@@ -46,14 +54,18 @@ export function observeFrame(doc: Document, table: SubstitutionTable, onGrow: ()
     const n = before()
     // A dev server says which source file a <style> came from (Vite:
     // data-vite-dev-id): the patch then names that file, not "runtime".
-    const out = rewriteCss(css, table, el.getAttribute('data-vite-dev-id') ?? '<style> (runtime)')
+    const source = el.getAttribute('data-vite-dev-id') ?? '<style> (runtime)'
+    extra.css?.(el.getAttribute('data-vite-dev-id') ?? `<style> ${css.length}:${css.slice(0, 40)}`, css.length)
+    let schemeGrew = false
+    if (extra.scheme) { const was = JSON.stringify(extra.scheme); detectScheme(css, extra.scheme); schemeGrew = JSON.stringify(extra.scheme) !== was }
+    const out = rewriteCss(css, table, source)
     defineNewVars(doc, table, n) // BEFORE the rewritten text lands
     if (out !== css) {
       muted = true
       el.textContent = out
       muted = false
     }
-    if (table.entries.length !== n) onGrow()
+    if (table.entries.length !== n || schemeGrew) onGrow()
   }
   /* Inline SVG paints with PRESENTATION ATTRIBUTES — `fill="#4f39f6"`,
      `stroke="#111"`, `stop-color` — which no stylesheet scan sees. A style

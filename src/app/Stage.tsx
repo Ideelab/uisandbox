@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type RefObject } from 'react'
 import { Info, ShieldCheck, Star, X } from 'lucide-react'
 import { ScreenPicker } from './ScreenPicker'
-import type { SandboxProject, Screen } from '../sandbox/project'
+import { cssKb, type SandboxProject, type Screen } from '../sandbox/project'
 import { identitySid, rawSid, sandboxUrl } from '../sandbox/host'
 import type { Tell } from '../sandbox/tells'
 import { compareDocuments, loadHidden, type VerifyResult } from '../sandbox/verify'
@@ -42,6 +42,8 @@ interface StageProps {
   onTab?: (t: StageTab) => void
   /** Set when the stage shows a kit build of ours, not somebody's app. */
   kitName?: string
+  /** The screen the frame is on after a click inside the app, or null when it is `screen`. */
+  onAt?: (s: Screen | null) => void
   /** Canvas controls that sit with the screen picker (1 | 6, Light / Dark). */
   barExtra?: React.ReactNode
   /** The "What we read" card: shown or not, and its toggle in the foot. */
@@ -73,7 +75,7 @@ function reportUrl(project: SandboxProject, detail: string): string {
   return `https://github.com/Ideelab/uisandbox/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}&labels=build-report`
 }
 
-export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, pinnable, changedCount, peek, onPeek, looks, tells, onLooks, warning, warningTitle, coverage, notes, tab = 'screens', onTab, kitName, barExtra, onToggleNotes, notesOpen, notesLabel }: StageProps) {
+export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, pinnable, changedCount, peek, onPeek, looks, tells, onLooks, warning, warningTitle, coverage, notes, tab = 'screens', onTab, kitName, barExtra, onAt, onToggleNotes, notesOpen, notesLabel }: StageProps) {
   const [showCov, setShowCov] = useState(false)
   const [showTells, setShowTells] = useState(false)
   const [verify, setVerify] = useState<VerifyResult | { busy: true } | null>(null)
@@ -86,6 +88,30 @@ export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, pi
 
   // A new project or screen invalidates the last measurement.
   useEffect(() => { setVerify(null); setLeftSandbox(false) }, [project.id, screen.path])
+  // The screen the frame is ON, which a click inside the app moves (an SPA's
+  // pushState, a link to another page) without telling the picker: it said
+  // Home on /invoices, and picking Home then did nothing (decision 217).
+  const [at, setAt] = useState<Screen | null>(null)
+  useEffect(() => { setAt(null) }, [project.id, screen.path])
+  useEffect(() => { onAt?.(at) }, [at]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const t = setInterval(() => {
+      let path: string
+      try { path = frameRef.current?.contentWindow?.location.pathname ?? '' } catch { return }
+      if (!path) return
+      path = path.replace(/^\/__sb\/[^/]+\//, '/').replace(/\/+$/, '') || '/'
+      if (project.base && path.startsWith('/' + project.base)) path = path.slice(project.base.length + 1) || '/'
+      const asFile = path.replace(/^\//, '')
+      const found = project.screens.find((x) => x.label === path || x.path === asFile || x.path === asFile + '.html' || x.path === (asFile ? asFile + '/' : '') + 'index.html') ?? null
+      setAt((cur) => (found === cur ? cur : found && found !== screen ? found : null))
+    }, 600)
+    return () => clearInterval(t)
+  }, [project, screen, frameRef])
+  // Picking the screen the state already holds, while the frame is elsewhere,
+  // has to navigate the frame itself: the src did not change.
+  const pick = (s: Screen) => {
+    if (s === screen && at && at !== screen) { setAt(null); frameRef.current?.setAttribute('src', src) } else onScreen(s)
+  }
 
   const runVerify = async () => {
     setVerify({ busy: true })
@@ -139,7 +165,7 @@ export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, pi
             <button type="button" role="tab" aria-selected={tab === 'components'} className={`stage__tab ${tab === 'components' ? 'stage__tab--on' : ''}`} onClick={() => pickTab('components')}>Components</button>
           </div>
         )}
-        {(!kitName || tab === 'screens') && <ScreenPicker screens={others} current={screen} onPick={onScreen} onPin={onPin} pinnable={pinnable} named={!!kitName} />}
+        {(!kitName || tab === 'screens') && <ScreenPicker screens={others} current={at ?? screen} onPick={pick} onPin={onPin} pinnable={pinnable} named={!!kitName} />}
         {/* the mode sits with the screen it shows; no widths (Alexander: a
             design system is looked at on a desktop, and a window resizes) */}
         {barExtra}
@@ -239,7 +265,7 @@ export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, pi
         )}
       </div>
       <div className="stage__foot">
-        <span><b>{project.name}</b>{project.root ? ` · root ${project.root}/` : ''} · {project.screens.length} screen{project.screens.length === 1 ? '' : 's'} · {project.table.entries.length} values tokenised from {Math.round(project.cssBytes / 1024)} KB of CSS</span>
+        <span><b>{project.name}</b>{project.root ? ` · root ${project.root}/` : ''} · {project.screens.length} screen{project.screens.length === 1 ? '' : 's'} · {project.table.entries.length} values tokenised from {cssKb(project)} KB of CSS</span>
         <span className="stage__spacer" />
         {coverage && (
           <button type="button" className={`chip ${pct(coverage.colours) < 80 ? 'chip--warn' : ''}`} onClick={() => setShowCov((v) => !v)} title="How much of what you see the knobs reach, measured on this screen">

@@ -6,7 +6,7 @@ import type { Config } from '../tokens/types'
 import { useConfig } from '../state/useConfig'
 import { shuffle } from '../sandbox/shuffle'
 import { openZip, type Archive } from '../audit/intake/readZip'
-import { buildProject, discoverRoutes, type SandboxProject, type Screen } from '../sandbox/project'
+import { buildProject, cssKb, discoverRoutes, observeExtra, type SandboxProject, type Screen } from '../sandbox/project'
 import { refusalFor } from '../sandbox/platform'
 import { Mark } from './Mark'
 import { McpButton } from './McpButton'
@@ -170,6 +170,8 @@ function Editor() {
   // Pick a look (decision 216): open or not, which brand and type pair each
   // direction shows, what is locked, and which direction the knobs stand on.
   const [looksOpen, setLooksOpen] = useState(false)
+  // The screen the frame is on after a click inside the app (Stage onAt): the six show that one.
+  const [frameAt, setFrameAt] = useState<Screen | null>(null)
   const [roll, setRoll] = useState<LookRoll>(firstRoll)
   const [locks, setLocks] = useState<LookLocks>({ font: false })
   const [lookOn, setLookOn] = useState<string | null>(null)
@@ -463,7 +465,7 @@ function Editor() {
         }, 2800)
       }, 1200)
     }
-    if (doc && loaded) stopObserver.current = observeFrame(doc, loaded.project.table, () => { setSheetVersion((v) => v + 1); refineBaseline(); remeasure() })
+    if (doc && loaded) stopObserver.current = observeFrame(doc, loaded.project.table, () => { setSheetVersion((v) => v + 1); refineBaseline(); remeasure() }, observeExtra(loaded.project))
     refineBaseline()
     // The knobs carried from a kit land now: after the untouched page had its
     // chance to correct the baseline, on top of the corrected one.
@@ -806,7 +808,7 @@ function Editor() {
               onPeek={setPeek}
               tells={tells ?? undefined}
               onLooks={openLooks}
-              looks={looksOpen && loaded ? <LookGrid project={loaded.project} screen={loaded.screen} looks={lookCards} current={lookOn} locks={locks} onLocks={setLocks}
+              looks={looksOpen && loaded ? <LookGrid project={loaded.project} screen={frameAt ?? loaded.screen} looks={lookCards} current={lookOn} locks={locks} onLocks={setLocks}
                 onShuffle={() => setRoll((r) => reroll(r))} onPick={pickDirection} onClose={() => setLooksOpen(false)} onGrow={() => setSheetVersion((v) => v + 1)} /> : null}
               warningTitle={!thin && !missingFiles.length && flutterWeb ? 'A Flutter web build' : undefined}
               warning={thin ?? (missingFiles.length ? `${missingFiles.length === 1 ? 'A file' : `${missingFiles.length} files`} this page asked for ${missingFiles.length === 1 ? 'is' : 'are'} not in the archive: ${missingFiles.slice(0, 3).join(', ')}${missingFiles.length > 3 ? '…' : ''}. ${loaded.captured ? 'The page was taken along as it rendered; these it asks for here, and the capture did not see.' : 'That usually means source, not the built output: parts of the page cannot run here.'}` : flutterWeb ? `Flutter paints this app into a <canvas>: there is almost no CSS for the knobs to move (${loaded.project.table.entries.length} values found). The 1:1 check and the reach meter still tell the truth about it; a design pass on a Flutter app belongs in its ThemeData.` : null)}
@@ -814,6 +816,7 @@ function Editor() {
               tab={tab}
               onTab={setTab}
               kitName={loaded.kit?.name}
+              onAt={setFrameAt}
               barExtra={<>
                 <ViewSwitch six={looksOpen} onChange={(six) => (six ? openLooks() : setLooksOpen(false))} />
                 {hasScheme && <SchemeSwitch value={cfg.sb.dark ?? 'light'} hooks={schemeHooks} onChange={(v) => dispatch({ type: 'SET', patch: { sb: { ...cfg.sb, dark: v } } })} />}
@@ -827,7 +830,7 @@ function Editor() {
                 <h3>{loaded.kit ? `What we read from ${loaded.kit.name}` : 'What we read from your code'}</h3>
                 <ul className="notes">
                   {loaded.report.notes.map((n, i) => <li key={i}>{n}</li>)}
-                  <li>{loaded.project.table.entries.length} distinct values in {Math.round(loaded.project.cssBytes / 1024)} KB of CSS: {(['color', 'radius', 'font-size', 'font-family', 'space', 'shadow', 'angle'] as const).map((k) => `${loaded.project.table.ofKind(k).length} ${k === 'angle' ? 'gradient angle' : k}`).join(' · ')}.</li>
+                  <li>{loaded.project.table.entries.length} distinct values in {cssKb(loaded.project)} KB of CSS: {(['color', 'radius', 'font-size', 'font-family', 'space', 'shadow', 'angle'] as const).map((k) => `${loaded.project.table.ofKind(k).length} ${k === 'angle' ? 'gradient angle' : k}`).join(' · ')}.</li>
                   {loaded.project.candidates.length > 1 && (
                     <li>Other roots in the archive:{' '}
                       {loaded.project.candidates.filter((c) => c !== loaded.project.root).slice(0, 6).map((c) => (

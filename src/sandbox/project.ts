@@ -58,6 +58,9 @@ export interface SandboxProject {
   table: SubstitutionTable
   /** How many bytes of stylesheet were rewritten — the sheet's coverage. */
   cssBytes: number
+  /** CSS a page wrote at runtime, per source (a dev server injects all of it):
+   *  counted by the live observer, so "KB of CSS" is not 0 on a Vite app. */
+  runtimeCss?: Map<string, number>
   /** What was dropped, and whether it renders. */
   platform: Platform
   /** The dark/light scheme hooks their CSS responds to (empty = no dark mode). */
@@ -337,3 +340,11 @@ export async function loadOutsideRoot(project: SandboxProject, archivePath: stri
   }
   return true
 }
+
+/** The KB of CSS read: the build's, and what the page wrote at runtime. */
+export const cssKb = (p: SandboxProject): number => Math.round((p.cssBytes + [...(p.runtimeCss?.values() ?? [])].reduce((a, b) => a + b, 0)) / 1024)
+
+/** What the live observer is told besides the table: the scheme it may add a
+ *  hook to and where runtime CSS is counted (sandbox/live.ts ObserveExtra). */
+export const observeExtra = (p: SandboxProject) => ({ scheme: p.scheme, css: (source: string, bytes: number) => { (p.runtimeCss ??= new Map()).set(source, bytes) } })
+

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Bot, Braces, Check, ChevronLeft, Copy, Diff, Download, FileCode2, FileJson2, FileText, Replace, Smartphone, SwatchBook, Wind, Boxes, Apple, FolderTree, X } from 'lucide-react'
 import type { Config } from '../tokens/types'
 import { DIALS } from '../sandbox/dials'
-import type { SubstitutionTable } from '../sandbox/table'
+import { varName, type SubstitutionTable } from '../sandbox/table'
 import type { Anchors, PaintRoles } from '../sandbox/coverage'
 import { genSheetCss, genSheetJson, genPatch, genPatchedFiles } from '../export/genSheet'
 import type { ServedFile } from '../sandbox/project'
@@ -174,6 +174,15 @@ export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName,
   const [patched, setPatched] = useState<Array<{ path: string; text: string }> | null>(null)
   useEffect(() => { let on = true; void genPatchedFiles(files, table, vars, fontCss).then((p) => { if (on) setPatched(p) }); return () => { on = false } }, [files, table, vars, fontCss])
   const movedCount = useMemo(() => { const id = table.identityVars(); return Object.keys(vars).filter((k) => vars[k] !== id[k]).length }, [table, vars])
+  // The source files the moved values sit in. On a live app (a dev server) no
+  // built file holds its CSS, so there is nothing to patch in place and the
+  // count of patched files read 0 beside a patch naming src/index.css: the
+  // files the patch names are the ones that change (decision 217).
+  const sourceFiles = useMemo(() => {
+    const id = table.identityVars()
+    return new Set(table.entries.filter((e) => vars[varName(e.id)] !== undefined && vars[varName(e.id)] !== id[varName(e.id)]).flatMap((e) => e.sites.map((x) => x.file)).filter((f) => f && !/^<|runtime|inline/.test(f))).size
+  }, [table, vars])
+  const filesChanged = patched?.length || sourceFiles
 
   // The kit engine's files for a build on one of the nine. Fetched when the
   // dialog opens because only the detected kit's values are loaded, and they
@@ -189,7 +198,7 @@ export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName,
     const changed = movedCount === 0 ? 'none of them changed' : `${movedCount} of them changed`
     const overview = kitDoorName
       ? `These values start from ${kitDoorName} as it ships, read off the build UISandbox made of it: ${m.totals.values} design values, ${changed} in this pass. They are written here in the names this kit publishes, so they are the ones to build against.`
-      : `These values were read off ${projectName}'s own build in UISandbox, not chosen: ${m.totals.values} design values out of its stylesheets, ${changed} in this pass. They are written here in the names this kit publishes, so they are the ones to build against.`
+      : `These values were read off ${projectName}'s own CSS in UISandbox, not chosen: ${m.totals.values} design values out of its stylesheets, ${changed} in this pass. They are written here in the names this kit publishes, so they are the ones to build against.`
     // The kit's own variables first; what was measured only fills the roles
     // it has none for. No family centre goes in for status: a centre is the
     // most-used member, which on AdminLTE was a syntax-highlight green, and a
@@ -492,7 +501,7 @@ export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName,
     const MEASURED: Record<string, string> = { gradients: 'gradients as decoration', 'dark-only': 'a dark mode with no light one' }
     const donts = [...new Set([...tells.filter((t) => !t.knobs && MEASURED[t.id]).map((t) => MEASURED[t.id]!), ...LAYOUT_DONTS])]
     const prompt = [
-      kitDoorName ? `Restyle this app, built on ${kitDoorName}, to the design system below. It was made in UISandbox.` : `Restyle ${projectName} to the design system below. It was made in UISandbox from this app's own build.`,
+      kitDoorName ? `Restyle this app, built on ${kitDoorName}, to the design system below. It was made in UISandbox.` : `Restyle ${projectName} to the design system below. It was made in UISandbox from this app's own CSS.`,
       `Use only its tokens${skill ? ' and the components SKILL.md names' : ''}. Do not fall back to the defaults, and add no raw colours, one-off sizes or new fonts.`,
       '', 'Keep the layout clear of the generic AI look. Avoid:',
       ...donts.map((d) => `- ${d}`),
@@ -604,7 +613,7 @@ export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName,
             </div>
             <div className="exp__stats">
               <div className="exp__stat"><b>{movedCount}</b><span>of {table.entries.length} values moved</span></div>
-              {!kitDoorName && <div className="exp__stat"><b>{patched?.length ?? 0}</b><span>file{(patched?.length ?? 0) === 1 ? '' : 's'} changed</span></div>}
+              {!kitDoorName && <div className="exp__stat"><b>{filesChanged}</b><span>file{filesChanged === 1 ? '' : 's'} changed</span></div>}
               <div className="exp__stat"><b>{turned.length}</b><span>knob{turned.length === 1 ? '' : 's'} turned</span></div>
             </div>
             <details className="exp__dest exp__more">

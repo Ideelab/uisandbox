@@ -12,7 +12,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Check, ChevronLeft, ChevronRight, Lock, Shuffle } from 'lucide-react'
 import type { SandboxProject, Screen } from '../sandbox/project'
-import { varsStyleTag } from '../sandbox/project'
+import { observeExtra, varsStyleTag } from '../sandbox/project'
 import { sandboxUrl } from '../sandbox/host'
 import { nestedDocs } from '../sandbox/verify'
 import { applyScheme } from '../sandbox/scheme'
@@ -48,7 +48,7 @@ function writeSheet(doc: Document, project: SandboxProject, sheet: LookSheet) {
 function useObserved(project: SandboxProject, onGrow: () => void) {
   const stop = useRef<(() => void) | null>(null)
   useEffect(() => () => { stop.current?.() }, [])
-  return (doc: Document) => { stop.current?.(); stop.current = observeFrame(doc, project.table, onGrow) }
+  return (doc: Document) => { stop.current?.(); stop.current = observeFrame(doc, project.table, onGrow, observeExtra(project)) }
 }
 
 function Card({ project, screen, look, picked, onOpen, onGrow }: { project: SandboxProject; screen: Screen; look: LookCard; picked: boolean; onOpen: () => void; onGrow: () => void }) {

@@ -81,6 +81,48 @@ const rgbKey = (css: string): string | null => {
   return key(+m[1]!, +m[2]!, +m[3]!)
 }
 
+/** A computed colour as a key, in whatever notation the browser hands back:
+ *  Chrome keeps `oklch()`, `oklab()` (a color-mix, Tailwind's `bg-primary/90`)
+ *  and `color()` as they were written, so reading only `rgb()` counted none of
+ *  a Tailwind v4 or shadcn page's paint, and 0 of 0 read as 100 %. */
+const colourKey = (css: string): string | null => {
+  const k = rgbKey(css)
+  if (k) return k
+  if (!css || css === 'none') return null
+  const c = parseCssColor(css)
+  if (!c) return null
+  if (c.a === 0) return 'transparent'
+  const [r, g, b] = hexRgb(c.L, c.C, c.H)
+  return key(r, g, b)
+}
+
+/** Radii a sheet DERIVES from a tokenised one: shadcn's `--radius-md:
+ *  calc(var(--radius) - 2px)`, or the same calc written straight into the
+ *  rule (Tailwind v4's `@theme inline`: `.rounded-md { border-radius:
+ *  calc(var(--radius) - 2px) }`). They follow the Shape knob through the
+ *  tokenised `--radius`, but no literal holds their px, so every rounded card
+ *  read as outside the knobs. Each is resolved in the frame. */
+function derivedRadii(doc: Document, probe: HTMLElement, pcs: CSSStyleDeclaration): number[] {
+  const values = new Set<string>()
+  const walk = (rules: CSSRuleList) => {
+    for (const r of Array.from(rules)) {
+      const style = (r as CSSStyleRule).style
+      if (style) for (let i = 0; i < style.length; i++) { const n = style[i]!; if (/radius|rounded/i.test(n)) { const v = style.getPropertyValue(n); if (/var\(/.test(v)) values.add(v.trim()) } }
+      const inner = (r as CSSGroupingRule).cssRules
+      if (inner) walk(inner)
+    }
+  }
+  for (const sh of [...Array.from(doc.styleSheets), ...(doc.adoptedStyleSheets ?? [])]) { try { walk(sh.cssRules) } catch { /* cross-origin */ } }
+  const out: number[] = []
+  for (const v of values) {
+    probe.style.borderTopLeftRadius = ''
+    probe.style.borderTopLeftRadius = v
+    const px = parseFloat(pcs.borderTopLeftRadius)
+    if (Number.isFinite(px) && px > 0) out.push(Math.round(px * 2) / 2)
+  }
+  return out
+}
+
 function kitReading(doc: Document): { kit: KitId | null; kitValues: RoleValues } {
   const kit = detectKit(doc)
   return { kit, kitValues: kit ? readKitValues(doc, kit) : {} }
@@ -116,7 +158,7 @@ export function measureCoverage(doc: Document, table: SubstitutionTable, vars: R
         const asCss = raw.startsWith('hsl:') ? `hsl(${cur})` : /^\d{1,3}(\s*,\s*|\s+)\d{1,3}(\s*,\s*|\s+)\d{1,3}$/.test(cur) ? `rgb(${cur})` : cur
         probe.style.color = ''
         probe.style.color = asCss
-        const k = rgbKey(pcs.color)
+        const k = colourKey(pcs.color)
         if (k && k !== 'transparent') keep(colourSet, k, e.id)
         else { const c = parseCssColor(cur); if (c) { const [r, g, b] = hexRgb(c.L, c.C, c.H); keep(colourSet, key(r, g, b), e.id) } }
       } else if (e.kind === 'font-family') {
@@ -137,6 +179,8 @@ export function measureCoverage(doc: Document, table: SubstitutionTable, vars: R
         if (Number.isFinite(px)) keep(radiusSet, Math.round(px * 2) / 2, e.id)
       }
     }
+    // derived radii count as reached, recorded against no entry of their own
+    for (const px of derivedRadii(doc, probe, pcs)) if (!radiusSet.has(px)) radiusSet.set(px, [])
   } finally { probe.remove() }
   const cov: Coverage = { colours: { hit: 0, total: 0 }, fonts: { hit: 0, total: 0 }, sizes: { hit: 0, total: 0 }, radii: { hit: 0, total: 0 }, outside: { images: 0, canvas: 0, video: 0, backgroundImages: 0 }, elements: 0, painted, anchors: readAnchors(doc, win), ...kitReading(doc) }
   // Shadow trees included (Spectrum, Lit: what you see is mostly in them);
@@ -167,13 +211,13 @@ export function measureCoverage(doc: Document, table: SubstitutionTable, vars: R
     if (el.tagName === 'VIDEO') { cov.outside.video++; continue }
     const ew = el.ownerDocument.defaultView ?? win
     const cs = ew.getComputedStyle(el)
-    const bg = rgbKey(cs.backgroundColor)
+    const bg = colourKey(cs.backgroundColor)
     if (bg && bg !== 'transparent' && (!UA_COLOURS.has(bg) || colourSet.has(bg))) { cov.colours.total++; if (hit(colourSet.get(bg), 'surface')) cov.colours.hit++ }
     if (cs.backgroundImage && cs.backgroundImage !== 'none' && /url\((?!"data:image\/svg)/.test(cs.backgroundImage)) cov.outside.backgroundImages++
     // Text at font-size 0 (slick's dot buttons) is not painted: no ink to meter.
     const hasText = parseFloat(cs.fontSize) > 0 && Array.from(el.childNodes).some((n) => n.nodeType === 3 && (n.textContent ?? '').trim().length > 0)
     if (hasText) {
-      const fg = rgbKey(cs.color)
+      const fg = colourKey(cs.color)
       if (fg && fg !== 'transparent' && (!UA_COLOURS.has(fg) || colourSet.has(fg))) { cov.colours.total++; if (hit(colourSet.get(fg), 'text')) cov.colours.hit++ }
       const fam = cs.fontFamily.split(',')[0]!.trim().replace(/^["']|["']$/g, '').toLowerCase()
       // A bare generic (`monospace` on <code>, `serif`) the sheet never named is
@@ -187,7 +231,7 @@ export function measureCoverage(doc: Document, table: SubstitutionTable, vars: R
       // missed, there was nothing to move (as for families).
       if (hit(near(sizeSet, fs)) || hit(nearEm(sizeEm, fs, parentFs)) || (sizeSet.size === 0 && sizeEm.size === 0)) cov.sizes.hit++
     }
-    if (parseFloat(cs.borderTopWidth) > 0) { const bc = rgbKey(cs.borderTopColor); if (bc && bc !== 'transparent' && (!UA_COLOURS.has(bc) || colourSet.has(bc))) { cov.colours.total++; if (hit(colourSet.get(bc), 'border')) cov.colours.hit++ } }
+    if (parseFloat(cs.borderTopWidth) > 0) { const bc = colourKey(cs.borderTopColor); if (bc && bc !== 'transparent' && (!UA_COLOURS.has(bc) || colourSet.has(bc))) { cov.colours.total++; if (hit(colourSet.get(bc), 'border')) cov.colours.hit++ } }
     const rad = parseFloat(cs.borderTopLeftRadius)
     // A circle or a pill (radius ≥ half the box) is authored as 50 % / 999px —
     // kept out of the sheet on purpose, so not a miss here either.
