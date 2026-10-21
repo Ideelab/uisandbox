@@ -236,6 +236,9 @@ const addrUrl = (addr: string) => {
   const ok = !clean || /^(https?:\/\/)?(localhost|127\.0\.0\.1|\[::1\]|[\w-]+\.(localhost|test))(:\d+)?(\/[^\s]*)?$/i.test(clean)
   return { ok, url: clean && ok ? (/^https?:/i.test(clean) ? clean : `http://${clean}`) : '' }
 }
+/** The carry token is a few hundred characters of base64: shown cut short
+ *  (its own words say what it is), copied whole. */
+const short = (text: string, carry?: string) => (carry ? text.split(carry).join(`${carry.slice(0, 6)}…`) : text)
 const useCopy = () => {
   const [copied, setCopied] = useState(false)
   return { copied, copy: async (text: string) => { try { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 1400) } catch { /* the text is on screen to select */ } } }
@@ -251,7 +254,7 @@ function LocalCommand({ addr, setAddr, carry }: { addr: string; setAddr: (a: str
       <div className="install install--compact">
         <div className="install__pill">
           <span className="install__prompt" aria-hidden>$</span>
-          <code className="install__cmd">{cmd}</code>
+          <code className="install__cmd">{short(cmd, carry)}</code>
           <button type="button" className="install__copy" onClick={() => void copy(cmd)} aria-label="Copy" title="Copy">{copied ? <Check size={14} strokeWidth={2.5} /> : <Copy size={14} />}</button>
         </div>
       </div>
@@ -274,7 +277,7 @@ function AgentPrompt({ addr, carry }: { addr: string; carry?: string }) {
     <div className="agentprompt">
       <p className="agentprompt__q">Or let your agent do it: paste this in Claude Code, Cursor or Codex.</p>
       <div className="agentprompt__box">
-        <p className="agentprompt__text">{prompt}</p>
+        <p className="agentprompt__text">{short(prompt, carry)}</p>
         <button type="button" className="btn btn--secondary btn--sm agentprompt__copy" onClick={() => void copy(prompt)}>{copied ? <><Check size={13} strokeWidth={2.5} /> Copied</> : <><Copy size={13} /> Copy prompt</>}</button>
       </div>
     </div>
