@@ -903,7 +903,10 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
 .steps4 li { counter-increment: s4; position: relative; padding: 14px 14px 14px 50px; border: 1px solid var(--app-border); border-radius: 12px; font-size: 14px; line-height: 1.5; color: var(--app-fg-muted); }
 .steps4 li b { display: block; color: var(--app-fg); font-size: 14.5px; }
 .steps4 li::before { content: counter(s4); position: absolute; left: 14px; top: 14px; width: 24px; height: 24px; border-radius: 99px; display: grid; place-items: center; background: var(--app-fg); color: var(--app-bg); font-size: 12px; font-weight: 650; }
-.steps4__note { margin: 12px 0 0; font-size: 13px; color: var(--app-fg-muted); }
+.landing__sec .steps4__note { display: flex; justify-content: center; align-items: center; gap: 6px; width: fit-content; margin: 20px auto 0; padding: 6px 14px; border: 1px solid var(--app-border); border-radius: 999px; background: var(--app-surface-2); font-size: 13px; font-weight: 500; color: var(--app-fg); }
+.about__body { display: flex; flex-direction: column; gap: 44px; padding-top: 8px; }
+.about__body .landing__sec h2 { margin-bottom: 14px; }
+.about__body .clip figcaption { margin-top: 12px; }
 /* the four in full, under More: the same cards, a little more air and the text at reading size */
 .steps4--long { margin-top: 16px; gap: 12px; }
 .steps4--long li { padding: 16px 18px 18px 52px; font-size: 14px; line-height: 1.6; }

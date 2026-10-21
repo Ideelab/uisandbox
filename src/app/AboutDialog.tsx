@@ -9,7 +9,7 @@
  * nothing left to sell.
  */
 import { useEffect, useRef, useState } from 'react'
-import { X } from 'lucide-react'
+import { Lock, X } from 'lucide-react'
 import { InstallLine } from './InstallLine'
 import { Mark } from './Mark'
 
@@ -51,10 +51,13 @@ export function AboutDialog({ section, onClose }: { section?: string; onClose: (
               <li><b>Tune it.</b> Colour, Type, Shape and Space. Hold Space to see your original.</li>
               <li><b>Take it home.</b> Copy it for your AI, or send it to your agent.</li>
             </ol>
-            <p className="steps4__note">Your files never leave this tab.</p>
+            <p className="steps4__note"><Lock size={13} strokeWidth={2} aria-hidden /> Your files never leave this tab</p>
           </section>
           <details className="about__more" open={more} onToggle={(e) => setMore((e.currentTarget as HTMLDetailsElement).open)}>
             <summary>More about how it works</summary>
+            {/* its own column: a <details> passes on none of .landing's gap, and
+                every section under More sat on the one above it */}
+            <div className="about__body">
           <section className="landing__sec">
             <p className="landing__lead">What would your app look like in another brand colour, a bigger type scale, or dark mode? Find out on the real app in about a minute. Keep what you see as code, or close the tab and nothing happened.</p>
             {/* the same four as above, said in full, in the same 2x2: as
@@ -126,6 +129,7 @@ export function AboutDialog({ section, onClose }: { section?: string; onClose: (
             <h2>Who made this</h2>
             <p>I'm <a href="https://github.com/AlexanderKaan" target="_blank" rel="noopener">Alexander Kaan</a>, and I build open-source tooling for user interfaces. UISandbox grew out of the design system generator I made before it: I could hand somebody a finished kit, but I could not show them their own app in it. Every decision, including the ones I had to undo, is in the repo's <a href="https://github.com/Ideelab/uisandbox/blob/main/notes/decisions.md" target="_blank" rel="noopener">notes</a>. It's <a href="https://github.com/Ideelab/uisandbox" target="_blank" rel="noopener">MIT</a>, and issues and pull requests are welcome.</p>
           </section>
+            </div>
           </details>
         </div>
       </div>
