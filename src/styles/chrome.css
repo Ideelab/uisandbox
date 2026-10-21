@@ -904,6 +904,10 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
 .steps4 li b { display: block; color: var(--app-fg); font-size: 14.5px; }
 .steps4 li::before { content: counter(s4); position: absolute; left: 14px; top: 14px; width: 24px; height: 24px; border-radius: 99px; display: grid; place-items: center; background: var(--app-fg); color: var(--app-bg); font-size: 12px; font-weight: 650; }
 .steps4__note { margin: 12px 0 0; font-size: 13px; color: var(--app-fg-muted); }
+/* the four in full, under More: the same cards, a little more air and the text at reading size */
+.steps4--long { margin-top: 16px; gap: 12px; }
+.steps4--long li { padding: 16px 18px 18px 52px; font-size: 14px; line-height: 1.6; }
+.steps4--long li b { margin-bottom: 4px; }
 @media (max-width: 640px) { .steps4 { grid-template-columns: minmax(0, 1fr); } }
 .about__more > summary { cursor: pointer; list-style: none; margin: 8px 0 0; padding: 12px 0; border-top: 1px solid var(--app-border); font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
 .about__more > summary::-webkit-details-marker { display: none; }
