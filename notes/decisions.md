@@ -3777,3 +3777,7 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     do to space and type now, not by a colour. The tests changed with it:
     the brand tests are gone, one holds that no look touches a colour dial.
 
+    Hold-outs after the ring change: 173, ok 153, differs 4, one flagged
+    (s12-fundamental-styles, the runner's own click on the Check 1:1 chip
+    before the foot had rendered, while the app was being edited under the
+    run); alone it is ok. The new daisyUI build loads 1:1 (kit-daisyui).
