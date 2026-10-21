@@ -3831,3 +3831,12 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     colour), the README hero and the clip (scripts/og/clip.mjs, the four steps
     on a kit and on SB Admin 2) shot again; uisandbox-mcp 0.5.1 packs the
     four-step app.
+
+    The MCP registry, without a token: a job in release.yml logs in with the
+    workflow's own GitHub OIDC (`mcp-publisher login github-oidc`), which the
+    registry grants io.github.Ideelab/* for a workflow in an Ideelab repo. The
+    browser login still falls back to the personal namespace (no read:org,
+    decision 177; making the membership public, which I relayed again, does
+    nothing), and the classic-token way works but leaves a token to revoke.
+    The job publishes only once npm has the version and skips a version the
+    registry already lists; after a human npm publish, run the workflow by hand.
