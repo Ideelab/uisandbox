@@ -3716,3 +3716,16 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     Components: a screen says what a kit looks like in use, the sheet of
     every control (danger buttons and all) is the drill-down (Alexander).
     Switching kit from the sheet keeps the sheet.
+
+    Preset is the six. The old Preset list (another kit's start values, "the
+    Mantine look") is gone; Preset names the six of Pick a look and applies
+    one exactly as Pick this one does, so the panel and the six are one
+    thing. A colour or font counts as yours only when you turned it, not
+    when a look set it: Swiss after Editorial took Editorial's navy along.
+
+    And the six themselves, retuned (Alexander: too far apart, very
+    outspoken fonts). Six good SaaS dashboards the way shadcn sets its own
+    styles: Classic, Compact, Soft, Sharp, Airy, Bold, each one restrained
+    sans (Public Sans, IBM Plex Sans, Figtree, Albert Sans, Manrope, Plus
+    Jakarta Sans and their pairs), the difference in corners, density, depth
+    and colour. No serif, no mono headings; still no Inter and no indigo.

@@ -7,7 +7,6 @@ import { useEffect, useRef, useState } from 'react'
 import { Check, ChevronDown, Link2, Moon, Send, Sun } from 'lucide-react'
 import DOOR from '../kits/door.json'
 import type { KitId } from '../kits/engine/detect.mjs'
-import { looks as LOOKS } from '../kits/looks'
 
 const KITS = DOOR.filter((k) => k.renders)
 const kitName = (id: string) => DOOR.find((k) => k.id === id)?.name ?? id
@@ -122,17 +121,14 @@ export function ShareButton({ url }: { url: string | null }) {
   )
 }
 
-/** Look: another kit's own start values on what the stage shows (kits/looks.ts).
- *  Shows the look while the knobs still stand where it put them. */
-export function LookSelect({ current, onPick }: { current: string | null; onPick: (id: string) => void }) {
-  const display = current ? `${LOOKS.find((l) => l.id === current)?.name ?? current} look` : current === '' ? 'Custom' : 'None'
-  // What each look sets, in its own values: specific, so the list can be read.
-  const fam = (stack?: string) => { const f = (stack ?? '').split(',')[0]!.trim().replace(/^["']|["']$/g, ''); return !f ? '' : /^(system-ui|-apple-system|blinkmacsystemfont|ui-sans-serif|sans-serif)$/i.test(f) ? 'system font' : f }
-  const hint = (v: (typeof LOOKS)[number]['values']) => [v.brand, fam(v.fontBody), v.radius && `${v.radius} corners`].filter(Boolean).join(' · ')
-  const options = [{ value: '', label: current ? 'Custom' : 'None', hint: 'the canvas as it stands' }, ...LOOKS.map((l) => ({ value: l.id, label: `${l.name} look`, hint: hint(l.values), swatch: l.values.brand }))]
+/** Preset: the six directions of Pick a look, from the panel (decision 216).
+ *  Shows the preset while the knobs still stand where it put them. */
+export function PresetSelect({ current, presets, onPick }: { current: string | null; presets: Array<{ id: string; name: string; what: string }>; onPick: (id: string) => void }) {
+  const display = current ? presets.find((p) => p.id === current)?.name ?? current : current === '' ? 'Custom' : 'None'
+  const options = [{ value: '', label: current ? 'Custom' : 'None', hint: 'the canvas as it stands' }, ...presets.map((p) => ({ value: p.id, label: p.name, hint: p.what }))]
   return (
     <Dropdown className="ebar__look" label="Preset" value={current ?? ''} display={display} options={options} onPick={(v) => { if (v) onPick(v) }}
-      title="A preset: another kit's own start values (brand, background, status colours, body font, corners) on what the canvas shows. Undo, Reset and Export treat it like any knob." />
+      title="A preset: one of the six looks of Pick a look, set through the knobs. A colour or font you chose stays. Undo, Reset and Export treat it like any knob." />
   )
 }
 

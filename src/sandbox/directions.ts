@@ -13,6 +13,12 @@
  * the tells on purpose: no indigo or violet brand, no Inter, and not the
  * cream-serif-terracotta set the anti-slop advice has itself made common.
  *
+ * Six styles the way shadcn sets its own (Vega, Nova, Maia, Lyra, Mira): one
+ * restrained SaaS sans each, and the difference in corners, density, depth
+ * and colour. The first six were further apart (a serif, mono headings) and
+ * read as six products, not six good dashboards (Alexander). They are also
+ * the Preset list, so the panel and Pick a look name the same six.
+ *
  * Locks: keep my colour leaves the brand and the grey tint where they are;
  * keep my font leaves both fonts.
  */
@@ -32,24 +38,24 @@ export interface Direction {
 }
 
 export const DIRECTIONS: Direction[] = [
-  { id: 'editorial', name: 'Editorial', what: 'serif headings, ink colour, sharp and flat',
-    brands: ['#1f3a5f', '#2b4a3f', '#5b2333'], fonts: [['Newsreader', 'Source Sans 3'], ['Source Serif 4', 'Public Sans']],
-    neutral: 'auto', sb: { radius: 0.25, space: 1.1, shadow: 0, lineHeight: 1.06 } },
-  { id: 'swiss', name: 'Swiss', what: 'one strong colour, tight, square, heavier type',
-    brands: ['#d62828', '#0057b8', '#111111'], fonts: [['IBM Plex Sans', 'IBM Plex Sans'], ['Public Sans', 'Public Sans']],
-    neutral: 'neutral', sb: { radius: 0, space: 0.9, shadow: 0, weight: 1, tracking: -0.01 } },
-  { id: 'calm', name: 'Calm', what: 'muted colour, airy, soft corners',
-    brands: ['#4f7a65', '#4a6f8a', '#7a6a55'], fonts: [['Figtree', 'Figtree'], ['Albert Sans', 'Albert Sans']],
-    neutral: 'auto', sb: { radius: 1.5, space: 1.2, shadow: 0.5, lineHeight: 1.1 } },
-  { id: 'bold', name: 'Bold', what: 'saturated brand, heavy type, real depth',
-    brands: ['#e11d48', '#ea580c', '#0d9488'], fonts: [['Plus Jakarta Sans', 'Plus Jakarta Sans'], ['Outfit', 'DM Sans']],
-    neutral: 'neutral', sb: { radius: 1, weight: 1, shadow: 1.4, type: 1.04 } },
-  { id: 'technical', name: 'Technical', what: 'mono headings, dense, small corners',
-    brands: ['#0f766e', '#2563eb', '#16a34a'], fonts: [['JetBrains Mono', 'IBM Plex Sans'], ['Geist Mono', 'Hanken Grotesk']],
-    neutral: 'neutral', sb: { radius: 0.4, space: 0.8, shadow: 0, borderWidth: 1 } },
-  { id: 'soft', name: 'Soft', what: 'round, light, friendly',
-    brands: ['#e8618c', '#3b82c4', '#d97706'], fonts: [['Nunito Sans', 'Nunito Sans'], ['Manrope', 'Manrope']],
-    neutral: 'auto', sb: { radius: 2, space: 1.15, shadow: 0.6 } },
+  { id: 'classic', name: 'Classic', what: 'balanced corners and spacing, a light shadow',
+    brands: ['#2563eb', '#0f766e', '#c2410c'], fonts: [['Public Sans', 'Public Sans'], ['Hanken Grotesk', 'Hanken Grotesk']],
+    neutral: 'neutral', sb: { radius: 1, space: 1, shadow: 0.6 } },
+  { id: 'compact', name: 'Compact', what: 'dense, small corners, nearly flat: for a lot of data',
+    brands: ['#0f766e', '#1d4ed8', '#be123c'], fonts: [['IBM Plex Sans', 'IBM Plex Sans'], ['Source Sans 3', 'Source Sans 3']],
+    neutral: 'neutral', sb: { radius: 0.6, space: 0.85, shadow: 0.2 } },
+  { id: 'soft', name: 'Soft', what: 'round corners, roomy, a soft shadow',
+    brands: ['#3b82c4', '#16a34a', '#db2777'], fonts: [['Figtree', 'Figtree'], ['Nunito Sans', 'Nunito Sans']],
+    neutral: 'auto', sb: { radius: 1.8, space: 1.2, shadow: 0.7 } },
+  { id: 'sharp', name: 'Sharp', what: 'square corners, borders instead of shadows',
+    brands: ['#111827', '#0057b8', '#c2410c'], fonts: [['Albert Sans', 'Albert Sans'], ['Public Sans', 'Public Sans']],
+    neutral: 'neutral', sb: { radius: 0, space: 1, shadow: 0 } },
+  { id: 'airy', name: 'Airy', what: 'muted colour, generous space, barely a shadow',
+    brands: ['#4a6f8a', '#4f7a65', '#7a6a55'], fonts: [['Manrope', 'Manrope'], ['DM Sans', 'DM Sans']],
+    neutral: 'auto', sb: { radius: 1.2, space: 1.3, shadow: 0.3, lineHeight: 1.06 } },
+  { id: 'bold', name: 'Bold', what: 'saturated colour, firmer headings, real depth',
+    brands: ['#e11d48', '#ea580c', '#0d9488'], fonts: [['Plus Jakarta Sans', 'Plus Jakarta Sans'], ['Outfit', 'Outfit']],
+    neutral: 'neutral', sb: { radius: 1, weight: 1, shadow: 1.3 } },
 ]
 
 export interface LookLocks { colour: boolean; font: boolean }

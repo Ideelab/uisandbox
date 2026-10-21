@@ -33,9 +33,7 @@ import { captureArchive, readCapture, sanitizeHtml, screenPath, type CapturedScr
 import { AboutDialog } from './AboutDialog'
 import { Stage, isSheet, type StageTab } from './Stage'
 import { ExportDialog } from './ExportDialog'
-import { EngineSelect, LookSelect, SchemeSwitch, SendButton } from './EditorBar'
-import { applyLook, looks } from '../kits/looks'
-import { toPx } from '../sandbox/mapping'
+import { EngineSelect, PresetSelect, SchemeSwitch, SendButton } from './EditorBar'
 import { encode, readHash } from '../state/hash'
 import { carryOver, differingKeys, isShownKnob, knobLabel, withKeys } from '../state/carry'
 import { genPatch, genPatchedFiles } from '../export/genSheet'
@@ -161,14 +159,30 @@ function Editor() {
   // What on this screen reads as the AI look (sandbox/tells.ts), measured
   // again after a load and after every turn, never while the original shows.
   const [tells, setTells] = useState<Tell[] | null>(null)
+  // What a look last set, so its colour and font are not taken for yours.
+  const [lookApplied, setLookApplied] = useState<{ id: string; cfg: Config; setColour: boolean; setFont: boolean } | null>(null)
+  /** A colour or font is yours when you turned it, not when a look did. */
+  const yours = (): LookLocks => {
+    if (!loaded) return { colour: false, font: false }
+    const b = loaded.report.baseline.cfg, la = lookApplied
+    const colour = cfg.cPrimary !== b.cPrimary && !(la?.setColour && la.cfg.cPrimary === cfg.cPrimary)
+    const font = (cfg.fontDisplay !== b.fontDisplay || cfg.fontBody !== b.fontBody) && !(la?.setFont && la.cfg.fontDisplay === cfg.fontDisplay && la.cfg.fontBody === cfg.fontBody)
+    return { colour, font }
+  }
+  /** One direction on the knobs as they stand, with the dials a look turns
+   *  put back to the app's own first, so one look never inherits another's. */
+  const directionCfg = (id: string, lk: LookLocks): Config | null => {
+    const d = DIRECTIONS.find((x) => x.id === id)
+    if (!d || !loaded) return null
+    const base = loaded.report.baseline.cfg
+    const reset = Object.fromEntries([...new Set(DIRECTIONS.flatMap((x) => Object.keys(x.sb)))].map((k) => [k, (base.sb as unknown as Record<string, number>)[k]]))
+    return applyDirection({ ...cfg, sb: { ...cfg.sb, ...reset } }, d, roll[d.id], lk)
+  }
   // The six open holding on to what was chosen: a colour or a font turned
   // away from the kit's is kept by default, so the looks vary the style
   // around it; untouched, they vary the colour too. Unlocking is one click.
   const openLooks = () => {
-    if (loaded) {
-      const b = loaded.report.baseline.cfg
-      setLocks({ colour: cfg.cPrimary !== b.cPrimary, font: cfg.fontDisplay !== b.fontDisplay || cfg.fontBody !== b.fontBody })
-    }
+    setLocks(yours())
     setLooksOpen(true)
   }
   const looksOpenRef = useRef(looksOpen)
@@ -202,10 +216,8 @@ function Editor() {
   const lookCards = useMemo<LookCard[]>(() => {
     if (!loaded || !looksOpen) return []
     const base = loaded.report.baseline.cfg
-    const reset = Object.fromEntries([...new Set(DIRECTIONS.flatMap((d) => Object.keys(d.sb)))].map((k) => [k, (base.sb as unknown as Record<string, number>)[k]]))
-    const from: Config = { ...cfg, sb: { ...cfg.sb, ...reset } }
     return DIRECTIONS.map((d) => {
-      const c = applyDirection(from, d, roll[d.id], locks)
+      const c = directionCfg(d.id, locks)!
       return { id: d.id, name: d.name, what: d.what, brand: c.cPrimary, // the whole of what the card wears: a knob turned while the six are
         // open (the colour, with it kept) rewrites the sheet, not only a shuffle
         key: JSON.stringify(c),
@@ -216,8 +228,18 @@ function Editor() {
     const card = lookCards.find((l) => l.id === id) as (LookCard & { cfg: Config }) | undefined
     if (!card) return
     dispatch({ type: 'REPLACE', cfg: card.cfg })
+    setLookApplied({ id, cfg: card.cfg, setColour: !locks.colour, setFont: !locks.font })
     setLookOn(id)
     setLooksOpen(false)
+  }
+  // Preset: the same six, from the panel, applied as Pick this one would.
+  const pickPreset = (id: string) => {
+    const lk = yours()
+    const next = directionCfg(id, lk)
+    if (!next) return
+    dispatch({ type: 'REPLACE', cfg: next })
+    setLookApplied({ id, cfg: next, setColour: !lk.colour, setFont: !lk.font })
+    setLookOn(id)
   }
   const changedCount = useMemo(() => {
     if (!loaded) return 0
@@ -660,23 +682,6 @@ function Editor() {
     if (loaded && !loaded.kit && !confirm(`Switch to ${DOOR.find((d) => d.id === id)?.name ?? id}? Your app was only in this tab: switching closes it, and you can bring it again from the Your app tab.`)) return
     void loadFromUrl(`/kits/${id}.zip`)
   }
-  // Look: the corners are measured against the stage's own radius, its kit's
-  // start card on a kit, the build's most-used radius on yours.
-  const [lookApplied, setLookApplied] = useState<{ id: string; cfg: Config } | null>(null)
-  const lookBasePx = (() => {
-    if (!loaded) return null
-    const own = loaded.kit ? looks.find((l) => l.id === loaded.kit!.id)?.values.radius : undefined
-    if (own) return toPx(own)?.px ?? null
-    const top = [...loaded.project.table.ofKind('radius')].map((e) => ({ px: toPx(e.value)?.px ?? 0, n: e.count })).filter((x) => x.px > 0 && x.px < 100).sort((a, b) => b.n - a.n)[0]
-    return top?.px ?? null
-  })()
-  const pickLook = (id: string) => {
-    const look = looks.find((l) => l.id === id)
-    if (!look || !loaded) return
-    const next = applyLook(cfg, look, lookBasePx)
-    dispatch({ type: 'REPLACE', cfg: next })
-    setLookApplied({ id, cfg: next })
-  }
   useEffect(() => { setLookApplied(null) }, [loaded?.project.id])
   // The look while the knobs stand where it put them; "As it is" at the
   // baseline; "Custom" once something was turned on top of a look.
@@ -772,7 +777,7 @@ function Editor() {
                   {/* What the knobs turn, and a start for all of them at once:
                       both belong to the knobs, not to the site's top bar. */}
                   <EngineSelect kitId={loaded.kit?.id} ownApp={!loaded.kit} detected={coverage ? coverage.kit : undefined} onPick={pickKit} />
-                  <LookSelect current={lookNow} onPick={pickLook} />
+                  <PresetSelect current={lookNow} presets={DIRECTIONS.map((d) => ({ id: d.id, name: d.name, what: d.what }))} onPick={pickPreset} />
                 </>}
               />
             )}
