@@ -3813,3 +3813,21 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     The kit builds, their fixtures and the /kits/ shots are rebuilt; all
     eight kit hold-outs load 1:1.
 
+
+    Two faults of the on-brand guard, found by the new clip (several knobs at
+    once): it matched "accent" too, and shadcn's --sidebar-accent-foreground
+    (dark text on a pale grey accent) went white, the active nav item a blank
+    pill; and it rewrote a SHARED entry, so shadcn's dark --card, the same
+    oklch(0.205 0 0) as its dark --primary-foreground, went white with the
+    text. The guard is primary and brand only, and text on the brand has its
+    own variable now (table.ts ON_BRAND_PROP, like the brand's own); a test
+    holds the shared case. Hold-outs on it: 173, ok 152, differs 5, one
+    flagged (mui-dist, a timeout while the MCP package was building beside
+    the run), which passes alone twice in 4 s.
+
+    And the outside, said as it is now: the README, the npm README, the meta,
+    llms.txt (generated with llms-full.txt now, it had drifted), the marketing
+    copy and its numbers; the OG card (the Dashboard six ways, one brand
+    colour), the README hero and the clip (scripts/og/clip.mjs, the four steps
+    on a kit and on SB Admin 2) shot again; uisandbox-mcp 0.5.1 packs the
+    four-step app.

@@ -483,7 +483,10 @@ function mapColor(c: Okla, fam: Family, e: Entry | null, base: Vars, now: Vars, 
   return applyGlobal(mapped, sb)
 }
 
-const ON_BRAND = /(primary|brand|accent)[-_]?(content|foreground|contrast|fg)\b|on[-_]primary\b/i
+// primary and brand only: shadcn's --sidebar-accent-foreground is dark text
+// on a pale grey ACCENT, and checked against the brand it went white, the
+// active nav item a blank pill (decision 216)
+const ON_BRAND = /(primary|brand)[-_]?(content|foreground|contrast|fg)\b|on[-_]primary\b/i
 const luminance = (c: Okla) => {
   const [r, g, b] = toSrgb({ ...c, a: 1 }).components.map((v) => v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)
   return 0.2126 * r! + 0.7152 * g! + 0.0722 * b!
@@ -512,7 +515,8 @@ export function mapEntry(e: Entry, base: Vars, now: Vars, baseCfg: Config, cfg: 
       // daisyUI's is a pale lavender, grey enough to map as a neutral: on a
       // blue or red pick it kept its violet tint and fell to 3.8:1. Only
       // when the brand moved; a kit as it ships keeps its own pairing.
-      if (cfg.cPrimary !== baseCfg.cPrimary && e.sites.some((st) => ON_BRAND.test(st.prop))) {
+      // every site: the entry is its own (table.ts ON_BRAND_PROP), never a value it shares
+      if (cfg.cPrimary !== baseCfg.cPrimary && e.sites.every((st) => ON_BRAND.test(st.prop))) {
         const b = parseCssColor(cfg.cPrimary)
         if (b) mapped = legibleOn(mapped, b)
       }

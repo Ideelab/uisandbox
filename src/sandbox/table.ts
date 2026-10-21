@@ -49,6 +49,12 @@ export const SITE_CAP = 25
    back from the mapping that reads it. */
 const BRAND_PROP = /^(?:--)?(?![\w-]*\bon[_-]?primary)(?:[\w.-]*?[-_.])?(primary|brand)(?:[-_]?(color|colour|base|default|500|600|main|hex))?(?:-(rgb|hsl|channels))?$/i
 const ROLE_PRIMARY_PROP = /(^|[-_.])(text|bg|background|surface|border|fg|foreground|ink|content|font|label|icon|heading|body)[-_.]primary/i
+/* text a kit sets ON its brand (--primary-foreground, --color-primary-content,
+   --md-sys-color-on-primary): its own variable too, because mapping keeps it
+   legible on the brand you pick, and shadcn's dark --primary-foreground is
+   the very oklch(0.205 0 0) its dark --card is. Shared, the card went white
+   with the text (decision 216). Kept in step with mapping.ts ON_BRAND. */
+const ON_BRAND_PROP = /(primary|brand)[-_]?(content|foreground|contrast|fg)\b|on[-_]primary\b/i
 
 export const varName = (id: number): string => `--us-v${id}`
 
@@ -73,7 +79,8 @@ export class SubstitutionTable {
        (decision 216). The page renders the same: the variable holds the same
        value. */
     const brandOwn = kind === 'color' && site.prop.startsWith('--') && BRAND_PROP.test(site.prop) && !ROLE_PRIMARY_PROP.test(site.prop)
-    const key = `${kind} ${norm}${brandOwn ? ' @brand' : ''}`
+    const onBrand = kind === 'color' && site.prop.startsWith('--') && ON_BRAND_PROP.test(site.prop)
+    const key = `${kind} ${norm}${brandOwn ? ' @brand' : onBrand ? ' @onbrand' : ''}`
     let e = this.byKey.get(key)
     if (!e) {
       e = { id: this.entries.length + 1, kind, value: norm, count: 0, sites: [] }
@@ -89,7 +96,7 @@ export class SubstitutionTable {
   /** The entry a literal WOULD map to, without registering it. */
   find(kind: Kind, value: string): Entry | undefined {
     const key = `${kind} ${normalise(kind, value)}`
-    return this.byKey.get(key) ?? this.byKey.get(`${key} @brand`)
+    return this.byKey.get(key) ?? this.byKey.get(`${key} @brand`) ?? this.byKey.get(`${key} @onbrand`)
   }
 
   get(id: number): Entry | undefined {

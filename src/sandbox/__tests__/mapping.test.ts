@@ -137,6 +137,20 @@ describe('size dials — ×1 is their code, everything scales relatively', () =>
     expect(at({ ...base, cPrimary: '#2563eb' })!.toLowerCase()).toBe('#2563eb')
   })
 
+  it("text on the brand is its own: shadcn's dark card shares its value and stays dark", () => {
+    const table = new SubstitutionTable()
+    rewriteCss(':root{--primary:#171717;--primary-foreground:#fafafa}.dark{--card:oklch(0.205 0 0);--primary:#e5e5e5;--primary-foreground:oklch(0.205 0 0)}.c{background:var(--card)}.b{background:var(--primary);color:var(--primary-foreground)}', table, 'x.css')
+    const base: Config = { ...theirCfg, cPrimary: '#171717' }
+    const baseline: Baseline = { cfg: base, tokens: buildTokens(base), families: familiesOf(table, base.cPrimary) }
+    const of = (prop: string) => table.entries.find((x) => x.sites.some((st) => st.prop === prop && /\.dark/.test(st.selector ?? '')))!
+    expect(of('--card').id).not.toBe(of('--primary-foreground').id)
+    const c = { ...base, cPrimary: '#4f46e5' as Config['cPrimary'] }
+    const out = computeVars(table, baseline, c, buildTokens(c))
+    // dark still (a grey tint may follow the brand), never the white the text needs
+    expect(parseCssColor(out[varName(of('--card').id)] ?? of('--card').value)!.L).toBeLessThan(0.3)
+    expect(parseCssColor(out[varName(of('--primary-foreground').id)]!)!.L).toBeGreaterThan(0.9)
+  })
+
   it("text on the brand stays legible on the brand you pick (daisyUI's lavender content)", () => {
     const table = new SubstitutionTable()
     rewriteCss(':root{--color-primary:#422ad5;--color-primary-content:oklch(0.93 0.034 272.788)}.btn{background:var(--color-primary);color:var(--color-primary-content)}', table, 'x.css')
