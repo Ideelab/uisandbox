@@ -8,7 +8,14 @@ import { customFontUrl } from '../tokens/customFonts'
 
 export function fontCssFor(cfg: Config, base: Config): string {
   const chosen = [cfg.fontDisplay, cfg.fontBody].filter((f, i) => f !== (i === 0 ? base.fontDisplay : base.fontBody) && f !== SYSTEM_FONT)
-  if (!chosen.length) return ''
+  // Letter spacing, where the CSS sets none (decision 219): the dial adds to
+  // the letter-spacing literals a sheet has, and most text has none, it
+  // inherits `normal`. On the Bootstrap docs the dial moved nothing at all.
+  // On body, before their sheets: text that inherits follows, a literal of
+  // theirs still wins and is moved by the sheet as before.
+  const tracking = Math.round(((cfg.sb.tracking ?? 0) - (base.sb.tracking ?? 0)) * 1000) / 1000
+  const track = tracking ? `body{letter-spacing:${tracking}em}` : ''
+  if (!chosen.length) return track
   const google = chosen.filter((f) => !isCustomFont(f))
   const custom = chosen.filter(isCustomFont)
   const parts: string[] = []
@@ -25,5 +32,6 @@ export function fontCssFor(cfg: Config, base: Config): string {
     const stack = String(buildTokens(cfg).vars['--k-font-display'])
     parts.push(`h1,h2,h3,h4,h5,h6,[class*="title"],[class*="heading"],[class*="hero"],[class*="display"]{font-family:${stack} !important}`)
   }
+  if (track) parts.push(track)
   return parts.join('\n')
 }

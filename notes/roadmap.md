@@ -147,6 +147,14 @@ traffic page and the registry counts, never from a script on the page.
 
 ## Open, not yet scheduled
 
+- **Status colours that are Tailwind's palette** (decision 219): an AI-built
+  shadcn app often colours its status badges with Tailwind's ramp
+  (`bg-red-500/15 text-red-700`, `emerald`, `amber`) rather than
+  `--destructive`. The Status knob moves the danger family, which those do
+  not join, so the badges stay red; the Hue knob reaches them. Moving a
+  ramp when a status pick changes would recolour every use of that ramp,
+  decorative ones too: decide whether a ramp used only on status-like
+  elements (badges, alerts) should follow, and measure it on real builds.
 - **"Use in AI" and a Claude Desktop extension** (Alexander, 2026-10-22;
   researched, not built). The top bar's MCP button only shows before a
   project is loaded, so in the editor nobody sees it. In its place, a button

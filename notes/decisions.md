@@ -4000,4 +4000,17 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     on opening them. scripts/knob-looks.mjs (`pnpm knobs:looks`) turns 20
     knobs and reads every element of the screen, three cards and the look
     full size: 20 of 20 now, 9 failed before.
+    The same twenty knobs on own apps (knob-looks.mjs takes any query now):
+    SB Admin 2 and the Bootstrap docs as zips, and the Vite + Tailwind
+    dashboard live through the CLI. One more fault: Letter spacing moved
+    nothing on the Bootstrap docs, on the screen or in the looks. The dial adds
+    to the letter-spacing literals a sheet has, and Bootstrap writes none (two
+    `normal`); most text anywhere inherits. Turned, it now also sets body's
+    letter-spacing (fontCss.ts, before their sheets, so a literal of theirs
+    still wins and moves with the sheet; nothing at ×1, so 1:1 is untouched):
+    20 of 20 on both zips and the kit, 19 of 20 live. On the live Tailwind app the Status knob moves
+    --destructive, light and dark, as it should; the red badges on its
+    Dashboard are Tailwind's own palette (text-red-700, bg-red-500/15), which
+    no status family claims, so nothing on that screen moved. Not changed:
+    whether a status knob should reach a Tailwind ramp is on the roadmap.
 

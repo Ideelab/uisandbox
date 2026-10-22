@@ -3,7 +3,8 @@
  * Every knob, on the canvas, in all three places it is seen (decision 219):
  * the screen (1), the six looks, and one look full size.
  *
- *   node scripts/knob-looks.mjs [http://localhost:5190]     a dev server (DEV: window.__us)
+ *   node scripts/knob-looks.mjs [http://localhost:5190]     the default kit, on a dev server (DEV: window.__us)
+ *   … <base> '?load=/samples/sb-admin-dashboard.zip&quiet=1'  an own app (any query the editor takes)
  *
  * knob-render.mjs holds each knob to what it must and must not move, on the
  * screen. This holds the looks to the knobs: with the six open, a font, a
@@ -15,8 +16,11 @@
  */
 import { chromium } from 'playwright'
 const base = process.argv[2] ?? 'http://localhost:5190'
+const query = process.argv[3] ?? '?screen=overview.html'
 const b = await chromium.launch(); const p = await (await b.newContext({ viewport: { width: 1500, height: 950 } })).newPage()
-await p.goto(`${base}/?screen=overview.html`); await p.waitForSelector('.stage__foot', { timeout: 90000 }); await p.waitForTimeout(4000)
+await p.goto(`${base}/${query}`); await p.waitForSelector('.stage__foot', { timeout: 180000 }); await p.waitForTimeout(5000)
+if (await p.$('.found__facts')) { await p.click('text=Tune it directly'); await p.waitForTimeout(1500) }
+console.log('on', await p.evaluate(() => document.querySelector('.stage__foot')?.textContent.replace(/\s+/g, ' ').slice(0, 90)))
 const KNOBS = [
   ['Colour (brand)', { cPrimary: '#e11d48' }], ['Type pair', { fontDisplay: 'IBM Plex Sans', fontBody: 'IBM Plex Sans' }],
   ['Heading font', { fontDisplay: 'Outfit' }], ['Text font', { fontBody: 'Nunito Sans' }],
