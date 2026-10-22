@@ -147,6 +147,33 @@ traffic page and the registry counts, never from a script on the page.
 
 ## Open, not yet scheduled
 
+- **"Use in AI" and a Claude Desktop extension** (Alexander, 2026-10-22;
+  researched, not built). The top bar's MCP button only shows before a
+  project is loaded, so in the editor nobody sees it. In its place, a button
+  that stays: "Use in AI", a menu with
+  - **Cursor**, one click: `cursor://anysphere.cursor-deeplink/mcp/install?name=uisandbox&config=<base64 of {"command":"npx","args":["-y","uisandbox-mcp"]}>`
+    ([docs](https://cursor.com/docs/mcp/install-links));
+  - **VS Code**, one click: `vscode:mcp/install?<encodeURIComponent of {"name":"uisandbox","command":"npx","args":["-y","uisandbox-mcp"]}>`
+    (the shape `code --add-mcp` takes; GitHub markdown needs a
+    vscode.dev/redirect wrapper; [docs](https://code.visualstudio.com/docs/copilot/guides/mcp-developer-guide));
+  - **Claude Desktop**, a download: `uisandbox.mcpb`, an MCP bundle (the
+    format was .dxt until September 2025), built and attached by
+    release.yml with every version, opened by double click
+    ([Anthropic](https://www.anthropic.com/engineering/desktop-extensions));
+  - **Claude Code**, copy: `claude mcp add uisandbox -- npx -y uisandbox-mcp`,
+    or the plugin (`/plugin marketplace add Ideelab/uisandbox`);
+  - **Codex**, copy: `codex mcp add uisandbox -- npx -y uisandbox-mcp`;
+  - **anything else**, the JSON block.
+  The official listings are Alexander's to file: Anthropic's desktop
+  extension directory (an interest form; it asks for tool annotations on
+  every tool, a privacy policy and three working examples, which can be
+  prepared here) and the official Claude Code plugin marketplace (an
+  in-app submission form). Not a fit: claude.ai connectors and ChatGPT
+  apps take remote (HTTP) servers only, and UISandbox runs on the
+  machine on purpose, next to the files and the localhost. With it:
+  .claude-plugin/marketplace.json still says 0.3.2, and the next npm
+  release (0.5.4) carries the takeover's uncut glow, which went in after
+  0.5.3 was packed.
 - **A "Feel" knob, to spar about first** (Alexander, 2026-10-20): one pick
   that sets Spacing, Radius, Elevation and Border width together (Compact,
   Default, Soft, Sharp), the way shadcn's Create offers Style. Alexander
