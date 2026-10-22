@@ -196,12 +196,26 @@ function Editor() {
   }
   /** One direction on the knobs as they stand, with the dials a look turns
    *  put back to the app's own first, so one look never inherits another's. */
+  /** The dials YOU turned: away from the code, and not to where a look put
+   *  them. The six keep these (decision 219): a radius or a spacing turned
+   *  with the six open showed in none of them, since every look set its own,
+   *  and only colour, which no look sets, seemed to work. */
+  const ownDials = (): string[] => {
+    if (!loaded) return []
+    const base = loaded.report.baseline.cfg.sb as unknown as Record<string, unknown>, now = cfg.sb as unknown as Record<string, unknown>
+    const byLook = lookApplied?.cfg.sb as unknown as Record<string, unknown> | undefined
+    return Object.keys(now).filter((k) => now[k] !== base[k] && !(byLook && byLook[k] === now[k] && byLook[k] !== base[k]))
+  }
   const directionCfg = (id: string, lk: LookLocks): Config | null => {
     const d = DIRECTIONS.find((x) => x.id === id)
     if (!d || !loaded) return null
     const base = loaded.report.baseline.cfg
-    const reset = Object.fromEntries([...new Set(DIRECTIONS.flatMap((x) => Object.keys(x.sb)))].map((k) => [k, (base.sb as unknown as Record<string, number>)[k]]))
-    return applyDirection({ ...cfg, sb: { ...cfg.sb, ...reset } }, d, roll[d.id], lk)
+    const own = ownDials()
+    // the dials a look turns, back to the app's own first, so one look never
+    // inherits another's; then the look; then what you turned, on top
+    const reset = Object.fromEntries([...new Set(DIRECTIONS.flatMap((x) => Object.keys(x.sb)))].filter((k) => !own.includes(k)).map((k) => [k, (base.sb as unknown as Record<string, number>)[k]]))
+    const looked = applyDirection({ ...cfg, sb: { ...cfg.sb, ...reset } }, d, roll[d.id], lk)
+    return withKeys(looked, cfg, own.map((k) => `sb.${k}`))
   }
   // The six open holding on to what was chosen: a font turned away from the
   // kit's is kept by default, so the looks vary the style around it. Colour
@@ -210,6 +224,9 @@ function Editor() {
     setLocks(yours())
     setLooksOpen(true)
   }
+  // A font turned with the six open is kept in all six, as Keep my font would:
+  // the look's own pair would otherwise hide the turn (decision 219).
+  useEffect(() => { if (looksOpen && !locks.font && yours().font) setLocks((l) => ({ ...l, font: true })) }, [cfg.fontDisplay, cfg.fontBody]) // eslint-disable-line react-hooks/exhaustive-deps
   const looksOpenRef = useRef(looksOpen)
   looksOpenRef.current = looksOpen
   const peekRef = useRef(peek)

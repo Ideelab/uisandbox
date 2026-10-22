@@ -3988,3 +3988,16 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     build"); 217 changed it to "own CSS" on purpose (a live app is no build),
     and the check follows: 101 of 101.
 
+219. The six keep what you turned (2026-10-22). With the six open, or one
+    look full size, turning a font, a radius, a spacing, the line height,
+    letter spacing, weight or elevation showed nowhere (Alexander: "kleur
+    reageert wel"). Every look sets those dials itself, and each card was
+    the look applied over the knobs with the look's dials put back to the
+    code first, so a turn there was overwritten six times; colour, which no
+    look sets, came through. Now the dials you turned (away from the code,
+    and not to where a picked look put them) stay on top of every look, and
+    a font turned with the six open switches Keep my font on, as it would be
+    on opening them. scripts/knob-looks.mjs (`pnpm knobs:looks`) turns 20
+    knobs and reads every element of the screen, three cards and the look
+    full size: 20 of 20 now, 9 failed before.
+
