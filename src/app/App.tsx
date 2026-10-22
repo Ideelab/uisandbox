@@ -1,5 +1,5 @@
 import DOOR from '../kits/door.json'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowLeft, Download, PanelLeftOpen, X, BookOpen } from 'lucide-react'
 import { SandboxPanel } from '../panel/SandboxPanel'
 import type { Config } from '../tokens/types'
@@ -31,9 +31,7 @@ import { Door, LoadStages } from './Intake'
 import { Found } from './Found'
 import { CaptureDoor } from './CaptureDoor'
 import { captureArchive, readCapture, sanitizeHtml, screenPath, type CapturedScreen } from '../capture/receive'
-import { AboutDialog } from './AboutDialog'
 import { Stage, isSheet, type StageTab } from './Stage'
-import { ExportDialog } from './ExportDialog'
 import { EngineSelect, PresetSelect, SchemeSwitch, SendButton, ViewSwitch } from './EditorBar'
 import { encode, readHash } from '../state/hash'
 import { carryOver, carryToken, differingKeys, isShownKnob, knobLabel, readCarryToken, withKeys } from '../state/carry'
@@ -61,6 +59,11 @@ interface Loaded {
    *  a snapshot, so no routes to discover; the origin they came from. */
   captured?: { origin: string }
 }
+
+// Opened on a click, so loaded on it: Export carries every generator, How it
+// works its video; neither belongs in what a first visit waits for.
+const ExportDialog = lazy(() => import('./ExportDialog').then((m) => ({ default: m.ExportDialog })))
+const AboutDialog = lazy(() => import('./AboutDialog').then((m) => ({ default: m.AboutDialog })))
 
 const carryNote = (from: string, keys: string[]) => `Carried over from ${from}: ${keys.filter(isShownKnob).map(knobLabel).join(', ')}. Every other knob starts where your code puts it; Reset puts it all back.`
 
@@ -586,7 +589,12 @@ function Editor() {
       const host = (() => { try { const u = new URL(url, location.href); return u.pathname.startsWith('/__repo/') ? (new URL(u.searchParams.get('u') ?? '', location.href).host || 'github.com') : u.host } catch { return url } })()
       setBusy({ stage: 'fetch', what: host, bytes: 0 })
       let res: Response
-      try { res = await fetch(url) } catch {
+      // The default kit may already be on its way (index.html starts it before this script runs).
+      const early = url === `/kits/${DEFAULT_KIT}.zip` ? (window as unknown as { __usKit?: Promise<Response | null> }).__usKit : undefined
+      ;(window as unknown as { __usKit?: unknown }).__usKit = undefined
+      const ready = early ? await early : null
+      if (ready) res = ready
+      else try { res = await fetch(url) } catch {
         throw new Error(`The browser could not fetch that URL from ${host}: the server must allow CORS (or it is offline). A public GitHub repository URL works regardless: it goes through this site's repo route.`)
       }
       if (!res.ok) throw new Error(res.status === 404 ? `Nothing at ${host} for that URL (${res.status}).` : `${res.status} fetching from ${host}.`)
@@ -868,9 +876,9 @@ function Editor() {
       {bringOpen && loaded && <div className="stage__door">{makeDoor()}</div>}
       {foundOpen && loaded && !loaded.kit && <Found facts={{ name: loaded.project.name, kit: coverage ? coverage.kit : undefined, screens: loaded.project.screens.length, values: loaded.project.table.entries.length, brand: loaded.report.baseline.cfg.cPrimary, font: loaded.report.baseline.cfg.fontBody }}
         carry={loaded.pendingCarry?.ask ? { from: loaded.pendingCarry.from, names: loaded.pendingCarry.keys.filter(isShownKnob).map(knobLabel) } : null} onDone={foundDone} />}
-      {aboutDialog.about && <AboutDialog section={aboutDialog.about.section} onClose={aboutDialog.close} />}
+      {aboutDialog.about && <Suspense fallback={null}><AboutDialog section={aboutDialog.about.section} onClose={aboutDialog.close} /></Suspense>}
       {showExport && loaded && (
-        <ExportDialog cfg={cfg} base={loaded.report.baseline.cfg} table={loaded.project.table} vars={vars} projectName={loaded.project.name} kitDoorName={loaded.kit?.name} shareUrl={shareUrl} files={loaded.project.raw} fontCss={fontCss} notes={loaded.report.notes} painted={coverage?.painted} anchors={coverage?.anchors} kit={coverage ? coverage.kit : undefined} kitValues={coverage?.kitValues} readPageVars={readPageVars} send={sendTo ? { to: sendTo, onSend: sendBack } : undefined} tells={tells ?? []} onClose={() => setShowExport(false)} />
+        <Suspense fallback={null}><ExportDialog cfg={cfg} base={loaded.report.baseline.cfg} table={loaded.project.table} vars={vars} projectName={loaded.project.name} kitDoorName={loaded.kit?.name} shareUrl={shareUrl} files={loaded.project.raw} fontCss={fontCss} notes={loaded.report.notes} painted={coverage?.painted} anchors={coverage?.anchors} kit={coverage ? coverage.kit : undefined} kitValues={coverage?.kitValues} readPageVars={readPageVars} send={sendTo ? { to: sendTo, onSend: sendBack } : undefined} tells={tells ?? []} onClose={() => setShowExport(false)} /></Suspense>
       )}
     </div>
   )

@@ -36,7 +36,7 @@ import {
   extractClassStyles, extractCssVars, resolveVar, detectKinds, detectShell, detectVariants,
   cssModuleBindings, moduleClassAttrs, qualify, deepResolveVar, styledClassNames, walkElements,
   countUnreadable, countReadable, norm, TW_GRAY_RAMPS, UTILITY_RX, cssInJsBlocks,
-  DOCS_PATH, ALT_THEME_PATH, THEME_FILE, extractPreprocessorVars, extractThemeObjectVars,
+  DOCS_PATH, ALT_THEME_PATH, THEME_FILE, extractPreprocessorVars, extractThemeObjectVars, lineCounter,
 } from './patterns.mjs'
 import {
   METRIC, NEAR_DUPE_THRESHOLD, colorDistance, pxDistance, clusterNear, parseColor, toLab, deltaE00,
@@ -324,7 +324,9 @@ function collectComponents(files) {
     if (e.at.length < 25) e.at.push(at)
   }
 
-  const lineAt = (content, idx) => content.slice(0, idx).split('\n').length
+  // one counter per text, kept while the same file is matched (patterns.mjs lineCounter)
+let lineText = null, lineFn = null
+const lineAt = (content, idx) => { if (content !== lineText) { lineText = content; lineFn = lineCounter(content) } return lineFn(idx) }
   const viaComponent = { button: 0, input: 0, card: 0 }
   const componentNames = { button: new Set(), input: new Set(), card: new Set() }
 

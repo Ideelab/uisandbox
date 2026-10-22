@@ -54,7 +54,8 @@ const { ICON_NAMES, SCREENS, wallMarkup, LAYER_SCRIPT } = await import(join(ENGI
 const { readIconSets, KIT_ICON_SETS } = await import(join(ENGINE, 'icon-sets.mjs'))
 const { kitDefaults } = await import(join(ENGINE, 'kit-defaults.mjs'))
 const { ROOT } = await import(join(ENGINE, 'kit-root.mjs'))
-const { zip } = await import(join(ENGINE, 'zip.mjs'))
+// Served from this site, so deflated (scripts/zip-deflate.mjs): stored, shadcn's door was 4.5 s of a 4G phone's first visit.
+const { zipDeflate: zip } = await import('./zip-deflate.mjs')
 const { materialElements } = await import(join(ENGINE, 'material-elements.mjs'))
 
 const ALL = ['tailwind', 'daisyui', 'shadcn', 'bootstrap', 'material', 'radix', 'mantine', 'antd', 'openprops']

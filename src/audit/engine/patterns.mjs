@@ -253,10 +253,24 @@ export function resolveSelector(selector, ancestors) {
  * `16px/1.5/400` and `16px/1.2/600` are two different typographic decisions, and
  * counting only font-size understates type sprawl by roughly 2×.
  */
+/** idx → its 1-based line, by binary search over the newline offsets, counted
+ *  once per text. Slicing and splitting the text up to every index was
+ *  quadratic: on SB Admin 2 (Font Awesome's CSS among it) it was 1.3 s of a
+ *  2.9 s load, the largest single cost of bringing an app in. */
+export function lineCounter(text) {
+  const starts = [0]
+  for (let i = text.indexOf('\n'); i !== -1; i = text.indexOf('\n', i + 1)) starts.push(i + 1)
+  return (idx) => {
+    let lo = 0, hi = starts.length - 1
+    while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (starts[mid] <= idx) lo = mid; else hi = mid - 1 }
+    return lo + 1
+  }
+}
+
 export function extractCss(path, content) {
   const events = []
   const src = blankComments(content)
-  const lineOf = (idx) => src.slice(0, idx).split('\n').length
+  const lineOf = lineCounter(src)
 
   // One pass per rule block, nesting included — see walkCss(). A nested rule's
   // parent declarations used to be dropped entirely.

@@ -3958,3 +3958,33 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     with low colour reach (water.css source among them) read the same with
     the meter as it was.
 
+218. Speed, measured (2026-10-22). On uisandbox.org, headless, a desktop line
+    and a 4G phone (1.6 Mbit/s, 150 ms, CPU ×4): first paint 0.6 s / 1.2 s,
+    but the kit on screen at 3.2 s / 12.3 s. Of the phone's 12.3 s, 4.5 s
+    was the default kit's zip (847 KB: the engine's writer stores, and
+    Cloudflare does not compress a .zip), and it only began after the app's
+    script had run. An own app (SB Admin 2, 6.6 MB) took 2.8 s / 10.8 s, and
+    a CPU profile put 1.3 s of it in one function: the audit's line counter,
+    slicing and splitting the CSS up to every declaration (quadratic).
+    - The kit doors are deflated (scripts/zip-deflate.mjs, used by
+      kit-builds.mjs; same bytes inside, checked before writing): 847 → 155 KB
+      for shadcn, 5 to 6 times smaller for all eight.
+    - index.html starts the default kit's fetch while the app's script
+      downloads, unless the address loads something else.
+    - The six cards' frames load lazily: on a phone four are below the fold.
+    - Export and How it works load on their first open: 238 → 208 KB gzip.
+    - lineCounter (patterns.mjs): the newline offsets once, a binary search
+      per index; audit.mjs uses it too. Tested against slice + split at every
+      index.
+    Measured locally after (a gzip server, the same 4G profile): the kit on
+    screen at about 5 s instead of 12.3 s; SB Admin 2 at 2.0 s / 7.5 s. Left:
+    the six looks' Google Fonts (1.2 MB, after the render, not blocking); the
+    zip reader inflating every entry up front (270 ms on 1878 files); the
+    Bootstrap docs' 114 pages rewritten and audited (no single hot spot).
+    The kit-export gate and the export sweep had not run since 217: both load
+    a build by ?load and clicked Export under What we found (13 of 13 timed
+    out). They open with &quiet=1 now, the headless mode 217 made for this.
+    The gate's "values were read, not chosen" check held the old wording ("own
+    build"); 217 changed it to "own CSS" on purpose (a live app is no build),
+    and the check follows: 101 of 101.
+

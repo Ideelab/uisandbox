@@ -69,7 +69,8 @@ function Card({ project, screen, look, picked, onOpen, onGrow }: { project: Sand
   return (
     <button type="button" className={`looks__card ${picked ? 'looks__card--on' : ''}`} onClick={onOpen} aria-pressed={picked} title={`${look.name}: open it full size`}>
       <div className="looks__shot" ref={box} style={{ height: FRAME_H * scale }}>
-        <iframe ref={frame} tabIndex={-1} aria-hidden="true" title={look.name} src={sandboxUrl(project.id, screen.path, project.base)}
+        {/* lazy: on a phone four of the six are below the fold, and each is a whole app rendering */}
+        <iframe ref={frame} tabIndex={-1} aria-hidden="true" title={look.name} loading="lazy" src={sandboxUrl(project.id, screen.path, project.base)}
           sandbox={SANDBOX_FLAGS} style={{ width: FRAME_W, height: FRAME_H, transform: `scale(${scale})` }}
           onLoad={() => { const doc = frame.current?.contentDocument; if (doc) { writeSheet(doc, project, look.sheet); observe(doc); setReady(true) } }} />
       </div>

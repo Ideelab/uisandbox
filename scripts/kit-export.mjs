@@ -130,7 +130,8 @@ const check = (build, name, pass, detail = '') => rows.push({ build, name, pass,
 for (const [f, kit] of BUILDS) {
   const page = await ctx.newPage()
   try {
-    await page.goto(`${base}/?load=${encodeURIComponent('/fixtures/' + f)}`, { waitUntil: 'domcontentloaded' })
+    // quiet: no What we found over the editor (decision 217); the export is what is tested
+    await page.goto(`${base}/?load=${encodeURIComponent('/fixtures/' + f)}&quiet=1`, { waitUntil: 'domcontentloaded' })
     await page.waitForFunction(() => document.querySelector('.stage__foot'), null, { timeout: 120000 })
     // Wait for the screen to have been READ, as the dialog says it is doing.
     await page.waitForFunction(() => !!window.__us?.coverage, null, { timeout: 60000 })
@@ -176,7 +177,7 @@ for (const [f, kit] of BUILDS) {
       check(f, `and every one install.md names is there (${named.join(', ') || 'none named'})`, named.every((n) => existsSync(join(x, n))))
       const theme = readFileSync(join(x, 'theme.css'), 'utf8')
       const design = readFileSync(join(x, 'DESIGN.md'), 'utf8')
-      check(f, 'DESIGN.md says the values were read, not chosen', /read off .* own build in UISandbox, not chosen/.test(design))
+      check(f, 'DESIGN.md says the values were read, not chosen', /read off .* own CSS in UISandbox, not chosen/.test(design))
       // MANIFEST.md must agree with the MEASUREMENT for this kit. Where the
       // unread list has rows, it names them; where it has none, "Nothing" is
       // what orphans.mjs found, not a claim made for want of data. (The first

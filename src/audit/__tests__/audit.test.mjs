@@ -1353,3 +1353,11 @@ test('pascalSegments splits namespaces and acronyms', () => {
   assert.equal(hasNoun('LightIconButton', 'Button'), true)
   assert.equal(hasNoun('FormattedMessage', 'Form'), false)
 })
+
+// lineCounter answers what slicing and splitting did, without the quadratic cost.
+import { lineCounter } from '../engine/patterns.mjs'
+test('lineCounter: the same line as slice + split, at every index', () => {
+  const text = 'a{b:1}\n\n.c{d:2}\r\n.e{\n  f:3\n}\n'
+  const at = lineCounter(text)
+  for (let i = 0; i <= text.length; i++) assert.equal(at(i), text.slice(0, i).split('\n').length)
+})

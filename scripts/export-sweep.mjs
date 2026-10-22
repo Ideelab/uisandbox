@@ -120,7 +120,8 @@ for (const [i, f] of PICKS.entries()) {
   const r = { fixture: f, findings: [], note: '' }
   const page = await context.newPage()
   try {
-    await page.goto(`${base}/?load=${encodeURIComponent(`/fixtures/${f}`)}&r=${i}`, { waitUntil: 'domcontentloaded' })
+    // quiet: no What we found over the editor (decision 217)
+    await page.goto(`${base}/?load=${encodeURIComponent(`/fixtures/${f}`)}&r=${i}&quiet=1`, { waitUntil: 'domcontentloaded' })
     const state = await page.waitForFunction(() => {
       const err = document.querySelector('.intake__error')
       if (err) return { refused: err.textContent }

@@ -109,6 +109,12 @@
         <footer>Made by <a href="https://github.com/AlexanderKaan">Alexander Kaan</a> at <a href="https://ideelab.nl/">Ideelab</a> · © Ideelab · MIT</footer>
       </div>
     </div>
+    <script>
+      // The kit a first visit opens on, fetched while the app's own script
+      // downloads instead of after it (on a 4G phone the two ran one after the
+      // other). Not when the address loads something else.
+      if (!/[?&](load|capture|live)=/.test(location.search)) window.__usKit = fetch('/kits/shadcn.zip').then(function (r) { return r.ok ? r : null }, function () { return null })
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
