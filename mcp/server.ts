@@ -28,7 +28,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod'
 import { readFileSync, existsSync, statSync, openSync, writeFileSync, unlinkSync } from 'node:fs'
 import { basename, join, dirname, extname } from 'node:path'
-import { tmpdir } from 'node:os'
+import { homedir, tmpdir } from 'node:os'
 import { createServer, request as httpRequest, type Server, type IncomingMessage, type ServerResponse } from 'node:http'
 import { request as httpsRequest } from 'node:https'
 import { connect as netConnect } from 'node:net'
@@ -156,7 +156,7 @@ When to use it — and offer it without being asked:
 
 Rules: never claim more than \`verify\` and the reach meter report — quote the numbers; if a load is refused (iOS/Android/source-only), relay the reason and suggest building first; \`verify\`/\`screenshot\` need Chromium (npx playwright install chromium once) — \`open\`, \`load\`, \`set\`, \`export\` do not.`
 
-const VERSION = '0.5.5'
+const VERSION = '0.5.6'
 const server = new McpServer({ name: 'uisandbox', version: VERSION }, { instructions: INSTRUCTIONS })
 
 server.registerTool('load', {
@@ -423,6 +423,13 @@ async function findDevServers(dir = process.cwd()): Promise<DevApp[]> {
   const found = (await Promise.all(ports.map(probe))).filter((x): x is DevApp => !!x)
   return found.sort((a, b) => Number(b.fromProject) - Number(a.fromProject))
 }
+/** The app meant when nobody names one: the dev server this project's package.json points at, or
+ *  the only one running; several and none of them this project's: ask. None: null (then the build). */
+async function theRunningApp(dir = process.cwd()): Promise<DevApp | { several: DevApp[] } | null> {
+  const apps = await findDevServers(dir)
+  if (apps.length > 1 && !apps[0]!.fromProject) return { several: apps }
+  return apps[0] ?? null
+}
 
 /** A running dev server, as a live project. */
 async function loadDev(devUrl: string, via?: Loaded['via']): Promise<Loaded> {
@@ -470,11 +477,11 @@ server.registerTool('try_designs', {
   let p: Loaded
   if (url) p = await loadDev(url, 'agent')
   else {
-    const apps = await findDevServers()
-    if (apps.length > 1 && !apps[0]!.fromProject) return reply({ found: apps.map((a) => ({ url: a.url, title: a.title })), next: 'More than one app runs on this machine. Ask the user which one, then call try_designs with its url.' })
-    if (apps.length) p = await loadDev(apps[0]!.url, 'agent')
+    const app = await theRunningApp()
+    if (app && 'several' in app) return reply({ found: app.several.map((a) => ({ url: a.url, title: a.title })), next: 'More than one app runs on this machine. Ask the user which one, then call try_designs with its url.' })
+    if (app) p = await loadDev(app.url, 'agent')
     else {
-      const r = await loadFolder(process.cwd(), 'agent')
+      const r = await loadFolder(process.cwd(), 'agent').catch((e: Error) => ({ refused: e.message }))
       if ('refused' in r) return reply({ found: [], next: 'No dev server answers on this machine and this folder holds no build that renders. Ask the user to start their dev server (npm run dev, or the project\'s own) and call try_designs again; or build it first.', why: r.refused })
       p = r
     }
@@ -691,9 +698,25 @@ server.registerPrompt('try', {
  *   uisandbox-mcp stop       stops what --detach left running
  * --detach starts the sandbox on its own and returns as soon as it is open: an
  * agent then runs one command that finishes, not a process it has to keep
- * (a background npx was refused in auto mode, decision 220). */
+ * (a background npx was refused in auto mode, decision 220). `open` with
+ * nothing after it opens the app that runs (try_designs' choice), else the
+ * build in this folder: the agent's line needs no port (decision 221). */
 const argv = process.argv.slice(2)
 const PIDS = join(tmpdir(), 'uisandbox-mcp.pids')
+const USAGE = `uisandbox-mcp: try designs on the app you are building, 1:1, in your own browser.
+
+  npx uisandbox-mcp open              the app running on this machine (else the build in this folder), live
+  npx uisandbox-mcp open <url>        that dev server, e.g. http://localhost:5173
+  npx uisandbox-mcp open <folder|zip> a build
+  npx uisandbox-mcp open --detach     the same, and the command returns (for an agent); the patch goes to a file
+  npx uisandbox-mcp stop              stops what --detach left running
+  npx uisandbox-mcp start             only the helper: uisandbox.org's "Connect a running app" lists your apps
+
+As an MCP server (what an agent adds once): claude mcp add uisandbox -- npx -y uisandbox-mcp`
+if (argv[0] === 'help' || argv.includes('--help') || argv.includes('-h')) { console.log(USAGE); process.exit(0) }
+// Typed in a terminal with nothing after it: a person, not an MCP client (those
+// pipe stdin). As a server it would wait in silence; start the helper instead.
+if (!argv.some((a) => !a.startsWith('--')) && !argv.includes('--stdio') && process.stdin.isTTY) argv.unshift('start')
 if (argv[0] === 'stop') {
   let n = 0
   try { for (const pid of readFileSync(PIDS, 'utf8').split('\n').filter(Boolean)) { try { process.kill(Number(pid)); n++ } catch { /* gone already */ } } unlinkSync(PIDS) } catch { /* nothing recorded */ }
@@ -717,8 +740,8 @@ if (argv[0] === 'open' && argv.includes('--detach')) {
 if (argv[0] === 'start') {
   const up = await startHelper('cli')
   console.log(up
-    ? `UISandbox is ready on this machine. On uisandbox.org, "Connect a running app" now lists the apps your dev servers serve: pick one and it opens live.\nCtrl-C to stop.`
-    : `Something already answers on 127.0.0.1:${HELPER_PORT}: UISandbox is probably running already (in Claude Code, or another terminal). uisandbox.org will find it.`)
+    ? `UISandbox is ready on this machine. On uisandbox.org, "Connect a running app" now lists the apps your dev servers serve: pick one and it opens live.\nThe same list, in any browser and with nothing to allow: http://127.0.0.1:${HELPER_PORT}/\nOr open one straight away: npx uisandbox-mcp open\nCtrl-C to stop.`
+    : `Something already answers on 127.0.0.1:${HELPER_PORT}: UISandbox is probably running already (in Claude Code, or another terminal). uisandbox.org will find it, and so does http://127.0.0.1:${HELPER_PORT}/`)
   if (!up) process.exit(0)
   await new Promise(() => {})
 }
@@ -726,7 +749,18 @@ if (argv[0] === 'open') {
   // `open` with no argument means the folder you are in: any repo works — the
   // build folder (dist/, build/, out/, public/, _site/…) is found inside it,
   // whatever the framework calls it. `--no-browser` prints the URL only.
-  const target = argv.slice(1).find((a) => !a.startsWith('--')) ?? '.'
+  let target = argv.slice(1).find((a) => !a.startsWith('--'))
+  // Nothing named: the app that runs, as try_designs finds it; else this folder's build.
+  if (!target) {
+    const app = await theRunningApp()
+    if (app && 'several' in app) {
+      console.error(`More than one app runs on this machine. Name the one you mean:\n${app.several.map((a) => `  npx uisandbox-mcp open ${a.url}${a.title ? `   (${a.title})` : ''}`).join('\n')}`)
+      process.exit(2)
+    }
+    if (app) console.log(`Found ${app.title || app.url} running at ${app.url}. Not that one? npx uisandbox-mcp open <url or folder>`)
+    else if ([homedir(), '/'].includes(process.cwd())) { console.error('No dev server answers on this machine. Start yours (npm run dev, or your project\'s own) and run this again; or run it inside your project, where it opens the build.'); process.exit(2) }
+    target = app?.url ?? '.'
+  }
   // An address (http://localhost:3000): live mode, the running app itself.
   const live = /^https?:\/\//i.test(target) || /^(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/i.test(target)
   let p: Loaded

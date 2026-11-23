@@ -1,5 +1,5 @@
 /** A folder → a zip (stored, no compression) in memory, for the CLI. */
-import { readdirSync, readFileSync, statSync } from 'node:fs'
+import { lstatSync, readdirSync, readFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
 
 const crcTable = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0 } return t })()
@@ -7,7 +7,22 @@ const crc32 = (b: Uint8Array) => { let c = 0xffffffff; for (let i = 0; i < b.len
 
 export async function zipFolder(dir: string): Promise<Uint8Array<ArrayBuffer>> {
   const files: string[] = []
-  const walk = (d: string) => { for (const e of readdirSync(d)) { if (e === 'node_modules' || e === '.git' || e === '.DS_Store' || e === '.cache') continue; const f = join(d, e); if (statSync(f).isDirectory()) walk(f); else files.push(f) } }
+  // A build is a few thousand files at most. Past that it is a home folder or a
+  // disk (`open` typed where no app runs), and reading on would take minutes.
+  const MAX_FILES = 20000, MAX_BYTES = 500 * 2 ** 20
+  let bytes = 0
+  const walk = (d: string) => {
+    let entries: string[]
+    try { entries = readdirSync(d) } catch { return } // a folder it may not read is not part of a build
+    for (const e of entries) {
+      if (e === 'node_modules' || e === '.git' || e === '.DS_Store' || e === '.cache') continue
+      const f = join(d, e), st = lstatSync(f)
+      if (st.isSymbolicLink()) continue
+      if (st.isDirectory()) { walk(f); continue }
+      files.push(f); bytes += st.size
+      if (files.length > MAX_FILES || bytes > MAX_BYTES) throw new Error(`${dir} is too big to be a build (over ${files.length > MAX_FILES ? `${MAX_FILES} files` : '500 MB'}). Start your dev server and run this again, or name the build folder (dist/, build/, out/).`)
+    }
+  }
   walk(dir)
   const enc = new TextEncoder()
   const locals: Uint8Array[] = [], centrals: Uint8Array[] = []

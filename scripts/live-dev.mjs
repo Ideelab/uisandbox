@@ -181,6 +181,12 @@ try {
       // the one call an agent makes for "let me try some designs" (decision 220)
       const tried = JSON.parse(text(await mcp.callTool({ name: 'try_designs', arguments: { url } })))
       check(tag, 'try_designs opens it live', /live=1/.test(tried.opened ?? '') && !!tried.id, (tried.opened ?? JSON.stringify(tried)).slice(0, 70))
+      // an agent with no tools: `open --detach`, no address, run in the project
+      // (its package.json names the port), finds the app and returns (decision 221)
+      const proj = join(work, `${app.id}-proj`); W(proj, { 'package.json': JSON.stringify({ scripts: { dev: `vite --port ${app.port}` } }) })
+      const det = await new Promise((res) => { const d = spawn('node', [cli, 'open', '--detach', '--no-browser'], { cwd: proj, env: { ...process.env, UISANDBOX_PORTS: String(app.port) }, stdio: ['ignore', 'pipe', 'pipe'] }); let out = ''; d.stdout.on('data', (x) => { out += x }); d.stderr.on('data', (x) => { out += x }); d.on('exit', (code) => res({ code, out })) })
+      check(tag, 'open --detach with no address finds it and returns', det.code === 0 && new RegExp(`Live: http://localhost:${app.port}`).test(det.out), det.out.split('\n')[0].slice(0, 70))
+      execFileSync('node', [cli, 'stop'])
       // the helper uisandbox.org asks: this app listed, a foreign site refused
       const listed = await fetch('http://127.0.0.1:47319/apps', { headers: { origin: 'https://uisandbox.org' } }).then((r) => r.json()).catch(() => ({ apps: [] }))
       check(tag, 'the helper lists it for uisandbox.org', listed.apps.some((a) => a.port === app.port), listed.apps.map((a) => a.port).join(' '))

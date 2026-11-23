@@ -4067,3 +4067,41 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     5000–5010, 5170–5180, 8000–8010, 8080–8090 and a few more): Cartful and
     six other local sites listed, in 0.1 s. uisandbox-mcp 0.5.5.
 
+
+221. An agent without the tools takes one line, with no address (2026-11-23).
+    Alexander let a Claude session without the uisandbox MCP server try it.
+    It read the site's Connect menu, which offered `npx uisandbox-mcp start`
+    (a process to keep open, for a person) and the MCP line (a new session),
+    then opened uisandbox.org in its own built-in browser, where every fetch
+    to 127.0.0.1 failed: that browser never shows Chrome's local network
+    prompt, and it cannot register a service worker on 127.0.0.1 either. Not
+    ours to fix. The "bug" it reported (no CORS header on the helper's `/`) is
+    not one: `/` is a page you visit; `/apps` and `/hello` carry the header
+    (checked). The line that works without tools or a new session was there,
+    `open <url> --detach`, but nothing on the site told an agent about it.
+    - **`open` with nothing after it** opens the app that runs, as try_designs
+      chooses (the port package.json names, or the only one; several and none
+      the project's: it lists them with the line for each and stops), else
+      the build in the folder. The agent's line is `npx uisandbox-mcp open
+      --detach`, no port to know. In the home folder or / with nothing
+      running it stops with what to do, and a folder over 20,000 files or
+      500 MB is refused as not a build, instead of zipping a disk.
+    - **The Connect menu**, when the helper does not answer, leads with that
+      line for a person, then a prompt to paste for an agent (try_designs,
+      else `open --detach`, "your built-in browser cannot reach my
+      localhost", the patch shown first), then the MCP line; `start` moved to
+      the fine print. The prompt in Try it on your own app says the same.
+    - **llms.txt** opens its For agents section with it, and the skill says
+      never to open localhost or the Connect menu in the agent's own browser.
+    - **`npx uisandbox-mcp` typed in a terminal** (stdin a TTY; an MCP client
+      pipes it) is `start`, not a server waiting in silence; `--help` prints
+      the commands; `start` names http://127.0.0.1:47319/, the same list in
+      any browser with nothing to allow.
+    Checked: in a folder whose package.json says `--port 4320`, `open --detach
+    --no-browser` found Cartful, opened it live and returned in 0.75 s; in ~,
+    with seven local sites running, it listed them and stopped; piped, the
+    server still answers initialize. live-dev.mjs adds the no-address
+    --detach check on all four apps: 4 of 4. Its helper check failed 4 times
+    in this run because a 0.5.4 `start` from the other session held port
+    47319 (it does not know the port ranges of 0.5.5); not a regression.
+    uisandbox-mcp 0.5.6.

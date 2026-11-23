@@ -36,13 +36,16 @@ The conversation this is built for: *"Let me try some designs on this"* → the 
 ## Without an agent
 
 ```bash
-npx uisandbox-mcp start                        # the helper: on uisandbox.org, "Connect a running app" lists your running apps; one click opens one live
-npx uisandbox-mcp open http://localhost:3000   # your RUNNING dev server, live: knobs on the app as you develop it, hot reload included
-npx uisandbox-mcp open                         # inside your project: finds the build, opens the sandbox (a folder or zip as argument works too)
-npx uisandbox-mcp open http://localhost:3000 --detach   # opens it and returns at once (for an agent without MCP); `stop` ends it
+npx uisandbox-mcp open                         # the app running on this machine, live (else the build in this folder); hot reload included
+npx uisandbox-mcp open http://localhost:3000   # that dev server, when more than one runs (a folder or zip works too)
+npx uisandbox-mcp open --detach                # opens it and returns at once (for an agent without MCP); the patch goes to a file; `stop` ends it
+npx uisandbox-mcp start                        # only the helper: on uisandbox.org, "Connect a running app" lists your running apps
+npx uisandbox-mcp                              # typed in a terminal: the same as start (an MCP client pipes stdin and gets the server)
 ```
 
-**The helper.** A page on uisandbox.org cannot read your localhost; the server can. It listens on `127.0.0.1:47319` (inside the MCP server whenever your client runs it, or with `start`) and answers uisandbox.org and localhost pages only: which dev servers run (`GET /apps`) and open one (`POST /open`), served from this process. Chrome asks once whether uisandbox.org may reach your local network. It looks on the usual dev ports and the runs around them (3000–3010, 4000–4010, 4200–4210, 4300–4330, 5000–5010, 5170–5180, 8000–8010, 8080–8090 and a few more) and the one your package.json names; `UISANDBOX_PORTS=4400,9000` adds your own.
+An agent without the MCP tools runs `open --detach`: one command that finishes, and the sandbox opens in the user's own browser. An agent's built-in browser cannot reach the user's localhost from uisandbox.org (no local network permission there), so the site's Connect menu is for the user's own browser.
+
+**The helper.** A page on uisandbox.org cannot read your localhost; the server can. It listens on `127.0.0.1:47319` (inside the MCP server whenever your client runs it, or with `start`) and answers uisandbox.org and localhost pages only: which dev servers run (`GET /apps`) and open one (`POST /open`), served from this process. Chrome asks once whether uisandbox.org may reach your local network; `http://127.0.0.1:47319/` lists the same apps in any browser with nothing to allow (Safari does not let a site ask). It looks on the usual dev ports and the runs around them (3000–3010, 4000–4010, 4200–4210, 4300–4330, 5000–5010, 5170–5180, 8000–8010, 8080–8090 and a few more) and the one your package.json names; `UISANDBOX_PORTS=4400,9000` adds your own.
 
 ## Slash commands
 

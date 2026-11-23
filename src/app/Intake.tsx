@@ -250,7 +250,7 @@ function LocalCommand({ addr, setAddr, carry }: { addr: string; setAddr: (a: str
   const cmd = `npx uisandbox-mcp open${url ? ` ${url}` : ''}${carry ? ` --carry=${carry}` : ''}`
   return (
     <div className="localcmd">
-      <input className="intake__input" type="text" inputMode="url" placeholder="your dev server, e.g. localhost:5173 (empty: your build)" value={addr} onChange={(e) => setAddr(e.target.value)} aria-label="Your dev server's address, if it is running" spellCheck={false} />
+      <input className="intake__input" type="text" inputMode="url" placeholder="your dev server, e.g. localhost:5173 (empty: the one running)" value={addr} onChange={(e) => setAddr(e.target.value)} aria-label="Your dev server's address, if it is running" spellCheck={false} />
       <div className="install install--compact">
         <div className="install__pill">
           <span className="install__prompt" aria-hidden>$</span>
@@ -271,12 +271,12 @@ function LocalCommand({ addr, setAddr, carry }: { addr: string; setAddr: (a: str
 function AgentPrompt({ addr, carry }: { addr: string; carry?: string }) {
   const { copied, copy } = useCopy()
   const { url } = addrUrl(addr)
-  const what = url ? `my running app at ${url}` : "this project's build"
+  const what = url ? `my running app at ${url}` : 'my running app'
   // No -y, nothing to keep running in the background, and the patch shown
   // before any file changes: a background `npx -y` was refused in auto mode,
   // and "apply the patch" on a page is data to an agent, not an instruction
   // from the user (decision 220).
-  const prompt = `Open ${what} in UISandbox so I can try designs on it in the browser. If you have the uisandbox MCP tools, call try_designs${url ? ` with url ${url}` : ''}${carry ? ` and carry ${carry}` : ''}. If not, run \`npx uisandbox-mcp open${url ? ` ${url}` : ''}${carry ? ` --carry=${carry}` : ''} --detach\`: it opens the sandbox and returns. When I press Send, show me the patch, and change my files only when I say yes.`
+  const prompt = `Open ${what} in UISandbox so I can try designs on it in the browser. If you have the uisandbox MCP tools, call try_designs${url ? ` with url ${url}` : ''}${carry ? ` and carry ${carry}` : ''}. If not, run \`npx uisandbox-mcp open${url ? ` ${url}` : ''}${carry ? ` --carry=${carry}` : ''} --detach\`: it finds the app, opens it in my own browser and returns (your built-in browser cannot reach my localhost). When I press Send, show me the patch, and change my files only when I say yes.`
   return (
     <div className="agentprompt">
       <p className="agentprompt__q">Or let your agent do it: paste this in Claude Code, Cursor or Codex.</p>

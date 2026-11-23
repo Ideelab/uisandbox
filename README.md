@@ -37,7 +37,7 @@ something to turn before you bring anything.
    seven more kits one pick away (Tailwind CSS, daisyUI, Bootstrap, Material 3,
    Radix Themes, Mantine, Ant Design), each dressed as the same seven-screen
    invoicing app. Then *Try it on your own app*: run
-   `npx uisandbox-mcp open http://localhost:3000` next to your dev server, or tell
+   `npx uisandbox-mcp open` next to your dev server, or tell
    your agent to open it, and your running app opens live, every screen, hot reload
    included. No terminal? Drag *Take this screen along* to your bookmarks bar and
    click it on any screen your browser shows (staging, behind a login, a Lovable or
@@ -111,8 +111,8 @@ which goes through uisandbox.org to fetch its zip. Nothing is stored.
 ## From your terminal, or from your agent
 
 ```bash
-npx uisandbox-mcp open                       # inside your project: finds the build, opens the sandbox
-npx uisandbox-mcp open http://localhost:3000 # your running dev server, live, hot reload included
+npx uisandbox-mcp open                       # the app you are running, live, hot reload included (else this folder's build)
+npx uisandbox-mcp open http://localhost:3000 # that dev server, when more than one runs
 ```
 
 The same engine runs as an MCP server ([`mcp/README.md`](mcp/README.md)): `load` a

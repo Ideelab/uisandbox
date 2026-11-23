@@ -23,13 +23,34 @@ async function helperApps(): Promise<DevApp[] | null> {
   } catch { return null }
 }
 
-function CopyLine({ cmd }: { cmd: string }) {
+const useCopy = () => {
   const [copied, setCopied] = useState(false)
+  return { copied, copy: async (text: string) => { try { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 1400) } catch { /* the text is on screen to select */ } } }
+}
+/** A carry token is long; on screen its first characters do, the copy is whole. */
+const short = (text: string, carry?: string) => (carry ? text.split(carry).join(`${carry.slice(0, 6)}…`) : text)
+
+function CopyLine({ cmd, carry }: { cmd: string; carry?: string }) {
+  const { copied, copy } = useCopy()
   return (
     <div className="install__pill connect__line">
       <span className="install__prompt" aria-hidden>$</span>
-      <code className="install__cmd">{cmd}</code>
-      <button type="button" className="install__copy" aria-label="Copy" title="Copy" onClick={async () => { try { await navigator.clipboard.writeText(cmd); setCopied(true); setTimeout(() => setCopied(false), 1400) } catch { /* the line is on screen to select */ } }}>{copied ? <Check size={14} strokeWidth={2.5} /> : <Copy size={14} />}</button>
+      <code className="install__cmd">{short(cmd, carry)}</code>
+      <button type="button" className="install__copy" aria-label="Copy" title="Copy" onClick={() => void copy(cmd)}>{copied ? <Check size={14} strokeWidth={2.5} /> : <Copy size={14} />}</button>
+    </div>
+  )
+}
+
+/** For an agent with no uisandbox tools, the line that works is `open --detach`: it finds the app,
+ *  opens the user's own browser and returns. An agent that read this menu ran `start` (a process to
+ *  keep) and tried the site in its built-in browser, which never reaches localhost (decision 221). */
+function AgentLine({ carry }: { carry?: string }) {
+  const { copied, copy } = useCopy()
+  const prompt = `Open my running app in UISandbox so I can try designs on it. If you have the uisandbox MCP tools, call try_designs${carry ? ` with carry ${carry}` : ''}. If not, run \`npx uisandbox-mcp open${carry ? ` --carry=${carry}` : ''} --detach\`: it finds the app, opens it in my own browser and returns (your built-in browser cannot reach my localhost). When I press Send, show me the patch, and change my files only when I say yes.`
+  return (
+    <div className="agentprompt__box connect__agent">
+      <p className="agentprompt__text">{short(prompt, carry)}</p>
+      <button type="button" className="btn btn--secondary btn--sm agentprompt__copy" onClick={() => void copy(prompt)}>{copied ? <><Check size={13} strokeWidth={2.5} /> Copied</> : <><Copy size={13} /> Copy</>}</button>
     </div>
   )
 }
@@ -91,12 +112,14 @@ export function ConnectMenu({ carry, onOther }: { carry?: string; onOther: () =>
           ))}
           {state.at === 'none' && (
             <div className="mcp__head">
-              <b>Start UISandbox on your machine, once</b>
-              <span>A web page cannot see your localhost; this small helper can. Run it anywhere, keep it open, and your running apps appear here.</span>
-              <CopyLine cmd="npx uisandbox-mcp start" />
-              <span>Using Claude Code? Add it once and it runs whenever Claude Code does; then just say "let me try some designs":</span>
+              <b>Open your app from your machine</b>
+              <span>A web page cannot see your localhost. One line in a terminal finds the app you are running and opens it, live, in a new tab:</span>
+              <CopyLine cmd={`npx uisandbox-mcp open${carry ? ` --carry=${carry}` : ''}`} carry={carry} />
+              <span>Or let your agent do it (Claude Code, Cursor, Codex): paste this.</span>
+              <AgentLine carry={carry} />
+              <span>Claude Code? Add it once, and from then on "let me try some designs" is enough:</span>
               <CopyLine cmd="claude mcp add uisandbox -- npx -y uisandbox-mcp" />
-              <span className="connect__fine">Chrome asks once whether this site may reach your local network: allow it. Already running and nothing shows (Safari does not let a site ask)? <a href={`${HELPER}/${carry ? `?carry=${carry}` : ''}`} target="_blank" rel="noopener">Open your apps from your machine</a>.</span>
+              <span className="connect__fine">To pick from this menu instead, run <code>npx uisandbox-mcp start</code> and keep it open; Chrome asks once whether this site may reach your local network. Running and nothing shows (Safari does not let a site ask)? <a href={`${HELPER}/${carry ? `?carry=${carry}` : ''}`} target="_blank" rel="noopener">Open your apps from your machine</a>.</span>
             </div>
           )}
           {state.at === 'opening' && <p className="connect__note"><RefreshCw size={13} className="connect__spin" /> Opening {state.url}…</p>}

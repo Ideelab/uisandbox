@@ -38,10 +38,13 @@ skill is the procedure around them.
 - You need the MCP server `uisandbox`. If its tools are not there, tell the
   user it is one line, once: `claude mcp add uisandbox -- npx -y uisandbox-mcp`
   (a new session picks it up). Do not try to emulate the tools, and do not
-  start `npx … uisandbox-mcp` in the background yourself: if they want it
-  without MCP, the line that returns at once is
-  `npx uisandbox-mcp open <url> --detach`; after Send the patch is in the file
-  it names; `npx uisandbox-mcp stop` ends it.
+  start `npx … uisandbox-mcp` in the background yourself: without MCP, the
+  line that returns at once is `npx uisandbox-mcp open --detach` (it finds
+  the running app; add its url when several run); after Send the patch is in
+  the file it names; `npx uisandbox-mcp stop` ends it.
+- Never open their localhost or uisandbox.org's Connect menu in your own
+  built-in browser: it cannot reach their machine. The commands above open
+  their own browser.
 - `verify` / `screenshot` need Chromium once (`npx playwright install chromium`).
 
 ## One change, tried headlessly ("try brand #e11d48 on this")
