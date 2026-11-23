@@ -4197,3 +4197,34 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     other session's 0.5.10 `start`: preview on 47320, Connect listed seven
     local sites, Cartful opened in that tab with its worker controlling
     (7 screens, 110 values). uisandbox-mcp 0.5.11.
+
+224. The local app, tested end to end as a person and as an agent
+    (2026-11-23). Alexander: make trying designs on the app you are running
+    the primary use case, for people and machines, and test everything.
+    On Ledgerly (Vite, React, Tailwind 4, React Router) at localhost:5173:
+    - Terminal, from npm (0.5.10): `npx uisandbox-mcp@latest open --detach`
+      in the app's folder found it (package.json → 5173) and opened it in
+      4.7 s; the six, a look picked, Compact, Send to the terminal: 19 patch
+      lines in the file it named.
+    - uisandbox.org, Connect a running app: Chromium lists the app and opens
+      it (4 screens, 72 values). Firefox and WebKit cannot reach the helper
+      from the site; its own page (127.0.0.1:47319) lists it and the sandbox
+      runs in both, worker and all (Firefox not tried before).
+    - Claude Code with the MCP server, "ik wil even wat verschillende designs
+      testen op mijn app": try_designs at 4 s, wait_for_send; a person turned
+      Compact and Round and pressed Send; it showed the patch as a table
+      (literal, value, where, ✓ in the file) and asked; no source file
+      changed (checksums). It still writes no line before it waits, in print
+      mode, even with the instruction now in wait_for_send's description
+      (2 of 2 runs): the open tab says what to do.
+    - Without MCP, the site's prompt pasted: `npx uisandbox-mcp@latest open
+      --detach` at 7 s, a watch on the patch file, a clear line, 27 s. With
+      only "with UISandbox (uisandbox.org)": it read the site (958
+      characters: the homepage and /about are the app's shell), then
+      llms.txt, and opened it at 69 s.
+    Fixed here: What we found showed the empty page's numbers for the first
+    second (1 screen, 0 values, #0A84FF) before Ledgerly's (4, 72, #4f39f6);
+    it reads "…" until they are in. The Connect menu, when the site cannot
+    reach a helper, said only to start one: in Firefox and Safari a running
+    helper looks the same, so "Open your running apps" (its own page) is a
+    button there, no longer a link in the fine print.

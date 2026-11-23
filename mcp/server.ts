@@ -593,7 +593,7 @@ server.registerTool('state', {
 
 server.registerTool('wait_for_send', {
   title: 'Wait for the user to send it back',
-  description: 'After `open`: wait until the user presses "Send to your agent" in the sandbox, then return what they turned (from → to, in the panel\'s own names), how many values moved, and the patch that writes it into their source. Returns at once if they already sent and you have not collected it. If the time runs out first it says the sandbox is still open: call it again (or ask them).',
+  description: 'BEFORE you call this, write the user one line in your reply: the sandbox is open in their browser, pick one of the six looks or turn the knobs, then press "Send to your agent". This call blocks until they press it, and they see nothing from you while it waits. After `open` or `try_designs`: wait until the user presses "Send to your agent" in the sandbox, then return what they turned (from → to, in the panel\'s own names), how many values moved, and the patch that writes it into their source. Returns at once if they already sent and you have not collected it. If the time runs out first it says the sandbox is still open: call it again (or ask them).',
   inputSchema: { id: z.string(), timeoutSeconds: z.number().int().min(5).max(1800).optional().describe('How long to wait (default 240)') },
 }, async ({ id, timeoutSeconds }) => {
   const p = need(id)

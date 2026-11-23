@@ -972,6 +972,10 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
 .connect__spin { animation: connect-spin 1s linear infinite; }
 @keyframes connect-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .connect__spin { animation: none; } }
+.found__reading { color: var(--app-fg-faint); animation: found-reading 1.2s ease-in-out infinite; }
+@keyframes found-reading { 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .found__reading { animation: none; } }
+.connect__helper { align-self: flex-start; margin: 4px 0 6px; text-decoration: none; }
 .connect__agent { margin: 4px 0 6px; padding: 8px 8px 8px 12px; }
 .connect .agentprompt__text { flex: 1; min-width: 0; margin: 0; font-size: 12px; line-height: 1.5; color: var(--app-fg); overflow-wrap: anywhere; }
 .connect__fine code { font: 11.5px "JetBrains Mono", ui-monospace, monospace; }

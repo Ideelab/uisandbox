@@ -119,7 +119,10 @@ export function ConnectMenu({ carry, onOther }: { carry?: string; onOther: () =>
               <AgentLine carry={carry} />
               <span>Claude Code? Add it once, and from then on "let me try some designs" is enough:</span>
               <CopyLine cmd="claude mcp add uisandbox -- npx -y uisandbox-mcp@latest" />
-              <span className="connect__fine">To pick from this menu instead, run <code>npx uisandbox-mcp@latest start</code> and keep it open; Chrome asks once whether this site may reach your local network. Running and nothing shows (Safari does not let a site ask)? <a href={`${HELPER}/${carry ? `?carry=${carry}` : ''}`} target="_blank" rel="noopener">Open your apps from your machine</a>.</span>
+              {/* Firefox and Safari never let this site reach the helper, Chrome only once allowed: a
+                  helper that runs looks the same as none from here. Its own page always works (decision 224). */}
+              <span>Already running UISandbox (<code>npx uisandbox-mcp@latest start</code>, or Claude Code with it added)? Firefox and Safari do not let this site see it, Chrome asks once. Your apps are one click away on your machine:</span>
+              <a className="btn btn--secondary btn--sm connect__helper" href={`${HELPER}/${carry ? `?carry=${carry}` : ''}`} target="_blank" rel="noopener">Open your running apps</a>
             </div>
           )}
           {state.at === 'opening' && <p className="connect__note"><RefreshCw size={13} className="connect__spin" /> Opening {state.url}…</p>}

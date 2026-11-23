@@ -5,7 +5,7 @@
  * bring what was turned on the kit. Asked only when something was turned.
  * Then the six, which is where the flow ends and the editor takes over.
  */
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { X } from 'lucide-react'
 import DOOR from '../kits/door.json'
 import { BringSteps } from './Intake'
@@ -36,6 +36,11 @@ export function Found({ facts, carry, onDone }: {
     return () => document.removeEventListener('keydown', onKey)
   }, [bring, onDone])
   const font = facts.font.replace(/^Custom: /, '')
+  // A running app writes its CSS as it renders: for the first second the
+  // counts are the empty page's (1 screen, 0 values, a default brand). Shown
+  // as they come in, the first thing a maker read was wrong (decision 224).
+  const reading = facts.kit === undefined
+  const v = (x: ReactNode) => (reading ? <span className="found__reading">…</span> : x)
   return (
     <div className="stage__door" role="dialog" aria-modal="true" aria-label="What we found">
       <div className="intake intake--door">
@@ -48,14 +53,14 @@ export function Found({ facts, carry, onDone }: {
             </div>
             <div className="bring">
               <div className="bring__head">
-                <h3>{facts.kit ? `Your app runs on ${kitLabel(facts.kit)}` : 'Your app is in'}</h3>
+                <h3>{reading ? 'Reading your app…' : facts.kit ? `Your app runs on ${kitLabel(facts.kit)}` : 'Your app is in'}</h3>
                 <p>Read in this tab from {facts.name}. Nothing turned yet: what you see is your own CSS, its literals replaced by variables holding the very same values.</p>
               </div>
               <dl className="found__facts">
-                <div><dt>{facts.screens}</dt><dd>screen{facts.screens === 1 ? '' : 's'}</dd></div>
-                <div><dt>{facts.values}</dt><dd>values the knobs reach</dd></div>
-                <div><dt><span className="found__swatch" style={{ background: facts.brand }} />{facts.brand}</dt><dd>your brand</dd></div>
-                <div><dt>{font}</dt><dd>your type</dd></div>
+                <div><dt>{v(facts.screens)}</dt><dd>screen{!reading && facts.screens === 1 ? '' : 's'}</dd></div>
+                <div><dt>{v(facts.values)}</dt><dd>values the knobs reach</dd></div>
+                <div><dt>{v(<><span className="found__swatch" style={{ background: facts.brand }} />{facts.brand}</>)}</dt><dd>your brand</dd></div>
+                <div><dt>{v(font)}</dt><dd>your type</dd></div>
               </dl>
               {carry && (
                 <fieldset className="found__carry">
