@@ -115,7 +115,7 @@ export function Door({ onArchive, onUrl, onSample, busy, error, standalone, onCl
             </div>
             <LocalCommand addr={addr} setAddr={setAddr} carry={carry?.token} />
             <AgentPrompt addr={addr} carry={carry?.token} />
-            <p className="bring__fine">A new tab opens with your app in it, served from <code>127.0.0.1</code>: your code never leaves your machine, not even to this site. Without an address the line finds your build (<code>dist/</code>, <code>build/</code>, <code>out/</code>). Needs Node 20.{carry ? ` What you turned on ${carry.kit} goes along in the line: ${carry.names.join(', ')}.` : ''}</p>
+            <p className="bring__fine">A new tab opens with your app in it, served from <code>127.0.0.1</code>: your code never leaves your machine, not even to this site. Without an address the line finds the app you are running, else your build (<code>dist/</code>, <code>build/</code>, <code>out/</code>). Needs Node 20.{carry ? ` What you turned on ${carry.kit} goes along in the line: ${carry.names.join(', ')}.` : ''}</p>
             <div className="bring__else">
               <span>No terminal, or not on localhost?</span>
               <div className="bring__links">

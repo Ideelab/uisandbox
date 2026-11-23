@@ -42,9 +42,11 @@ skill is the procedure around them.
   line that returns at once is `npx uisandbox-mcp@latest open --detach` (it finds
   the running app; add its url when several run); after Send the patch is in
   the file it names; `npx uisandbox-mcp@latest stop` ends it.
-- Never open their localhost or uisandbox.org's Connect menu in your own
-  built-in browser: it cannot reach their machine. The commands above open
-  their own browser.
+- The sandbox opens in their own browser; leave it there. uisandbox.org's
+  Connect menu cannot reach their machine from your built-in browser. To
+  show the sandbox in your own pane (Claude desktop app), attach it as a
+  preview: `ownPane` in try_designs' answer (and the line --detach prints)
+  says how; a plain navigate cannot start its service worker.
 - `verify` / `screenshot` need Chromium once (`npx playwright install chromium`).
 
 ## One change, tried headlessly ("try brand #e11d48 on this")

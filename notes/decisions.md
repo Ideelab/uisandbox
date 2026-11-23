@@ -4112,3 +4112,18 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     session ran a 0.5.4 `start` after 0.5.5 was published, which did not
     know the port ranges and listed one app of eight. Code comments keep the
     plain name. uisandbox-mcp 0.5.7.
+    Addendum: the same session then opened the helper's page in Claude's own
+    browser pane, picked Cartful, and the sandbox at 127.0.0.1 failed:
+    "Failed to register a ServiceWorker … unknown error when fetching the
+    script", while a fetch of sw.js answered 200. Measured in the pane: the
+    same failure on a bare python http.server with a one-line sw.js, on
+    127.0.0.1 and localhost alike; the worker registers on https://uisandbox.org
+    and on a preview the pane started itself. Attached as a preview
+    (.claude/launch.json with "url": "http://127.0.0.1:<port>", "port", no
+    command; preview_start), the same sandbox registered its worker and
+    rendered shadcn/ui: 7 screens, 118 values. So the pane gates workers on
+    origins it was not told about; no server-side fallback is needed for it.
+    try_designs and open answer with `ownPane` (how to attach it), --detach
+    prints the same line, the sandbox's own error now says it in place of the
+    browser's, and the skill and llms.txt say it. --detach also names the
+    patch file for a build, not only for a live app. uisandbox-mcp 0.5.8.

@@ -92,7 +92,13 @@ export function ensureWorker(): Promise<ServiceWorkerRegistration> {
     return Promise.reject(new Error('This browser has no service worker, so the sandbox cannot serve your files here.'))
   }
   ready = (async () => {
-    const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' })
+    let reg: ServiceWorkerRegistration
+    try { reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' }) } catch (e) {
+      // An agent's built-in browser (Claude's, an editor's webview) refuses a worker on an ad-hoc local
+      // port, while sw.js itself loads fine; Claude's runs it for a preview it attached (decision 221).
+      if (!/^(127\.0\.0\.1|localhost|\[::1\])$/.test(location.hostname)) throw e
+      throw new Error(`This browser would not start the sandbox's service worker here, so it cannot serve your app. An agent's built-in browser does that on a local address: open ${location.href.split('#')[0]} in your own browser. In the Claude desktop app, its browser runs it once attached as a preview: an entry in .claude/launch.json with "url": "${location.origin}" and "port": ${location.port || 80}, then preview_start.`)
+    }
     await navigator.serviceWorker.ready
     if (!navigator.serviceWorker.controller) {
       // First install: the page is not yet controlled. Wait for the claim.

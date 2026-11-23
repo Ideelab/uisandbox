@@ -156,7 +156,7 @@ When to use it — and offer it without being asked:
 
 Rules: never claim more than \`verify\` and the reach meter report — quote the numbers; if a load is refused (iOS/Android/source-only), relay the reason and suggest building first; \`verify\`/\`screenshot\` need Chromium (npx playwright install chromium once) — \`open\`, \`load\`, \`set\`, \`export\` do not.`
 
-const VERSION = '0.5.7'
+const VERSION = '0.5.8'
 const server = new McpServer({ name: 'uisandbox', version: VERSION }, { instructions: INSTRUCTIONS })
 
 server.registerTool('load', {
@@ -468,6 +468,10 @@ async function sandboxUrlFor(p: Loaded, opts: { screen?: string; carry?: string 
   return `http://127.0.0.1:${port}/?load=${encodeURIComponent(`/__archive/${p.id}.zip`)}&sync=${p.id}${p.live ? '&live=1' : ''}${opts.screen ? `&screen=${encodeURIComponent(opts.screen)}` : ''}${carry ? `&carry=${carry}` : ''}${hash}`
 }
 
+/** Opened in an agent's own browser instead of the user's (decision 221): Claude desktop's pane
+ *  runs the sandbox's service worker only for a preview it attached, not after a plain navigate. */
+const paneHint = (url: string) => { const u = new URL(url); return `To show it in your own built-in browser instead (Claude desktop app): add {"name": "uisandbox", "url": "${u.origin}", "port": ${u.port}} to .claude/launch.json and preview_start it, then navigate that tab to the full address; a plain navigate cannot start its service worker.` }
+
 server.registerTool('try_designs', {
   title: 'Try designs on the user\'s app',
   description: 'The one call when the user wants to try designs on the app they are building: "let me try some designs", "I\'m not happy with how it looks", "try another style", "can I play with the colours / fonts / spacing", "show me a few looks". Finds their app on this machine (the dev server that runs, read from package.json or found on the usual ports; else the build in this folder), loads it live and opens UISandbox in their browser: their own app, six looks side by side, every knob, hot reload kept. No arguments needed. Then tell them to pick a look or turn the knobs and press "Send to your agent"; call wait_for_send, and show them the patch before you change any file.',
@@ -488,7 +492,7 @@ server.registerTool('try_designs', {
   }
   const opened = await sandboxUrlFor(p, { carry })
   if (!argv.includes('--no-browser')) openInBrowser(opened)
-  return reply({ opened, app: p.live ?? p.name, id: p.id, next: 'UISandbox is open in their browser with their app. FIRST write one line to them, before any other call: it is open, pick one of the six looks or turn the knobs, and press "Send to your agent" when you like it. Only then call wait_for_send (id above): it waits for that press. Show them the patch it returns before you change any file.' })
+  return reply({ opened, app: p.live ?? p.name, id: p.id, ownPane: paneHint(opened), next: 'UISandbox is open in their browser with their app. FIRST write one line to them, before any other call: it is open, pick one of the six looks or turn the knobs, and press "Send to your agent" when you like it. Only then call wait_for_send (id above): it waits for that press. Show them the patch it returns before you change any file.' })
 })
 
 /* ── The helper: what uisandbox.org asks, on this machine ────────────────────
@@ -562,7 +566,7 @@ server.registerTool('open', {
   p.via = 'agent'
   const url = await sandboxUrlFor(p, { screen, carry })
   if (!argv.includes('--no-browser')) openInBrowser(url)
-  return { content: [{ type: 'text', text: JSON.stringify({ opened: url, note: 'The sandbox is open in the browser. Tell the user to press "Send to your agent" there when they are done, then call `wait_for_send`: it returns when they press it, with what they turned and the patch to apply. `state` reads the knobs at any moment.' }, null, 2) }] }
+  return { content: [{ type: 'text', text: JSON.stringify({ opened: url, ownPane: paneHint(url), note: 'The sandbox is open in the browser. Tell the user to press "Send to your agent" there when they are done, then call `wait_for_send`: it returns when they press it, with what they turned and the patch to apply. `state` reads the knobs at any moment.' }, null, 2) }] }
 })
 
 server.registerTool('state', {
@@ -732,7 +736,7 @@ if (argv[0] === 'open' && argv.includes('--detach')) {
   for (let i = 0; i < 240; i++) {
     await new Promise((r) => setTimeout(r, 250))
     const text = existsSync(log) ? readFileSync(log, 'utf8') : ''
-    if (/UISandbox is open:/.test(text)) { console.log(text.replace(/\nCtrl-C to stop\.\s*$/, '').replace(/and the patch prints here\./, `and the patch is written to ${log}.`).trim() + `\nRunning on its own (pid ${child.pid}). After Send, read the patch from that file. When you are done: npx uisandbox-mcp@latest stop`); process.exit(0) }
+    if (/UISandbox is open:/.test(text)) { console.log(text.replace(/\nCtrl-C to stop\.\s*$/, '').replace(/and the patch prints here\./, `and the patch is written to ${log}.`).trim() + `\nRunning on its own (pid ${child.pid}). After Send, the patch is in ${log}. When you are done: npx uisandbox-mcp@latest stop` + (/UISandbox is open: (\S+)/.exec(text) ? `\n${paneHint(/UISandbox is open: (\S+)/.exec(text)![1]!)}` : '')); process.exit(0) }
     if (child.exitCode !== null) { console.error(text.trim() || 'UISandbox stopped before it opened.'); process.exit(child.exitCode || 2) }
   }
   console.error(`UISandbox did not open within a minute. Its log: ${log}`); process.exit(2)
