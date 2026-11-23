@@ -401,6 +401,7 @@ export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName,
     if (unit === '×') return `×${v}`
     if (unit === '°') return `${v}°`
     if (unit === 'em') return `${v}em`
+    if (unit === 'wght') return n ? v : 'as is'
     return n > 0 ? `+${v}` : v          // steps and ΔL read as a signed offset
   }
 

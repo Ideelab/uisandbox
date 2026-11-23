@@ -28,6 +28,10 @@ export interface Dials {
   hue: number         // ° rotation of every chromatic colour (−180 … 180)
   sat: number         // × chroma of every colour  (0 … 2)
   contrast: number    // ± lightness stretch around the middle (−0.3 … 0.3)
+  /** Headings' weight, picked (300 … 900); 0 or absent = as in the code.
+   *  Set by selector like the heading font, so it reaches headings however
+   *  their weight is written (decision 222). */
+  headWeight?: number
   /** ° added to every gradient direction (−180 … 180); the row shows only
    *  when the sheet holds a linear/conic gradient. Older configs lack it. */
   gradAngle?: number
@@ -48,11 +52,11 @@ export interface Dials {
 export const DEFAULT_DIALS: Dials = {
   radius: 1, space: 1, type: 1, lineHeight: 1, tracking: 0, weight: 0,
   borderWidth: 1, borderTone: 0, bgTone: 0, shadow: 1, motion: 1,
-  hue: 0, sat: 1, contrast: 0, gradAngle: 0,
+  hue: 0, sat: 1, contrast: 0, gradAngle: 0, headWeight: 0,
 }
 
 export interface Snap { at: number; label: string }
-export interface DialSpec { key: keyof Dials; label: string; min: number; max: number; step: number; unit: '×' | 'em' | 'steps' | 'ΔL' | '°'; snaps: Snap[]; section: 'Type' | 'Shape' | 'Colour' }
+export interface DialSpec { key: keyof Dials; label: string; min: number; max: number; step: number; unit: '×' | 'em' | 'steps' | 'ΔL' | '°' | 'wght'; snaps: Snap[]; section: 'Type' | 'Shape' | 'Colour' }
 
 /** The dials the panel shows, in order, with the old preset names as snap points. */
 export const DIALS: DialSpec[] = [
@@ -60,6 +64,7 @@ export const DIALS: DialSpec[] = [
   { key: 'lineHeight', label: 'Line height', min: 0.85, max: 1.35, step: 0.01, unit: '×', section: 'Type', snaps: [{ at: 0.9, label: 'Tight' }, { at: 1, label: 'as is' }, { at: 1.15, label: 'Airy' }] },
   { key: 'tracking', label: 'Letter spacing', min: -0.05, max: 0.15, step: 0.005, unit: 'em', section: 'Type', snaps: [{ at: -0.02, label: 'Tight' }, { at: 0, label: 'as is' }, { at: 0.05, label: 'Wide' }] },
   { key: 'weight', label: 'Weight', min: -2, max: 2, step: 1, unit: 'steps', section: 'Type', snaps: [{ at: -1, label: 'Lighter' }, { at: 0, label: 'as is' }, { at: 1, label: 'Bolder' }] },
+  { key: 'headWeight', label: 'Heading weight', min: 0, max: 900, step: 100, unit: 'wght', section: 'Type', snaps: [{ at: 0, label: 'as is' }, { at: 300, label: 'Light' }, { at: 400, label: 'Regular' }, { at: 600, label: 'Semibold' }, { at: 700, label: 'Bold' }, { at: 900, label: 'Black' }] },
   { key: 'space', label: 'Spacing', min: 0.6, max: 1.5, step: 0.02, unit: '×', section: 'Shape', snaps: [{ at: 0.75, label: 'Compact' }, { at: 1, label: 'as is' }, { at: 1.25, label: 'Comfortable' }] },
   { key: 'radius', label: 'Radius', min: 0, max: 2, step: 0.05, unit: '×', section: 'Shape', snaps: [{ at: 0, label: 'None' }, { at: 0.5, label: 'Subtle' }, { at: 1, label: 'as is' }, { at: 1.5, label: 'Round' }, { at: 2, label: 'Rounder' }] },
   { key: 'borderWidth', label: 'Border width', min: 0, max: 3, step: 0.25, unit: '×', section: 'Shape', snaps: [{ at: 0, label: 'None' }, { at: 1, label: 'as is' }, { at: 2, label: 'Heavy' }] },
@@ -79,6 +84,6 @@ export const nearestSnap = (spec: DialSpec, v: number): Snap | null => {
 }
 export const fmtDial = (spec: DialSpec, v: number): string => {
   const snap = nearestSnap(spec, v)
-  const num = spec.unit === '°' ? `${v > 0 ? '+' : ''}${Math.round(v)}°` : spec.unit === '×' ? `×${String(+v.toFixed(2))}` : spec.unit === 'em' ? `${v >= 0 ? '+' : ''}${v.toFixed(3).replace(/0+$/, '').replace(/\.$/, '')}em` : spec.unit === 'steps' ? `${v > 0 ? '+' : ''}${v}` : `${v >= 0 ? '+' : ''}${(v * 100).toFixed(1).replace(/\.0$/, '')}%`
+  const num = spec.unit === '°' ? `${v > 0 ? '+' : ''}${Math.round(v)}°` : spec.unit === '×' ? `×${String(+v.toFixed(2))}` : spec.unit === 'em' ? `${v >= 0 ? '+' : ''}${v.toFixed(3).replace(/0+$/, '').replace(/\.$/, '')}em` : spec.unit === 'steps' ? `${v > 0 ? '+' : ''}${v}` : spec.unit === 'wght' ? String(v) : `${v >= 0 ? '+' : ''}${(v * 100).toFixed(1).replace(/\.0$/, '')}%`
   return snap ? (snap.label === 'as is' ? 'as is' : snap.label === num ? num : `${snap.label} · ${num}`) : num
 }

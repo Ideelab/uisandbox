@@ -299,7 +299,7 @@ export function SandboxPanel({ cfg, tokens, base, families, codeFonts = [], hasG
   // alone and every dial are under More, still one click away.
   const ESSENTIAL = ['brand', 'pair', 'radius', 'space', 'dark']
   const PLAIN: Record<string, string> = { brand: 'Colour', radius: 'Shape', space: 'Space' }
-  const GROUP: Record<string, 'Colour' | 'Type' | 'Shape'> = { fontDisplay: 'Type', fontBody: 'Type', type: 'Type', lineHeight: 'Type', tracking: 'Type', weight: 'Type', borderWidth: 'Shape', shadow: 'Shape', motion: 'Shape' }
+  const GROUP: Record<string, 'Colour' | 'Type' | 'Shape'> = { fontDisplay: 'Type', fontBody: 'Type', type: 'Type', lineHeight: 'Type', tracking: 'Type', weight: 'Type', headWeight: 'Type', borderWidth: 'Shape', shadow: 'Shape', motion: 'Shape' }
   const essential = ESSENTIAL.map((k) => rows.find((r) => r.key === k)).filter((r): r is Row => !!r).map((r) => ({ ...r, sec: undefined, label: PLAIN[r.key] ?? r.label }))
   const rest = rows.filter((r) => !ESSENTIAL.includes(r.key)).map((r) => ({ ...r, grp: GROUP[r.key] ?? 'Colour' }))
   const fine = (['Colour', 'Type', 'Shape'] as const).flatMap((g) => rest.filter((r) => r.grp === g).map((r, i) => ({ ...r, sec: i === 0 ? g : undefined })))

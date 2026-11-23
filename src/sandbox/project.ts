@@ -16,7 +16,7 @@
  * next step (see PROMPT.md, hard nut 2).
  */
 import type { Archive, ZipEntry } from '../audit/intake/readZip'
-import { rewriteCss, rewriteHtml, stripLinkIntegrity } from './rewrite'
+import { rewriteCss, rewriteHtml, stripLinkIntegrity, readUsage, readUsageHtml } from './rewrite'
 import { SubstitutionTable } from './table'
 import { detectPlatform, type Platform } from './platform'
 import { detectScheme, type Scheme } from './scheme'
@@ -189,9 +189,24 @@ export async function buildProject(archive: Archive, opts: { root?: string; onPr
   const order = (e: ZipEntry) => (/\.css$/i.test(e.path) ? 0 : /\.html?$/i.test(e.path) ? 1 : 2)
   const sorted = [...under].sort((a, b) => order(a) - order(b) || a.path.localeCompare(b.path))
 
+  // What each custom property is FOR, read from every sheet before any is
+  // rewritten: a token defined in one file and read in another still gets its
+  // role (decision 222). The blobs read here are kept for the pass below.
+  const read = new Map<ZipEntry, Blob | null>()
+  for (const e of sorted) {
+    const isCss = /\.css$/i.test(e.path)
+    if (!isCss && !/\.html?$/i.test(e.path)) continue
+    const blob = await archive.readBlob(e)
+    read.set(e, blob)
+    if (!blob || blob.size > (isCss ? 24 : 8) * 1024 * 1024) continue
+    const text = await blob.text()
+    if (isCss) readUsage(text, table); else readUsageHtml(text, table)
+  }
+
   for (const e of sorted) {
     const rel = e.path.slice(prefix.length)
-    const blob = await archive.readBlob(e)
+    const blob = read.has(e) ? read.get(e)! : await archive.readBlob(e)
+    read.delete(e)
     done++
     opts.onProgress?.(done, sorted.length, cssBytes)
     if (!blob) continue

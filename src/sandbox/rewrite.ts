@@ -383,7 +383,7 @@ function findSvgUrls(value: string): Splice[] {
 }
 
 /** Which literals in one declaration's value are design values, and of what kind. */
-export function splicesFor(prop: string, value: string): Splice[] {
+export function splicesFor(prop: string, value: string, roleOf?: (name: string) => string | null): Splice[] {
   // `!important` is part of the DECLARATION, not the value: minified CSS writes
   // `sans-serif!important` with no space, and a whole-value splice that swallows
   // it both strips the priority (the cascade flips) and poisons the var's value
@@ -391,7 +391,7 @@ export function splicesFor(prop: string, value: string): Splice[] {
   const imp = value.match(/\s*!\s*important\s*$/i)
   if (imp) {
     const head = value.slice(0, imp.index)
-    return splicesFor(prop, head).filter((x) => x.end <= head.length)
+    return splicesFor(prop, head, roleOf).filter((x) => x.end <= head.length)
   }
   const m = masked(value)
   const bare = m.trim().toLowerCase()
@@ -446,8 +446,12 @@ export function splicesFor(prop: string, value: string): Splice[] {
     // are colours by convention, wrapped at the point of use.
     if (/^\d{1,3}(\s*,\s*|\s+)\d{1,3}(\s*,\s*|\s+)\d{1,3}$/.test(bare)) return [{ start: 0, end: value.length, kind: 'color', raw: value }]
     if (/^-?\d*\.?\d+(deg)?\s+\d*\.?\d+%\s+\d*\.?\d+%$/.test(bare)) return [{ start: 0, end: value.length, kind: 'color', raw: 'hsl:' + value }]
-    for (const [rx, kind] of CUSTOM_ROLE) {
-      if (!rx.test(prop)) continue
+    // The name says the role (`--spacing-4`); where it says nothing, the sheets
+    // do: `padding: var(--ruimte-3)` (decision 222).
+    const named = CUSTOM_ROLE.find(([rx]) => rx.test(prop))?.[1]
+    const byUse = named ? undefined : roleOf?.(prop)
+    const kind = named ?? (byUse && USE_KINDS.has(byUse) ? (byUse as Kind) : undefined)
+    if (kind) {
       if (kind === 'font-family') {
         // Must look like a family list, not a size, a weight, a function or a
         // keyword: `-apple-system, …` IS one (a system stack starts with a dash;
@@ -503,6 +507,50 @@ export function splicesFor(prop: string, value: string): Splice[] {
   return []
 }
 
+// ─────────────────────────── what a custom property is for ───────────────────────────
+
+/** The kinds a custom property can take by use; everything else a var() sits
+ *  in counts as `other`, and a property read as two things gets no role. */
+const USE_KINDS = new Set<string>(['space', 'radius', 'font-size', 'line-height', 'letter-spacing', 'font-weight', 'border-width', 'duration', 'font-family', 'shadow'])
+function useKindOf(prop: string): string {
+  if (SPACE_PROP.test(prop)) return 'space'
+  if (RADIUS_PROP.test(prop)) return 'radius'
+  if (prop === 'font-size') return 'font-size'
+  if (prop === 'line-height') return 'line-height'
+  if (prop === 'letter-spacing') return 'letter-spacing'
+  if (prop === 'font-weight') return 'font-weight'
+  if (BORDER_WIDTH_PROP.test(prop)) return 'border-width'
+  if (prop === 'transition-duration' || prop === 'animation-duration') return 'duration'
+  if (prop === 'font-family') return 'font-family'
+  if (prop === 'box-shadow') return 'shadow'
+  return 'other'
+}
+
+/**
+ * Note where each custom property is read (decision 222). A token's role was
+ * only ever read from its NAME, in English: Cartful's `--ruimte-3`,
+ * `--fw-display` and `--lh-kop` were nothing to the knobs, so Spacing moved 6
+ * of 135 elements and Weight never reached a heading. The sheets say it
+ * plainly: `padding: var(--ruimte-3)`, `font-weight: var(--fw-display)`.
+ */
+export function readUsage(css: string, table: SubstitutionTable): void {
+  for (const d of scanDeclarations(css)) {
+    if (d.atRules.some((a) => SKIP_AT.has(a))) continue
+    const value = css.slice(d.valueStart, d.valueEnd)
+    if (!value.includes('var(')) continue
+    const kind = d.prop.startsWith('--') ? null : useKindOf(d.prop)
+    for (const m of value.matchAll(/var\(\s*(--[\w-]+)/g)) {
+      if (kind) table.use(m[1]!, kind)
+      else table.read(m[1]!, d.prop)
+    }
+  }
+}
+/** The same for an HTML page: its `<style>` blocks and `style=""` attributes. */
+export function readUsageHtml(html: string, table: SubstitutionTable): void {
+  for (const m of html.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/gi)) readUsage(m[1]!, table)
+  for (const m of html.matchAll(/\sstyle=("([^"]*)"|'([^']*)')/g)) { const raw = m[2] ?? m[3] ?? ''; if (raw.includes('var(')) readUsage(`x{${raw}}`, table) }
+}
+
 // ─────────────────────────── the rewrite ───────────────────────────
 
 // Keyframes are IN: var()-valued colours interpolate in every modern engine,
@@ -543,13 +591,15 @@ export function rewriteCss(css: string, table: SubstitutionTable, file: string, 
   }
   // Tokenising (not patching): note how often the sheet reads each custom property.
   if (!values) for (const m of css.matchAll(/var\(\s*(--[\w-]+)/g)) table.ref(m[1]!)
+  if (!values) readUsage(css, table)
+  const roleOf = (name: string) => table.role(name)
   const decls = scanDeclarations(css)
   // Splice from the end so earlier offsets stay valid.
   const edits: Array<{ start: number; end: number; text: string }> = []
   for (const d of decls) {
     if (d.atRules.some((a) => SKIP_AT.has(a))) continue
     const value = css.slice(d.valueStart, d.valueEnd)
-    const splices = splicesFor(d.prop, value)
+    const splices = splicesFor(d.prop, value, roleOf)
     if (!splices.length) continue
     const site: Site = d.selector ? { file, prop: d.prop, selector: d.selector } : { file, prop: d.prop }
     // Outer-first: a box-shadow's whole-value splice must be applied AFTER its

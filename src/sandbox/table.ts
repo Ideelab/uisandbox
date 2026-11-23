@@ -66,6 +66,27 @@ export class SubstitutionTable {
   refs = new Map<string, number>()
   ref(name: string): void { this.refs.set(name, (this.refs.get(name) ?? 0) + 1) }
   readonly entries: Entry[] = []
+  /** What each custom property is used FOR, read from the sheets (decision 222):
+   *  the kinds of the properties its var() sits in (`padding` → space, `width` →
+   *  other), and the custom properties whose value reads it. */
+  readonly uses = new Map<string, Set<string>>()
+  readonly readers = new Map<string, Set<string>>()
+  use(name: string, kind: string): void { (this.uses.get(name) ?? this.uses.set(name, new Set()).get(name)!).add(kind) }
+  read(name: string, by: string): void { (this.readers.get(name) ?? this.readers.set(name, new Set()).get(name)!).add(by) }
+  /** A custom property's role by use: every place it is read, directly or
+   *  through the properties that read it, agrees on one kind. Anything mixed,
+   *  or read nowhere, has none. */
+  role(name: string): string | null {
+    const kinds = new Set<string>(), seen = new Set<string>()
+    const walk = (n: string) => {
+      if (seen.has(n)) return
+      seen.add(n)
+      for (const k of this.uses.get(n) ?? []) kinds.add(k)
+      for (const r of this.readers.get(n) ?? []) walk(r)
+    }
+    walk(name)
+    return kinds.size === 1 ? [...kinds][0]! : null
+  }
 
   /** Register one occurrence; returns the variable reference to write in its place. */
   add(kind: Kind, value: string, site: Site): string {

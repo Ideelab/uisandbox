@@ -343,3 +343,26 @@ describe('a shadow held in a custom property', () => {
     expect(kinds(':root{--shadow-2:0 1px 2px rgba(0,0,0,.1), 0 2px 8px rgba(0,0,0,.1)}').some((x) => x.startsWith('shadow:'))).toBe(true)
   })
 })
+
+describe('a custom property named in another language gets its role from where it is read (decision 222)', () => {
+  const kindsOf = (css: string) => { const t = sheet(); rewriteCss(css, t, 'a.css'); return t.entries.map((e) => `${e.kind}:${e.value}`).sort() }
+  it('a spacing scale read by padding and through a chain moves with Spacing', () => {
+    expect(kindsOf(':root{--ruimte-3:.75rem;--ritme:var(--ruimte-3)}.a{padding:var(--ruimte-3)}.b{margin-top:var(--ritme)}')).toEqual(['space:.75rem'])
+  })
+  it('a heading weight read by font-weight is a weight', () => {
+    expect(kindsOf(':root{--fw-display:700}h1{font-weight:var(--fw-display)}')).toEqual(['font-weight:700'])
+  })
+  it('a token read as two things, or as something no knob moves, gets none', () => {
+    expect(kindsOf(':root{--maat:8px}.a{padding:var(--maat)}.b{width:var(--maat)}')).toEqual([])
+    expect(kindsOf(':root{--kolom:240px}.a{width:var(--kolom)}')).toEqual([])
+  })
+  it('the name still decides where it says something', () => {
+    expect(kindsOf(':root{--radius:12px}.a{padding:var(--radius)}')).toEqual(['radius:12px'])
+  })
+  it('a token defined in one file and read in another, through the project pass', () => {
+    const t = sheet()
+    rewriteHtml('<style>.a{gap:var(--steek)}</style>', t, 'i.html')
+    rewriteCss(':root{--steek:1rem}', t, 'tokens.css')
+    expect(t.entries.map((e) => `${e.kind}:${e.value}`)).toEqual(['space:1rem'])
+  })
+})

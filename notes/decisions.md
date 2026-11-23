@@ -4127,3 +4127,45 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     prints the same line, the sandbox's own error now says it in place of the
     browser's, and the skill and llms.txt say it. --detach also names the
     patch file for a build, not only for a live app. uisandbox-mcp 0.5.8.
+
+222. A token's role from where it is read, and a heading weight (2026-11-23).
+    Alexander turned the knobs on his own site (Cartful, live) and found
+    several that did nothing. Measured on his own link, in Chromium:
+    - Colour seemed dead: his link held Rose AND Hue +119°, which turns rose
+      back to green (`--merk` #5fbb00). Both worked; they cancelled out.
+    - Shape changed 0 of 135 elements on Home: the only rounded things there
+      are pills (9999px, which stay pills), and Cartful's surfaces are square
+      on purpose (`--radius-vlak: 0px`). Radius multiplies; zero stays zero.
+      Elevation: Cartful has no shadows. Nothing to fix in either.
+    - Spacing changed 6 of 135, and Weight never reached a heading. Cartful
+      writes its scale as `--ruimte-0` … `--ruimte-7`, its rhythm as
+      `--ritme-regel`, its weights as `--fw-display` and `--fw-kop`, its line
+      heights as `--lh-kop`. A custom property's role was read only from its
+      name, in English (spacing, gap, radius, weight, line-height): every one
+      of these was nothing to the knobs.
+    The fix reads the role from use where the name says nothing:
+    `padding: var(--ruimte-3)` makes it a space, followed through chains
+    (`--ritme-regel: var(--ruimte-3)` read by a margin). One rule, no word
+    lists: every place a token is read must agree on one kind; read by a
+    property no knob moves (width, top) or by two kinds, it gets none. The
+    name still decides where it says something. The project pass reads every
+    sheet and page first, so a token defined in tokens.css and read in
+    another file gets its role; a runtime sheet reads its own.
+    Heading weight is a new dial in Type (Light, Regular, Semibold, Bold,
+    Black; as is), set by selector like the heading font, with !important on
+    h1–h6 and title/heading/hero/display classes, so it reaches a heading
+    however its weight is written (a literal, a token, a Tailwind class). It
+    is a pick, not a shift: every heading gets the one weight. A Google face
+    loads 400–700, so on a picked face 300 or 900 shows its nearest; the
+    app's own (often variable) face has them all. The patch has no line for
+    it, as for the heading font; Send names it and the agent sets it.
+    Measured on Cartful afterwards: Spacing moves --ruimte-0 … -7 (16 values,
+    was 10) and Compact changes 38 of 135 elements on Home (was 6); Line
+    height reaches --lh-kop/--lh-tekst/--lh-mega (8, was 3); Weight reaches
+    --fw-kop and --fw-display; Heading weight Black puts h1 and h2 at 900,
+    Light at 300 (they were 700), on the stage and, on the shadcn kit, in
+    each of the six looks; no page errors. Tests: 540 of 540 (five new on
+    the role by use, three on the heading weight). Hold-outs: 173 fixtures,
+    154 ok, no regressions against holdouts.expect.json; live-dev.mjs 78 of
+    82, the four the helper check that a 0.5.6 `start` in another session
+    holds port 47319 for. uisandbox-mcp 0.5.9.

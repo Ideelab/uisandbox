@@ -48,7 +48,7 @@ something to turn before you bring anything.
    type and never in colour, so you compare the style and not the paint. Open one
    full size, then *Pick this one*. The same six are the Preset list.
 3. **Tune it.** Colour, Type, Shape and Space first; text size, line height,
-   letter spacing, weight, border width, elevation, motion, grey tint and the rest
+   letter spacing, weight, heading weight, border width, elevation, motion, grey tint and the rest
    under More. Every dial has **×1 = as in your code** at its centre. Your own dark
    mode is switched on your own hooks. Hold Space to see your original.
 4. **Take it home.** *Copy for your AI* puts the design system and how to apply it

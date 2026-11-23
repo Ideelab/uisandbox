@@ -6,6 +6,9 @@ import { buildTokens } from '../tokens/buildTokens'
 import { googleFontsImport, isCustomFont, customFontFamily, SYSTEM_FONT } from '../tokens/fonts'
 import { customFontUrl } from '../tokens/customFonts'
 
+/** What counts as a heading, for the heading font and the heading weight. */
+const HEADINGS = 'h1,h2,h3,h4,h5,h6,[class*="title"],[class*="heading"],[class*="hero"],[class*="display"]'
+
 export function fontCssFor(cfg: Config, base: Config): string {
   const chosen = [cfg.fontDisplay, cfg.fontBody].filter((f, i) => f !== (i === 0 ? base.fontDisplay : base.fontBody) && f !== SYSTEM_FONT)
   // Letter spacing, where the CSS sets none (decision 219): the dial adds to
@@ -15,7 +18,12 @@ export function fontCssFor(cfg: Config, base: Config): string {
   // theirs still wins and is moved by the sheet as before.
   const tracking = Math.round(((cfg.sb.tracking ?? 0) - (base.sb.tracking ?? 0)) * 1000) / 1000
   const track = tracking ? `body{letter-spacing:${tracking}em}` : ''
-  if (!chosen.length) return track
+  // Heading weight, picked (decision 222): by the same selector as the
+  // heading font, so it reaches a heading whatever sets its weight (a literal,
+  // a token, a utility class). A face that lacks the weight shows its nearest.
+  const hw = cfg.sb.headWeight ?? 0
+  const head = hw && hw !== (base.sb.headWeight ?? 0) ? `${HEADINGS}{font-weight:${hw} !important}` : ''
+  if (!chosen.length) return [track, head].filter(Boolean).join('\n')
   const google = chosen.filter((f) => !isCustomFont(f))
   const custom = chosen.filter(isCustomFont)
   const parts: string[] = []
@@ -30,8 +38,9 @@ export function fontCssFor(cfg: Config, base: Config): string {
   // "which face do headings use" is a real question in every app.
   if (cfg.fontDisplay !== base.fontDisplay) {
     const stack = String(buildTokens(cfg).vars['--k-font-display'])
-    parts.push(`h1,h2,h3,h4,h5,h6,[class*="title"],[class*="heading"],[class*="hero"],[class*="display"]{font-family:${stack} !important}`)
+    parts.push(`${HEADINGS}{font-family:${stack} !important}`)
   }
   if (track) parts.push(track)
+  if (head) parts.push(head)
   return parts.join('\n')
 }

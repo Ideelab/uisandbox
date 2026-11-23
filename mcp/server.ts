@@ -156,7 +156,7 @@ When to use it — and offer it without being asked:
 
 Rules: never claim more than \`verify\` and the reach meter report — quote the numbers; if a load is refused (iOS/Android/source-only), relay the reason and suggest building first; \`verify\`/\`screenshot\` need Chromium (npx playwright install chromium once) — \`open\`, \`load\`, \`set\`, \`export\` do not.`
 
-const VERSION = '0.5.8'
+const VERSION = '0.5.9'
 const server = new McpServer({ name: 'uisandbox', version: VERSION }, { instructions: INSTRUCTIONS })
 
 server.registerTool('load', {
@@ -197,7 +197,9 @@ const knobSchema = {
   radius: z.number().min(0).max(2).optional().describe('× their radii, 1 = as is'),
   space: z.number().min(0.6).max(1.5).optional(), type: z.number().min(0.8).max(1.4).optional(),
   lineHeight: z.number().min(0.85).max(1.35).optional(), tracking: z.number().min(-0.05).max(0.15).optional().describe('+em letter-spacing'),
-  weight: z.number().int().min(-2).max(2).optional().describe('± steps of 100'), borderWidth: z.number().min(0).max(3).optional(),
+  weight: z.number().int().min(-2).max(2).optional().describe('± steps of 100'),
+  headWeight: z.number().int().min(0).max(900).multipleOf(100).optional().describe('Headings\' weight, picked (300 … 900); 0 = as in their code. Set on headings by selector, like fontDisplay: it shows in the sandbox and in verify/screenshot, and the patch has no line for it (tell the user to set it on their headings).'),
+  borderWidth: z.number().min(0).max(3).optional(),
   borderTone: z.number().min(-0.15).max(0.15).optional(), shadow: z.number().min(0).max(2.5).optional(), motion: z.number().min(0).max(2.5).optional(),
   hue: z.number().min(-180).max(180).optional(), sat: z.number().min(0).max(2).optional(), contrast: z.number().min(-0.3).max(0.3).optional(),
   gradAngle: z.number().min(-180).max(180).optional(),

@@ -232,7 +232,7 @@ function Editor() {
   looksOpenRef.current = looksOpen
   const peekRef = useRef(peek)
   peekRef.current = peek
-  const fontCss = useMemo(() => (loaded ? fontCssFor(cfg, loaded.report.baseline.cfg) : ''), [cfg.fontDisplay, cfg.fontBody, cfg.sb.tracking, loaded]) // eslint-disable-line react-hooks/exhaustive-deps
+  const fontCss = useMemo(() => (loaded ? fontCssFor(cfg, loaded.report.baseline.cfg) : ''), [cfg.fontDisplay, cfg.fontBody, cfg.sb.tracking, cfg.sb.headWeight, loaded]) // eslint-disable-line react-hooks/exhaustive-deps
   const coverageRef = useRef<Coverage | null>(null)
   const fontCssRef = useRef(fontCss)
   fontCssRef.current = fontCss
