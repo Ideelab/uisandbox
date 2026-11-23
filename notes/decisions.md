@@ -4057,4 +4057,13 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     line and --detach, and could not reach localhost from its shell at all
     (it said the app was not running; it was). live-dev.mjs checks
     try_designs and the helper on all four apps: 78 of 78.
+    Tried on Alexander's own site (Cartful, a built site on its own preview
+    server at localhost:4320) with the published 0.5.4: What we found 7
+    screens, 94 values, brand #23b509, Archivo; reach 100/100/100; Check 1:1
+    135 elements, 0 differences; the six render; Soft moves 23 values; no
+    page errors. One fault: the helper did not list it. It looked on a fixed
+    list of usual ports, 4320 not among them (Astro's 4321 was). It looks on
+    the runs around them now (3000–3010, 4000–4010, 4200–4210, 4300–4330,
+    5000–5010, 5170–5180, 8000–8010, 8080–8090 and a few more): Cartful and
+    six other local sites listed, in 0.1 s. uisandbox-mcp 0.5.5.
 

@@ -1,6 +1,6 @@
 {
   "name": "uisandbox",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "description": "A design sandbox for the web app you are building: say \"let me try some designs\" and your running app opens in UISandbox, 1:1, six looks side by side and every knob; what you keep comes back as a patch. Bundles the /uisandbox skill and the uisandbox MCP server.",
   "author": {
     "name": "Alexander Kaan",

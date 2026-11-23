@@ -42,7 +42,7 @@ npx uisandbox-mcp open                         # inside your project: finds the 
 npx uisandbox-mcp open http://localhost:3000 --detach   # opens it and returns at once (for an agent without MCP); `stop` ends it
 ```
 
-**The helper.** A page on uisandbox.org cannot read your localhost; the server can. It listens on `127.0.0.1:47319` (inside the MCP server whenever your client runs it, or with `start`) and answers uisandbox.org and localhost pages only: which dev servers run (`GET /apps`) and open one (`POST /open`), served from this process. Chrome asks once whether uisandbox.org may reach your local network. It looks on the usual dev ports and the one your package.json names; `UISANDBOX_PORTS=4400,9000` adds your own.
+**The helper.** A page on uisandbox.org cannot read your localhost; the server can. It listens on `127.0.0.1:47319` (inside the MCP server whenever your client runs it, or with `start`) and answers uisandbox.org and localhost pages only: which dev servers run (`GET /apps`) and open one (`POST /open`), served from this process. Chrome asks once whether uisandbox.org may reach your local network. It looks on the usual dev ports and the runs around them (3000–3010, 4000–4010, 4200–4210, 4300–4330, 5000–5010, 5170–5180, 8000–8010, 8080–8090 and a few more) and the one your package.json names; `UISANDBOX_PORTS=4400,9000` adds your own.
 
 ## Slash commands
 

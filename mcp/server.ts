@@ -156,7 +156,7 @@ When to use it — and offer it without being asked:
 
 Rules: never claim more than \`verify\` and the reach meter report — quote the numbers; if a load is refused (iOS/Android/source-only), relay the reason and suggest building first; \`verify\`/\`screenshot\` need Chromium (npx playwright install chromium once) — \`open\`, \`load\`, \`set\`, \`export\` do not.`
 
-const VERSION = '0.5.4'
+const VERSION = '0.5.5'
 const server = new McpServer({ name: 'uisandbox', version: VERSION }, { instructions: INSTRUCTIONS })
 
 server.registerTool('load', {
@@ -382,8 +382,11 @@ function openInBrowser(url: string): void {
 
 /* ── Finding the user's app, loading it, opening it: try_designs, the helper, the CLI ── */
 
-/** The ports dev servers start on. */
-const DEV_PORTS = [5173, 3000, 5174, 3001, 4321, 4200, 8080, 3002, 5175, 8000, 4000, 1234, 5000, 8888, 6006, 4173, 3333]
+/** The ports dev servers start on, and the runs around them: a project that took
+ *  the next one up, or picked its own (Alexander's own site answers on 4320, next
+ *  to Astro's 4321, and was not listed). A closed port refuses at once. */
+const range = (a: number, b: number) => Array.from({ length: b - a + 1 }, (_, i) => a + i)
+const DEV_PORTS = [...new Set([5173, 3000, 4321, 4200, 8080, 1234, 6006, 8888, 3333, 9000, ...range(3000, 3010), ...range(4000, 4010), ...range(4173, 4174), ...range(4200, 4210), ...range(4300, 4330), ...range(5000, 5010), ...range(5170, 5180), ...range(8000, 8010), ...range(8080, 8090)])]
 /** What package.json says about this project's dev server: an explicit port, or its framework's default. */
 function portsFromPackage(dir: string): number[] {
   try {
