@@ -46,6 +46,8 @@ interface StageProps {
   onAt?: (s: Screen | null) => void
   /** Canvas controls that sit with the screen picker (1 | 6, Light / Dark). */
   barExtra?: React.ReactNode
+  /** Above the screen: on a kit, the way to your own app (decision 225). */
+  strip?: React.ReactNode
   /** The "What we read" card: shown or not, and its toggle in the foot. */
   onToggleNotes?: () => void
   notesOpen?: boolean
@@ -75,7 +77,7 @@ function reportUrl(project: SandboxProject, detail: string): string {
   return `https://github.com/Ideelab/uisandbox/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}&labels=build-report`
 }
 
-export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, pinnable, changedCount, peek, onPeek, looks, tells, onLooks, warning, warningTitle, coverage, notes, tab = 'screens', onTab, kitName, barExtra, onAt, onToggleNotes, notesOpen, notesLabel }: StageProps) {
+export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, pinnable, changedCount, peek, onPeek, looks, tells, onLooks, warning, warningTitle, coverage, notes, tab = 'screens', onTab, kitName, barExtra, strip, onAt, onToggleNotes, notesOpen, notesLabel }: StageProps) {
   const [showCov, setShowCov] = useState(false)
   const [showTells, setShowTells] = useState(false)
   const [verify, setVerify] = useState<VerifyResult | { busy: true } | null>(null)
@@ -158,6 +160,7 @@ export function Stage({ project, screen, onScreen, frameRef, onLoaded, onPin, pi
 
   return (
     <section className="stage">
+      {strip}
       <div className="stage__bar">
         {kitName && (
           <div className="stage__tabs" role="tablist" aria-label="What the stage shows">

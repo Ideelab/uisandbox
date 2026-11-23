@@ -96,7 +96,7 @@ export function Door({ onArchive, onUrl, onSample, busy, error, standalone, onCl
       <div className="door">
       <div className="card intake__card door__card">
         <div className="door__bar">
-          <h2>Try it on your own app</h2>
+          <h2>Try it on your app</h2>
           <BringSteps at={1} />
           {onClose && <button type="button" className="btn btn--ghost btn--icon" onClick={onClose} aria-label="Close" title="Back to the kit"><X size={15} /></button>}
         </div>

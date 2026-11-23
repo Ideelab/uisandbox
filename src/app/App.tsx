@@ -29,7 +29,7 @@ import { measureTells, type Tell } from '../sandbox/tells'
 import { DIRECTIONS, applyDirection, firstRoll, reroll, type LookLocks, type LookRoll } from '../sandbox/directions'
 import { Door, LoadStages } from './Intake'
 import { Found } from './Found'
-import { ConnectMenu } from './ConnectMenu'
+import { ConnectMenu, YourAppStrip } from './ConnectMenu'
 import { CaptureDoor } from './CaptureDoor'
 import { captureArchive, readCapture, sanitizeHtml, screenPath, type CapturedScreen } from '../capture/receive'
 import { Stage, isSheet, type StageTab } from './Stage'
@@ -790,7 +790,9 @@ function Editor() {
             {loaded.kit
               ? <ConnectMenu carry={kitCarry?.token} onOther={() => { setLooksOpen(false); setBringOpen(true) }} />
               : <button type="button" className="btn btn--ghost btn--sm" onClick={closeProject} title="Close your app and go back to the kit"><ArrowLeft size={14} /> Back to the kits</button>}
-            <button type="button" className={`btn ${sendTo ? 'btn--secondary' : 'btn--primary'} btn--sm`} onClick={() => setShowExport(true)}><Download size={14} /> Export</button>
+            {/* On a kit the one filled button is Try it on your app: the app you are
+                running is what this is for (decision 225). */}
+            <button type="button" className={`btn ${sendTo || loaded.kit ? 'btn--secondary' : 'btn--primary'} btn--sm`} onClick={() => setShowExport(true)}><Download size={14} /> Export</button>
             {sendTo && !loaded.kit && <SendButton to={sendTo} onSend={sendBack} />}
           </>}
         </div>
@@ -851,6 +853,7 @@ function Editor() {
               onTab={setTab}
               kitName={loaded.kit?.name}
               onAt={setFrameAt}
+              strip={loaded.kit ? <YourAppStrip kit={loaded.kit.name} carry={kitCarry?.token} /> : undefined}
               barExtra={<>
                 <ViewSwitch six={looksOpen} onChange={(six) => (six ? openLooks() : setLooksOpen(false))} />
                 {hasScheme && <SchemeSwitch value={cfg.sb.dark ?? 'light'} hooks={schemeHooks} onChange={(v) => dispatch({ type: 'SET', patch: { sb: { ...cfg.sb, dark: v } } })} />}

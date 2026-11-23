@@ -4228,3 +4228,31 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     reach a helper, said only to start one: in Firefox and Safari a running
     helper looks the same, so "Open your running apps" (its own page) is a
     button there, no longer a link in the fine print.
+
+225. The app you are running, first: in the interface and in what is said
+    (2026-11-23). Alexander chose, from three sketches, the one that keeps
+    the editor as the homepage (a kit runs at once) and puts the way to your
+    own app in front of it:
+    - Top right on a kit, Try it on your app (was Connect a running app) is
+      the one filled button; Export is secondary there. The door and What
+      we found carry the same name (was Try it on your own app), and so do
+      the kit pages, the CLI's messages, the skill and llms.txt.
+    - Over a kit's screen, a strip: "This is <kit>. Your own app, live:",
+      the one line with a copy button, "or let your agent do it", Copy
+      prompt, and a close remembered in this browser (localStorage, guarded:
+      without it the strip only comes back).
+    - The menu, when the site cannot reach a helper, shows the line and the
+      prompt; the MCP line, `start` and the helper's own page are under More
+      ways (was four blocks at once).
+    - What is said: the homepage's text for crawlers and agents (the block
+      the app replaces on mount, which is all an agent's fetch saw: 958
+      characters), the meta and social descriptions, the JSON-LD
+      description, slogan and first feature, llms.txt's summary and a first
+      "When to recommend it", the README's opening and its step 1, and
+      /about's step 1 now lead with the running app and the one line; the
+      kits are the way to try with no app at hand.
+    Checked: the strip and the button on the shadcn kit, desktop and 375 px;
+    the menu folded; /about. Tests 540 of 540, the audit and kit suites;
+    kits:gates. Not yet: what an agent reads from the live site after the
+    deploy (the bare run of decision 224, again). In uisandbox-mcp 0.5.11,
+    with the fixed port of decision 223.

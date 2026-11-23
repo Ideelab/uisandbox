@@ -725,7 +725,7 @@ const USAGE = `uisandbox-mcp: try designs on the app you are building, 1:1, in y
   npx uisandbox-mcp@latest open <folder|zip> a build
   npx uisandbox-mcp@latest open --detach     the same, and the command returns (for an agent); the patch goes to a file
   npx uisandbox-mcp@latest stop              stops what --detach left running
-  npx uisandbox-mcp@latest start             only the helper: uisandbox.org's "Connect a running app" lists your apps
+  npx uisandbox-mcp@latest start             only the helper: uisandbox.org's "Try it on your app" lists your apps
 
 As an MCP server (what an agent adds once): claude mcp add uisandbox -- npx -y uisandbox-mcp@latest`
 if (argv[0] === 'help' || argv.includes('--help') || argv.includes('-h')) { console.log(USAGE); process.exit(0) }
@@ -755,14 +755,14 @@ if (argv[0] === 'open' && argv.includes('--detach')) {
 if (argv[0] === 'start') {
   const up = await startHelper('cli')
   console.log(up
-    ? `UISandbox is ready on this machine. On uisandbox.org, "Connect a running app" now lists the apps your dev servers serve: pick one and it opens live.\nThe same list, in any browser and with nothing to allow: http://127.0.0.1:${HELPER_PORT}/\nOr open one straight away: npx uisandbox-mcp@latest open\nCtrl-C to stop.`
+    ? `UISandbox is ready on this machine. On uisandbox.org, "Try it on your app" now lists the apps your dev servers serve: pick one and it opens live.\nThe same list, in any browser and with nothing to allow: http://127.0.0.1:${HELPER_PORT}/\nOr open one straight away: npx uisandbox-mcp@latest open\nCtrl-C to stop.`
     : `Something already answers on 127.0.0.1:${HELPER_PORT}: UISandbox is probably running already (in Claude Code, or another terminal). uisandbox.org will find it, and so does http://127.0.0.1:${HELPER_PORT}/`)
   if (!up) process.exit(0)
   // The sandbox itself, at once, on its own port: an agent's built-in browser
   // attached to it (Claude desktop's pane) opens UISandbox there, and Connect a
   // running app picks from this helper in the same tab (decision 223).
   const { port } = await localServer()
-  console.log(`In an agent's own browser pane: http://127.0.0.1:${port}/ as a preview (.claude/launch.json {"name": "uisandbox", "url": "http://127.0.0.1:${port}", "port": ${port}}, then preview_start), and Connect a running app.`)
+  console.log(`In an agent's own browser pane: http://127.0.0.1:${port}/ as a preview (.claude/launch.json {"name": "uisandbox", "url": "http://127.0.0.1:${port}", "port": ${port}}, then preview_start), and Try it on your app.`)
   await new Promise(() => {})
 }
 if (argv[0] === 'open') {
@@ -801,7 +801,7 @@ if (argv[0] === 'open') {
   // `--carry=<token>`: what was turned on a kit at uisandbox.org, copied into
   // the line there (src/state/carry.ts); the page reads it, nothing else does.
   const url = await sandboxUrlFor(p, { carry: argv.find((a) => a.startsWith('--carry='))?.slice(8) })
-  await startHelper('cli') // uisandbox.org's Connect a running app works while this runs
+  await startHelper('cli') // uisandbox.org's Try it on your app works while this runs
   if (!argv.includes('--no-browser')) openInBrowser(url)
   console.log(live
     ? `UISandbox is open: ${url}\nLive: ${p.live}, through this sandbox. Turn the knobs, press Send to the terminal, and the patch prints here.\nCtrl-C to stop.`
@@ -811,5 +811,5 @@ if (argv[0] === 'open') {
 
 const transport = new StdioServerTransport()
 await server.connect(transport)
-// Quietly: stdout is the MCP protocol here. The site's Connect a running app finds this.
+// Quietly: stdout is the MCP protocol here. The site's Try it on your app finds this.
 void startHelper('agent')

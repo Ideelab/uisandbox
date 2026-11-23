@@ -26,20 +26,27 @@ UISandbox opens it next to the knobs that decide that: colour, type, shape and
 space. Turn one and every place that value is used follows, on the real app and
 not a mock-up of it. Keep what you see as a design system your agent can apply.
 
-Open **[uisandbox.org](https://uisandbox.org)**. It starts on a UI kit, so there is
-something to turn before you bring anything.
+Try it on the app you are running. Next to your dev server:
+
+```bash
+npx uisandbox-mcp@latest open
+```
+
+It finds the app on localhost and opens it live in your browser, every screen,
+hot reload kept. Or tell your agent to open it. No app at hand?
+**[uisandbox.org](https://uisandbox.org)** starts on a UI kit.
 
 <p align="center"><img src="brand/marketing/launch.gif" alt="The four steps on the real app: shadcn/ui's Dashboard, the same screen six ways, Soft picked, the colour turned through five and the dark mode switched, then SB Admin 2 brought in with those knobs, checked 1:1, and the export" width="880"></p>
 
 ## The four steps
 
-1. **Bring your app.** The editor opens on shadcn/ui as it ships, six ways, with
-   seven more kits one pick away (Tailwind CSS, daisyUI, Bootstrap, Material 3,
-   Radix Themes, Mantine, Ant Design), each dressed as the same seven-screen
-   invoicing app. Then *Try it on your own app*: run
-   `npx uisandbox-mcp@latest open` next to your dev server, or tell
-   your agent to open it, and your running app opens live, every screen, hot reload
-   included. No terminal? Drag *Take this screen along* to your bookmarks bar and
+1. **Bring your app.** Run `npx uisandbox-mcp@latest open` next to your dev
+   server, or tell your agent to open it, and your running app opens live, every
+   screen, hot reload included (*Try it on your app*, top right on the site, has
+   the line and a prompt for your agent). No app at hand? The editor opens on
+   shadcn/ui as it ships, six ways, with seven more kits one pick away (Tailwind
+   CSS, daisyUI, Bootstrap, Material 3, Radix Themes, Mantine, Ant Design), each
+   dressed as the same seven-screen invoicing app. No terminal? Drag *Take this screen along* to your bookmarks bar and
    click it on any screen your browser shows (staging, behind a login, a Lovable or
    v0 preview), or bring a zip, a folder or a public repo. What you turned on the
    kit comes along if you want it to.

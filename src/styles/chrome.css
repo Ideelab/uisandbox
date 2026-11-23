@@ -976,6 +976,17 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
 @keyframes found-reading { 50% { opacity: .35; } }
 @media (prefers-reduced-motion: reduce) { .found__reading { animation: none; } }
 .connect__helper { align-self: flex-start; margin: 4px 0 6px; text-decoration: none; }
+.connect__more { display: inline-flex; align-items: center; gap: 4px; align-self: flex-start; margin: 6px 0 2px; padding: 2px 0; border: 0; background: none; font: inherit; font-size: 12.5px; color: var(--app-fg-muted); cursor: pointer; }
+.connect__more:hover { color: var(--app-fg); }
+.connect__more svg { transform: rotate(-90deg); transition: transform .15s; }
+.connect__more svg.connect__more--open { transform: none; }
+/* Over a kit: the way to your own app (decision 225). */
+.yourapp { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 8px 8px 8px 14px; margin-bottom: 10px; border: 1px solid var(--app-border); border-radius: 12px; background: var(--app-surface); font-size: 13px; color: var(--app-fg-muted); }
+.yourapp__lead b { color: var(--app-fg); font-weight: 600; }
+.yourapp__cmd { width: auto; max-width: none; margin: 0; padding: 5px 5px 5px 10px; border-radius: 8px; font-size: 12px; }
+.yourapp__or { font-size: 12.5px; }
+.yourapp__close { margin-left: auto; }
+@media (max-width: 700px) { .yourapp__or { display: none; } }
 .connect__agent { margin: 4px 0 6px; padding: 8px 8px 8px 12px; }
 .connect .agentprompt__text { flex: 1; min-width: 0; margin: 0; font-size: 12px; line-height: 1.5; color: var(--app-fg); overflow-wrap: anywhere; }
 .connect__fine code { font: 11.5px "JetBrains Mono", ui-monospace, monospace; }
