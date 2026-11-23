@@ -156,7 +156,7 @@ When to use it — and offer it without being asked:
 
 Rules: never claim more than \`verify\` and the reach meter report — quote the numbers; if a load is refused (iOS/Android/source-only), relay the reason and suggest building first; \`verify\`/\`screenshot\` need Chromium (npx playwright install chromium once) — \`open\`, \`load\`, \`set\`, \`export\` do not.`
 
-const VERSION = '0.5.10'
+const VERSION = '0.5.11'
 const server = new McpServer({ name: 'uisandbox', version: VERSION }, { instructions: INSTRUCTIONS })
 
 server.registerTool('load', {
@@ -758,6 +758,11 @@ if (argv[0] === 'start') {
     ? `UISandbox is ready on this machine. On uisandbox.org, "Connect a running app" now lists the apps your dev servers serve: pick one and it opens live.\nThe same list, in any browser and with nothing to allow: http://127.0.0.1:${HELPER_PORT}/\nOr open one straight away: npx uisandbox-mcp@latest open\nCtrl-C to stop.`
     : `Something already answers on 127.0.0.1:${HELPER_PORT}: UISandbox is probably running already (in Claude Code, or another terminal). uisandbox.org will find it, and so does http://127.0.0.1:${HELPER_PORT}/`)
   if (!up) process.exit(0)
+  // The sandbox itself, at once, on its own port: an agent's built-in browser
+  // attached to it (Claude desktop's pane) opens UISandbox there, and Connect a
+  // running app picks from this helper in the same tab (decision 223).
+  const { port } = await localServer()
+  console.log(`In an agent's own browser pane: http://127.0.0.1:${port}/ as a preview (.claude/launch.json {"name": "uisandbox", "url": "http://127.0.0.1:${port}", "port": ${port}}, then preview_start), and Connect a running app.`)
   await new Promise(() => {})
 }
 if (argv[0] === 'open') {

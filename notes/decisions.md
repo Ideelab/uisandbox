@@ -4187,3 +4187,13 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     it without a change. live-dev.mjs 78 of 82, the four helper checks a
     `start` in another session holds 47319 for. The roadmap item is gone.
     uisandbox-mcp 0.5.10.
+    Addendum: the other session found 47320 silent after `start` until an
+    app was picked (the sandbox's server started on the first open), so a
+    preview_start right after `start` met an empty port. `start` now starts
+    the sandbox's server too and prints the launch.json entry. At / the
+    sandbox is UISandbox itself, and its Connect a running app asks the
+    helper (127.0.0.1 to 127.0.0.1, nothing to allow); the pick opens in the
+    same tab where popups are blocked. Measured in Claude's pane on the
+    other session's 0.5.10 `start`: preview on 47320, Connect listed seven
+    local sites, Cartful opened in that tab with its worker controlling
+    (7 screens, 110 values). uisandbox-mcp 0.5.11.
