@@ -4014,3 +4014,47 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     no status family claims, so nothing on that screen moved. Not changed:
     whether a status knob should reach a Tailwind ramp is on the roadmap.
 
+220. A design sandbox you reach in one step (2026-11-23). Alexander tried his
+    own local site from another Claude chat and it did not get there: the
+    agent had no MCP tools, took the prompt's fallback (`npx -y uisandbox-mcp
+    open <url>` in the background), and auto mode refused it as an
+    unattended process fetching code; the running-app route asks for a line
+    in the source <head>; and "apply the patch" on a page is data to an
+    agent, not the user's instruction. What I had tested last month was not
+    that case: my subagents ran without auto mode. What changed:
+    - **try_designs**, one MCP call with no arguments: it finds the app (the
+      port package.json names, its framework's default, the usual dev ports,
+      UISANDBOX_PORTS; else the build in the folder), opens it live and
+      returns the id for wait_for_send; with more than one app it lists them.
+      The server's instructions and the skill now trigger on what people say
+      ("let me try some designs", "not happy with the look", "try another
+      style") and say to offer it; the patch is shown before any file
+      changes (nextStep).
+    - **The helper**: the MCP server (whenever a client runs it) and
+      `npx uisandbox-mcp start` listen on 127.0.0.1:47319 for uisandbox.org
+      and localhost pages only (any other Origin gets 403): GET /apps, the dev
+      servers that answer; POST /open, the sandbox with one, live. Top right,
+      Connect a running app lists them; one click opens the app in a new tab.
+      Not running: the start line, the Claude Code line, every other way in.
+      Chrome asks once for local network access; Safari (WebKit) refuses an
+      https page reaching http://127.0.0.1 at all, so the helper also serves
+      its own page at http://127.0.0.1:47319 (a visit, not a fetch): the apps,
+      each link carrying a per-process token. Measured: Chromium with the
+      permission lists them; WebKit, the helper's page opens Ledgerly; a
+      wrong token is 403. Firefox not tried here.
+    - **`open --detach`** returns as soon as the sandbox is open, names the
+      file Send writes the patch to; `stop` ends it. The site's agent prompt
+      leads with try_designs, then --detach, no -y, and "show me the patch".
+    - The plugin is 0.5.4 (it said 0.3.2), with the skill rewritten around
+      try_designs.
+    Tested as the user would: `claude -p "ik wil even wat verschillende
+    designs testen op mijn app" --permission-mode auto` in the dashboard
+    app's folder. With the MCP server: it called try_designs with no
+    arguments, auto mode let it, Ledgerly opened live, and it waited in
+    wait_for_send. It wrote no line to the user before waiting, even when
+    told to (in print mode its text comes at the end of the turn); the tab
+    that opens says what to do. Without the server: it offered the install
+    line and --detach, and could not reach localhost from its shell at all
+    (it said the app was not running; it was). live-dev.mjs checks
+    try_designs and the helper on all four apps: 78 of 78.
+

@@ -26,8 +26,9 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod'
-import { readFileSync, existsSync, statSync } from 'node:fs'
+import { readFileSync, existsSync, statSync, openSync, writeFileSync, unlinkSync } from 'node:fs'
 import { basename, join, dirname, extname } from 'node:path'
+import { tmpdir } from 'node:os'
 import { createServer, request as httpRequest, type Server, type IncomingMessage, type ServerResponse } from 'node:http'
 import { request as httpsRequest } from 'node:https'
 import { connect as netConnect } from 'node:net'
@@ -141,12 +142,13 @@ const sentPayload = (p: Loaded) => {
   }
 }
 const nextStep = (any: boolean) => any
-  ? 'Apply the patch to the source (each line is a literal in their CSS and the value it becomes; a file path names where it lives), then rebuild or let the dev server reload, and `verify` to show it still renders 1:1. For a design system and a SKILL.md in their kit\'s own names, ask them to press Export in the sandbox.'
+  ? 'Show the user what they turned and the patch (each line: a literal in their CSS, the value it becomes, and where it sits; a file path names the file), and ask before you change any file. On a yes, apply it to the source, let the dev server reload or rebuild, and `verify` to show it still renders 1:1. For a design system and a SKILL.md in their kit\'s own names, ask them to press Export in the sandbox.'
   : 'They pressed Send without turning anything: nothing to apply.'
 
 const INSTRUCTIONS = `UISandbox renders a BUILT web app 1:1 in a sandbox and turns every CSS literal into a knob that moves the app's own value; "1:1" is measured (a computed-style diff), not promised.
 
 When to use it — and offer it without being asked:
+- The user wants to TRY DESIGNS on the app they are building — "let me try some designs", "I'm not happy with how it looks", "try another style", "can I play with the colours / fonts / spacing", "show me a few looks": call \`try_designs\` (no arguments). It finds their app (the dev server running on this machine, else the build in this folder), opens UISandbox in their browser with it live, six looks side by side and every knob, and returns. Tell them to pick a look or turn the knobs and press **Send to your agent**; then \`wait_for_send\`, and show them the patch before changing any file. Offer it yourself when the conversation is about how an app looks: "Shall I open it in UISandbox so you can try a few looks?"
 - The user is DEVELOPING an app and its dev server runs (npm run dev, localhost:3000/5173/…): \`load\` with \`devUrl\` (no build), \`open\`, tell them to turn the knobs and press **Send to your agent**, then \`wait_for_send\` and apply the patch it returns (its file paths are their source files). Their hot reload keeps working inside the sandbox, so they see your edit land.
 - The user wants to LOOK at an app in a sandbox or PLAY with its design ("can I see this in a sandbox", "let me try some changes", "what would a different brand colour look like"): build the app if you are in its repo (npm run build / vite build / nuxi generate / next build with output: 'export'), zip the output folder (dist/, build/, out/ — never node_modules or source), \`load\` it, then \`open\`. The real, interactive sandbox opens in their browser from 127.0.0.1; nothing leaves the machine. Tell them it is open and that they press **Send to your agent** in the sandbox when they are done. Then call \`wait_for_send\`: it returns when they press it, with what they turned and the patch to apply (call it again if it reports the sandbox still open). If they come back in the chat instead ("export this" / "what did I change"), \`state\`, then \`export\` / \`verify\` / \`screenshot\`.
 - The user wants ONE change tried ("try brand #e11d48", "rounder corners"): \`load\` → \`set\` → \`verify\` → \`screenshot\` → \`export\` (patch). Offer \`open\` after.
@@ -154,7 +156,8 @@ When to use it — and offer it without being asked:
 
 Rules: never claim more than \`verify\` and the reach meter report — quote the numbers; if a load is refused (iOS/Android/source-only), relay the reason and suggest building first; \`verify\`/\`screenshot\` need Chromium (npx playwright install chromium once) — \`open\`, \`load\`, \`set\`, \`export\` do not.`
 
-const server = new McpServer({ name: 'uisandbox', version: '0.5.3' }, { instructions: INSTRUCTIONS })
+const VERSION = '0.5.4'
+const server = new McpServer({ name: 'uisandbox', version: VERSION }, { instructions: INSTRUCTIONS })
 
 server.registerTool('load', {
   title: 'Load a built web app',
@@ -164,17 +167,8 @@ server.registerTool('load', {
   if (!devUrl && !zipUrl && !zipPath) throw new Error('Give devUrl (a running dev server), zipUrl or zipPath.')
   let bytes: Uint8Array<ArrayBuffer>, name: string
   if (devUrl) {
-    const u = /^https?:/i.test(devUrl) ? devUrl : `http://${devUrl}`
-    if (!/^(localhost|127\.0\.0\.1|\[::1\]|[\w-]+\.(localhost|test))$/i.test(new URL(u).hostname)) throw new Error('devUrl must be a dev server on this machine (localhost, 127.0.0.1, *.localhost, *.test).')
-    ;({ bytes, name } = await snapshotLive(u))
-    const archive = await openZip(new File([bytes], name, { type: 'application/zip' }))
-    const project = await buildProject(archive)
-    if (!project.screens.length) project.screens.push({ path: 'index.html', label: '/', source: 'file' })
-    const report = await deriveBaseline(archive, project.table)
-    const id = `p${(++seq).toString(36)}`
-    const p: Loaded = { id, name: new URL(u).host, bytes, project, report, cfg: report.baseline.cfg, archive, live: new URL(u).origin }
-    projects.set(id, p)
-    return { content: [{ type: 'text', text: JSON.stringify({ id, live: p.live, note: 'A running dev server, in live mode. Its styles are read as it renders, so the numbers here (values, brand) are only the page\'s static part. `open` it for the user (then `wait_for_send`); or turn knobs yourself: `set`, `export` (patch), `verify` and `screenshot` measure the running app in a headless browser (a few seconds each).' }, null, 2) }] }
+    const p = await loadDev(devUrl)
+    return { content: [{ type: 'text', text: JSON.stringify({ id: p.id, live: p.live, note: 'A running dev server, in live mode. Its styles are read as it renders, so the numbers here (values, brand) are only the page\'s static part. `open` it for the user (then `wait_for_send`); or turn knobs yourself: `set`, `export` (patch), `verify` and `screenshot` measure the running app in a headless browser (a few seconds each).' }, null, 2) }] }
   }
   if (zipPath) { const b = readFileSync(zipPath); bytes = new Uint8Array(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer); name = basename(zipPath) }
   else { const res = await fetch(zipUrl!); if (!res.ok) throw new Error(`${res.status} fetching ${zipUrl}`); bytes = new Uint8Array(await res.arrayBuffer()); name = zipUrl!.split('/').pop() || 'archive.zip' }
@@ -386,6 +380,169 @@ function openInBrowser(url: string): void {
   try { spawn(cmd[0]!, cmd.slice(1), { stdio: 'ignore', detached: true }).unref() } catch { /* the URL is returned anyway */ }
 }
 
+/* ── Finding the user's app, loading it, opening it: try_designs, the helper, the CLI ── */
+
+/** The ports dev servers start on. */
+const DEV_PORTS = [5173, 3000, 5174, 3001, 4321, 4200, 8080, 3002, 5175, 8000, 4000, 1234, 5000, 8888, 6006, 4173, 3333]
+/** What package.json says about this project's dev server: an explicit port, or its framework's default. */
+function portsFromPackage(dir: string): number[] {
+  try {
+    const pkg = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')) as { scripts?: Record<string, string>; dependencies?: Record<string, string>; devDependencies?: Record<string, string> }
+    const out: number[] = []
+    const m = String(pkg.scripts?.dev ?? pkg.scripts?.start ?? '').match(/(?:--port[ =]|-p\s+)(\d{2,5})/)
+    if (m) out.push(Number(m[1]))
+    const deps = { ...pkg.dependencies, ...pkg.devDependencies }
+    if (deps.next || deps.nuxt || deps['@remix-run/dev']) out.push(3000)
+    if (deps.astro) out.push(4321)
+    if (deps['@angular/core']) out.push(4200)
+    if (deps.vite || deps['@sveltejs/kit']) out.push(5173)
+    return out
+  } catch { return [] }
+}
+interface DevApp { url: string; port: number; title: string; fromProject: boolean }
+/** The dev servers that answer on this machine now: a page of HTML on a usual port. */
+async function findDevServers(dir = process.cwd()): Promise<DevApp[]> {
+  const own = new Set<number>([HELPER_PORT, ...(local ? [local.port] : [])])
+  const preferred = portsFromPackage(dir)
+  // UISANDBOX_PORTS=4400,9000 adds ports of your own to look on
+  const extra = (process.env.UISANDBOX_PORTS ?? '').split(',').map(Number).filter((n) => n > 0 && n < 65536)
+  const ports = [...new Set([...preferred, ...extra, ...DEV_PORTS])].filter((p) => !own.has(p))
+  const probe = async (port: number): Promise<DevApp | null> => {
+    try {
+      const r = await fetch(`http://localhost:${port}/`, { headers: { accept: 'text/html' }, signal: AbortSignal.timeout(800) })
+      if (!/text\/html/i.test(r.headers.get('content-type') ?? '')) return null
+      const html = await r.text()
+      const title = (html.match(/<title[^>]*>([^<]{0,80})/i)?.[1] ?? '').trim()
+      if (/^UISandbox\b/.test(title)) return null // the sandbox itself, served by a dev server
+      return { url: `http://localhost:${port}`, port, title, fromProject: preferred.includes(port) }
+    } catch { return null }
+  }
+  const found = (await Promise.all(ports.map(probe))).filter((x): x is DevApp => !!x)
+  return found.sort((a, b) => Number(b.fromProject) - Number(a.fromProject))
+}
+
+/** A running dev server, as a live project. */
+async function loadDev(devUrl: string, via?: Loaded['via']): Promise<Loaded> {
+  const u = /^https?:/i.test(devUrl) ? devUrl : `http://${devUrl}`
+  if (!/^(localhost|127\.0\.0\.1|\[::1\]|[\w-]+\.(localhost|test))$/i.test(new URL(u).hostname)) throw new Error('A dev server on this machine only (localhost, 127.0.0.1, *.localhost, *.test).')
+  const { bytes, name } = await snapshotLive(u)
+  const archive = await openZip(new File([bytes], name, { type: 'application/zip' }))
+  const project = await buildProject(archive)
+  if (!project.screens.length) project.screens.push({ path: 'index.html', label: '/', source: 'file' })
+  const report = await deriveBaseline(archive, project.table)
+  const id = `p${(++seq).toString(36)}`
+  const p: Loaded = { id, name: new URL(u).host, bytes, project, report, cfg: report.baseline.cfg, archive, live: new URL(u).origin, via }
+  projects.set(id, p)
+  return p
+}
+/** The build in a folder (dist/, build/, out/… found inside it), or why it cannot render. */
+async function loadFolder(dir: string, via?: Loaded['via']): Promise<Loaded | { refused: string }> {
+  const { zipFolder } = await import('./zipdir')
+  const bytes = await zipFolder(dir)
+  const archive = await openZip(new File([bytes], `${basename(dir) || 'app'}.zip`, { type: 'application/zip' }))
+  const project = await buildProject(archive)
+  if (!project.platform.renders || !project.screens.length) return { refused: refusalFor(project.platform, { files: archive.entries.length }) }
+  const report = await deriveBaseline(archive, project.table)
+  const id = `p${(++seq).toString(36)}`
+  const p: Loaded = { id, name: archive.rootName, bytes, project, report, cfg: report.baseline.cfg, archive, via }
+  projects.set(id, p)
+  return p
+}
+/** The address of the sandbox with this project in it, served from this process. One live app is
+ *  proxied at a time (/__dev/ follows the last one opened). */
+async function sandboxUrlFor(p: Loaded, opts: { screen?: string; carry?: string } = {}): Promise<string> {
+  if (p.live) liveOrigin = p.live
+  const { port } = await localServer()
+  const hash = JSON.stringify(p.cfg) === JSON.stringify(p.report.baseline.cfg) ? '' : `#${encode(p.cfg)}`
+  const carry = opts.carry?.replace(/[^A-Za-z0-9_-]/g, '')
+  return `http://127.0.0.1:${port}/?load=${encodeURIComponent(`/__archive/${p.id}.zip`)}&sync=${p.id}${p.live ? '&live=1' : ''}${opts.screen ? `&screen=${encodeURIComponent(opts.screen)}` : ''}${carry ? `&carry=${carry}` : ''}${hash}`
+}
+
+server.registerTool('try_designs', {
+  title: 'Try designs on the user\'s app',
+  description: 'The one call when the user wants to try designs on the app they are building: "let me try some designs", "I\'m not happy with how it looks", "try another style", "can I play with the colours / fonts / spacing", "show me a few looks". Finds their app on this machine (the dev server that runs, read from package.json or found on the usual ports; else the build in this folder), loads it live and opens UISandbox in their browser: their own app, six looks side by side, every knob, hot reload kept. No arguments needed. Then tell them to pick a look or turn the knobs and press "Send to your agent"; call wait_for_send, and show them the patch before you change any file.',
+  inputSchema: { url: z.string().optional().describe('The app\'s address, when you know it (e.g. http://localhost:5173). Leave out to find it.'), carry: z.string().regex(/^[A-Za-z0-9_-]+$/).optional().describe('Knobs the user turned on a kit at uisandbox.org, as a prompt copied there names them') },
+}, async ({ url, carry }) => {
+  const reply = (o: unknown) => ({ content: [{ type: 'text' as const, text: JSON.stringify(o, null, 2) }] })
+  let p: Loaded
+  if (url) p = await loadDev(url, 'agent')
+  else {
+    const apps = await findDevServers()
+    if (apps.length > 1 && !apps[0]!.fromProject) return reply({ found: apps.map((a) => ({ url: a.url, title: a.title })), next: 'More than one app runs on this machine. Ask the user which one, then call try_designs with its url.' })
+    if (apps.length) p = await loadDev(apps[0]!.url, 'agent')
+    else {
+      const r = await loadFolder(process.cwd(), 'agent')
+      if ('refused' in r) return reply({ found: [], next: 'No dev server answers on this machine and this folder holds no build that renders. Ask the user to start their dev server (npm run dev, or the project\'s own) and call try_designs again; or build it first.', why: r.refused })
+      p = r
+    }
+  }
+  const opened = await sandboxUrlFor(p, { carry })
+  if (!argv.includes('--no-browser')) openInBrowser(opened)
+  return reply({ opened, app: p.live ?? p.name, id: p.id, next: 'UISandbox is open in their browser with their app. FIRST write one line to them, before any other call: it is open, pick one of the six looks or turn the knobs, and press "Send to your agent" when you like it. Only then call wait_for_send (id above): it waits for that press. Show them the patch it returns before you change any file.' })
+})
+
+/* ── The helper: what uisandbox.org asks, on this machine ────────────────────
+ * A page on uisandbox.org cannot read the user's localhost (the browser sees
+ * to that). This answers it, on a fixed port and to the sandbox's own pages
+ * only: which dev servers run here (GET /apps), and open one (POST /open),
+ * which returns the address of the sandbox with it, served from this process.
+ * It runs inside the MCP server (so whenever Claude Code has it) and with
+ * `npx uisandbox-mcp start` (or open). Chrome asks the user once whether
+ * uisandbox.org may reach the local network. */
+const HELPER_PORT = 47319
+const HELPER_ORIGIN = /^(https:\/\/(www\.)?uisandbox\.org|http:\/\/(localhost|127\.0\.0\.1)(:\d+)?)$/
+/** A secret per process for the helper's own page: its links open an app, and a site elsewhere cannot guess them. */
+const HELPER_TOKEN = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2)
+const esc = (t: string) => t.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
+/** The helper's own page, for a browser that will not let uisandbox.org ask it (Safari blocks an https page
+ *  from reaching http://127.0.0.1; a top-level visit is fine): the running apps, one click each. */
+async function helperPage(carry: string): Promise<string> {
+  const apps = await findDevServers()
+  const c = carry.replace(/[^A-Za-z0-9_-]/g, '')
+  const rows = apps.map((a) => `<a class="app" href="/go?url=${encodeURIComponent(a.url)}&t=${HELPER_TOKEN}${c ? `&carry=${c}` : ''}"><span class="dot"></span><b>${esc(a.title || `localhost:${a.port}`)}</b><code>localhost:${a.port}</code></a>`).join('')
+  return `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>UISandbox · your running apps</title>
+<style>body{margin:0;font:15px/1.5 system-ui,sans-serif;background:#f4f4f5;color:#18181b;display:grid;place-items:center;min-height:100vh}main{width:min(460px,92vw);background:#fff;border:1px solid #e4e4e7;border-radius:14px;padding:22px}h1{font-size:18px;margin:0 0 4px}p{margin:0 0 14px;color:#52525b;font-size:13.5px}.app{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:9px;color:inherit;text-decoration:none}.app:hover{background:#f4f4f5}.app b{flex:1;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.dot{width:8px;height:8px;border-radius:99px;background:#22c55e}code{font-size:12px;color:#52525b}@media (prefers-color-scheme:dark){body{background:#0f0f12;color:#f4f4f5}main{background:#18181b;border-color:#27272a}p,code{color:#a1a1aa}.app:hover{background:#27272a}}</style>
+<main><h1>Your running apps</h1><p>${apps.length ? 'Pick one: it opens live in UISandbox, every screen, hot reload kept.' : 'No dev server answers yet. Start yours (npm run dev) and reload this page.'}</p>${rows}</main>`
+}
+async function startHelper(via: Loaded['via']): Promise<boolean> {
+  const srv = createServer(async (req, res) => {
+    const here = new URL(req.url ?? '/', 'http://127.0.0.1')
+    // The helper's own page and its links: visited, not fetched, so no Origin to check; the token guards the links.
+    if (req.method === 'GET' && here.pathname === '/') { res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' }); res.end(await helperPage(here.searchParams.get('carry') ?? '')); return }
+    if (req.method === 'GET' && here.pathname === '/go') {
+      if (here.searchParams.get('t') !== HELPER_TOKEN) { res.writeHead(403); res.end('This link is from another session: open http://127.0.0.1:' + HELPER_PORT + ' again.'); return }
+      try { const p = await loadDev(here.searchParams.get('url') ?? '', via); res.writeHead(302, { location: await sandboxUrlFor(p, { carry: here.searchParams.get('carry') ?? undefined }) }); res.end() } catch (e) { res.writeHead(400, { 'content-type': 'text/plain; charset=utf-8' }); res.end((e as Error).message) }
+      return
+    }
+    const origin = String(req.headers.origin ?? '')
+    const ok = HELPER_ORIGIN.test(origin)
+    if (ok) { res.setHeader('access-control-allow-origin', origin); res.setHeader('vary', 'origin') }
+    if (req.method === 'OPTIONS') {
+      res.writeHead(ok ? 204 : 403, ok ? { 'access-control-allow-methods': 'GET, POST', 'access-control-allow-headers': 'content-type', 'access-control-allow-private-network': 'true', 'access-control-max-age': '600' } : {})
+      res.end(); return
+    }
+    // Only the sandbox's own pages: a site elsewhere must not learn which apps run here, nor open them.
+    if (!ok) { res.writeHead(403); res.end(); return }
+    res.setHeader('content-type', 'application/json')
+    const path = new URL(req.url ?? '/', 'http://127.0.0.1').pathname
+    if (path === '/hello') { res.end(JSON.stringify({ uisandbox: VERSION })); return }
+    if (path === '/apps') { res.end(JSON.stringify({ apps: await findDevServers() })); return }
+    if (path === '/open' && req.method === 'POST') {
+      let body = ''; req.on('data', (c) => { body += c })
+      req.on('end', async () => {
+        try {
+          const j = JSON.parse(body) as { url?: string; carry?: string }
+          const p = await loadDev(String(j.url ?? ''), via)
+          res.end(JSON.stringify({ url: await sandboxUrlFor(p, { carry: j.carry }) }))
+        } catch (e) { res.statusCode = 400; res.end(JSON.stringify({ error: (e as Error).message })) }
+      })
+      return
+    }
+    res.statusCode = 404; res.end('{}')
+  })
+  return new Promise((resolve) => { srv.once('error', () => resolve(false)); srv.listen(HELPER_PORT, '127.0.0.1', () => resolve(true)) })
+}
+
 server.registerTool('open', {
   title: 'Open the sandbox',
   description: 'Open UISandbox in the user\'s browser with this project loaded — the real, interactive sandbox: the whole app rendered 1:1, every knob there to turn by hand. Use this whenever the user wants to SEE or PLAY with the design themselves ("can I look at this in a sandbox", "let me try some changes"), not only read numbers. Served from 127.0.0.1 by this process; nothing leaves the machine. What the user turns in the browser flows back here: a later `export`, `verify` or `screenshot` uses it.',
@@ -393,10 +550,7 @@ server.registerTool('open', {
 }, async ({ id, screen, carry }) => {
   const p = need(id)
   p.via = 'agent'
-  if (p.live) liveOrigin = p.live
-  const { port } = await localServer()
-  const hash = JSON.stringify(p.cfg) === JSON.stringify(p.report.baseline.cfg) ? '' : `#${encode(p.cfg)}`
-  const url = `http://127.0.0.1:${port}/?load=${encodeURIComponent(`/__archive/${id}.zip`)}&sync=${id}${p.live ? '&live=1' : ''}${screen ? `&screen=${encodeURIComponent(screen)}` : ''}${carry ? `&carry=${carry}` : ''}${hash}`
+  const url = await sandboxUrlFor(p, { screen, carry })
   if (!argv.includes('--no-browser')) openInBrowser(url)
   return { content: [{ type: 'text', text: JSON.stringify({ opened: url, note: 'The sandbox is open in the browser. Tell the user to press "Send to your agent" there when they are done, then call `wait_for_send`: it returns when they press it, with what they turned and the patch to apply. `state` reads the knobs at any moment.' }, null, 2) }] }
 })
@@ -528,44 +682,77 @@ server.registerPrompt('try', {
   argsSchema: { zip: z.string().optional().describe('A zip path or URL; omit to build the current repo'), change: z.string().describe('What to try, e.g. "brand #e11d48 and radius ×1.5"') },
 }, ({ zip, change }) => ({ messages: [{ role: 'user', content: { type: 'text', text: `${zip ? `Load ${zip} in UISandbox` : 'Build this repo, zip the output and load it in UISandbox'}. Then try: ${change}. Verify it is still 1:1 (quote the numbers and the reach), show me a screenshot, and give me the patch. Offer to open the sandbox afterwards.` } }] }))
 
-/* ── CLI: `uisandbox-mcp open <zip|folder>` for a human without an agent ───── */
+/* ── CLI: for a human, and for an agent that has no MCP ──────────────────────
+ *   uisandbox-mcp open [url | folder | zip] [--detach] [--carry=…]
+ *   uisandbox-mcp start      the helper only: uisandbox.org lists your running apps
+ *   uisandbox-mcp stop       stops what --detach left running
+ * --detach starts the sandbox on its own and returns as soon as it is open: an
+ * agent then runs one command that finishes, not a process it has to keep
+ * (a background npx was refused in auto mode, decision 220). */
 const argv = process.argv.slice(2)
+const PIDS = join(tmpdir(), 'uisandbox-mcp.pids')
+if (argv[0] === 'stop') {
+  let n = 0
+  try { for (const pid of readFileSync(PIDS, 'utf8').split('\n').filter(Boolean)) { try { process.kill(Number(pid)); n++ } catch { /* gone already */ } } unlinkSync(PIDS) } catch { /* nothing recorded */ }
+  console.log(n ? `Stopped ${n} UISandbox process${n === 1 ? '' : 'es'}.` : 'Nothing of UISandbox was running in the background.')
+  process.exit(0)
+}
+if (argv[0] === 'open' && argv.includes('--detach')) {
+  const log = join(tmpdir(), `uisandbox-mcp-${Date.now()}.log`)
+  const out = openSync(log, 'a')
+  const child = spawn(process.execPath, [...process.execArgv, process.argv[1]!, ...argv.filter((a) => a !== '--detach')], { detached: true, stdio: ['ignore', out, out] })
+  child.unref()
+  try { writeFileSync(PIDS, `${child.pid}\n`, { flag: 'a' }) } catch { /* stop will not know it; Ctrl-C in its own terminal still works */ }
+  for (let i = 0; i < 240; i++) {
+    await new Promise((r) => setTimeout(r, 250))
+    const text = existsSync(log) ? readFileSync(log, 'utf8') : ''
+    if (/UISandbox is open:/.test(text)) { console.log(text.replace(/\nCtrl-C to stop\.\s*$/, '').replace(/and the patch prints here\./, `and the patch is written to ${log}.`).trim() + `\nRunning on its own (pid ${child.pid}). After Send, read the patch from that file. When you are done: npx uisandbox-mcp stop`); process.exit(0) }
+    if (child.exitCode !== null) { console.error(text.trim() || 'UISandbox stopped before it opened.'); process.exit(child.exitCode || 2) }
+  }
+  console.error(`UISandbox did not open within a minute. Its log: ${log}`); process.exit(2)
+}
+if (argv[0] === 'start') {
+  const up = await startHelper('cli')
+  console.log(up
+    ? `UISandbox is ready on this machine. On uisandbox.org, "Connect a running app" now lists the apps your dev servers serve: pick one and it opens live.\nCtrl-C to stop.`
+    : `Something already answers on 127.0.0.1:${HELPER_PORT}: UISandbox is probably running already (in Claude Code, or another terminal). uisandbox.org will find it.`)
+  if (!up) process.exit(0)
+  await new Promise(() => {})
+}
 if (argv[0] === 'open') {
   // `open` with no argument means the folder you are in: any repo works — the
   // build folder (dist/, build/, out/, public/, _site/…) is found inside it,
   // whatever the framework calls it. `--no-browser` prints the URL only.
   const target = argv.slice(1).find((a) => !a.startsWith('--')) ?? '.'
-  let bytes: Uint8Array<ArrayBuffer>, name: string
   // An address (http://localhost:3000): live mode, the running app itself.
   const live = /^https?:\/\//i.test(target) || /^(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/i.test(target)
-  const liveUrl = live ? (/^https?:/i.test(target) ? target : `http://${target}`) : ''
-  if (live) {
-    liveOrigin = new URL(liveUrl).origin
-    try { ({ bytes, name } = await snapshotLive(liveUrl)) } catch (e) { console.error((e as Error).message); process.exit(2) }
-  } else if (statSync(target).isDirectory()) {
-    // Zip the folder in memory (store, no compression — it only travels to the browser on this machine).
-    const { zipFolder } = await import('./zipdir')
-    bytes = await zipFolder(target); name = basename(target) + '.zip'
-  } else { const b = readFileSync(target); bytes = new Uint8Array(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer); name = basename(target) }
-  const archive = await openZip(new File([bytes], name.endsWith('.zip') ? name : `${name}.zip`, { type: 'application/zip' }))
-  const project = await buildProject(archive)
-  // A dev server's page is source by design (`/src/main.tsx`): that is what a
-  // build refusal guards against, and exactly what live mode is for.
-  if (!live && (!project.platform.renders || !project.screens.length)) { console.error(refusalFor(project.platform, { files: archive.entries.length })); process.exit(2) }
-  const report = await deriveBaseline(archive, project.table)
-  const id = 'cli'
-  projects.set(id, { id, name: live ? new URL(liveUrl).host : archive.rootName, bytes, project, report, cfg: report.baseline.cfg, archive, via: 'cli', live: live ? liveOrigin! : undefined })
-  const { port } = await localServer()
+  let p: Loaded
+  try {
+    if (live) p = await loadDev(target, 'cli')
+    else if (statSync(target).isDirectory()) { const r = await loadFolder(target, 'cli'); if ('refused' in r) { console.error(r.refused); process.exit(2) } p = r }
+    else {
+      const b = readFileSync(target), name = basename(target)
+      const archive = await openZip(new File([new Uint8Array(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer)], name.endsWith('.zip') ? name : `${name}.zip`, { type: 'application/zip' }))
+      const project = await buildProject(archive)
+      if (!project.platform.renders || !project.screens.length) { console.error(refusalFor(project.platform, { files: archive.entries.length })); process.exit(2) }
+      const report = await deriveBaseline(archive, project.table)
+      const id = `p${(++seq).toString(36)}`
+      p = { id, name: archive.rootName, bytes: new Uint8Array(b) as Uint8Array<ArrayBuffer>, project, report, cfg: report.baseline.cfg, archive, via: 'cli' }
+      projects.set(id, p)
+    }
+  } catch (e) { console.error((e as Error).message); process.exit(2) }
   // `--carry=<token>`: what was turned on a kit at uisandbox.org, copied into
   // the line there (src/state/carry.ts); the page reads it, nothing else does.
-  const carry = argv.find((a) => a.startsWith('--carry='))?.slice(8).replace(/[^A-Za-z0-9_-]/g, '')
-  const url = `http://127.0.0.1:${port}/?load=${encodeURIComponent(`/__archive/${id}.zip`)}&sync=${id}${live ? '&live=1' : ''}${carry ? `&carry=${carry}` : ''}`
+  const url = await sandboxUrlFor(p, { carry: argv.find((a) => a.startsWith('--carry='))?.slice(8) })
+  await startHelper('cli') // uisandbox.org's Connect a running app works while this runs
   if (!argv.includes('--no-browser')) openInBrowser(url)
   console.log(live
-    ? `UISandbox is open: ${url}\nLive: ${liveOrigin}, through this sandbox. Turn the knobs, press Send to the terminal, and the patch prints here.\nCtrl-C to stop.`
-    : `UISandbox is open: ${url}\n${project.root ? `build found at ${project.root}/ · ` : ''}${project.screens.length} screens · ${project.table.entries.length} values · brand ${report.baseline.cfg.cPrimary}\nCtrl-C to stop.`)
+    ? `UISandbox is open: ${url}\nLive: ${p.live}, through this sandbox. Turn the knobs, press Send to the terminal, and the patch prints here.\nCtrl-C to stop.`
+    : `UISandbox is open: ${url}\n${p.project.root ? `build found at ${p.project.root}/ · ` : ''}${p.project.screens.length} screens · ${p.project.table.entries.length} values · brand ${p.report.baseline.cfg.cPrimary}\nCtrl-C to stop.`)
   await new Promise(() => {})
 }
 
 const transport = new StdioServerTransport()
 await server.connect(transport)
+// Quietly: stdout is the MCP protocol here. The site's Connect a running app finds this.
+void startHelper('agent')

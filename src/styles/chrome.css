@@ -955,3 +955,23 @@ kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border: 1px s
 .bring .agentprompt__text { flex: 1; min-width: 0; font-size: 12.5px; line-height: 1.5; color: var(--app-fg); overflow-wrap: anywhere; }
 .agentprompt__copy { flex: none; }
 
+/* Connect a running app (decision 220): the apps on this machine, top right. */
+.connect .app__try { display: inline-flex; align-items: center; gap: 6px; }
+.connect__btn--on { background: var(--app-hover); }
+.connect__pop { width: min(440px, 92vw); padding: 16px 16px 12px; }
+.connect__apps { display: flex; flex-direction: column; gap: 2px; margin: 0 -6px 8px; }
+.connect__app { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border-radius: 8px; text-align: left; }
+.connect__dot { flex: none; width: 8px; height: 8px; border-radius: 99px; background: #22c55e; box-shadow: 0 0 0 3px color-mix(in srgb, #22c55e 22%, transparent); }
+.connect__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; font-weight: 600; color: var(--app-fg); }
+.connect__url { flex: none; font: 12px "JetBrains Mono", ui-monospace, monospace; color: var(--app-fg-muted); }
+.connect__line { width: 100%; max-width: none; margin: 4px 0 6px; border-radius: 10px; padding: 7px 7px 7px 12px; font-size: 12px; }
+.connect__line .install__cmd { min-width: 0; }
+.connect__fine { font-size: 12px !important; color: var(--app-fg-faint) !important; }
+.connect__note { display: flex; align-items: center; gap: 8px; margin: 2px 0 12px; font-size: 13px; color: var(--app-fg-muted); }
+.connect__note--err { color: var(--app-danger, #dc2626); }
+.connect__spin { animation: connect-spin 1s linear infinite; }
+@keyframes connect-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .connect__spin { animation: none; } }
+.connect__other { display: block; width: 100%; margin-top: 2px; padding: 10px 2px 2px; border: 0; border-top: 1px solid var(--app-border); background: none; font: inherit; font-size: 12.5px; color: var(--app-fg-muted); text-align: left; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.connect__other:hover { color: var(--app-fg); }
+

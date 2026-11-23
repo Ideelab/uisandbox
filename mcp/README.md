@@ -18,6 +18,7 @@ npx tsx mcp/smoke.ts fixtures/x.zip        # load → set → export → verify 
 
 | tool | input | returns |
 |---|---|---|
+| `try_designs` | `url?`, `carry?` | **the one call for "let me try some designs"**: finds the user's app (the dev server running on this machine, read from package.json or found on the usual ports; else the build in this folder), opens the sandbox with it live, and returns the id for `wait_for_send`; lists the apps when more than one runs |
 | `load` | `devUrl`, or `zipUrl` / `zipPath` | `devUrl` (e.g. `http://localhost:5173`): a RUNNING dev server, in live mode, no build needed, hot reload passed through; a zip: project id, screens, values, the baseline (brand, fonts, families, palette, canvas, dark mode), or a refusal with the reason |
 | `open` | `id`, `screen?` | **the sandbox itself** in the user's browser: the web app ships in the package and is served from 127.0.0.1 by this process with the archive; what the user turns flows back (`state`) |
 | `state` | `id` | the knobs now, including what was turned by hand in an opened sandbox |
@@ -30,14 +31,18 @@ npx tsx mcp/smoke.ts fixtures/x.zip        # load → set → export → verify 
 
 `load`/`set`/`export`/`state` are pure Node. `open` serves the bundled app on 127.0.0.1 and opens the browser; nothing leaves the machine. `verify`/`screenshot` drive the app in headless Chromium (the bundled one on 127.0.0.1; `UISANDBOX_URL` to point elsewhere) with the archive served from a route inside the browser, so the number an agent gets is the number a visitor gets.
 
-The conversation this is built for: *"Can I look at this app in a sandbox and change the design a bit?"* → the agent builds, `load`s, `open`s and calls `wait_for_send`; you play in the real sandbox and press **Send to your agent**; the agent gets what you turned and the patch, and applies it. (Or come back and say *"export what I did"* → `state` → `export`.) Opened from the terminal with `npx uisandbox-mcp open`, the button is **Send to the terminal** and prints the same there.
+The conversation this is built for: *"Let me try some designs on this"* → the agent calls `try_designs`, which finds your running app and opens it; you pick one of six looks or turn the knobs and press **Send to your agent**; the agent gets what you turned and the patch, shows it to you, and applies it when you say yes. (Or come back and say *"export what I did"* → `state` → `export`.) Opened from the terminal with `npx uisandbox-mcp open`, the button is **Send to the terminal** and prints the same there.
 
 ## Without an agent
 
 ```bash
+npx uisandbox-mcp start                        # the helper: on uisandbox.org, "Connect a running app" lists your running apps; one click opens one live
 npx uisandbox-mcp open http://localhost:3000   # your RUNNING dev server, live: knobs on the app as you develop it, hot reload included
-npx uisandbox-mcp open                 # inside your project: finds the build, opens the sandbox (a folder or zip as argument works too)
+npx uisandbox-mcp open                         # inside your project: finds the build, opens the sandbox (a folder or zip as argument works too)
+npx uisandbox-mcp open http://localhost:3000 --detach   # opens it and returns at once (for an agent without MCP); `stop` ends it
 ```
+
+**The helper.** A page on uisandbox.org cannot read your localhost; the server can. It listens on `127.0.0.1:47319` (inside the MCP server whenever your client runs it, or with `start`) and answers uisandbox.org and localhost pages only: which dev servers run (`GET /apps`) and open one (`POST /open`), served from this process. Chrome asks once whether uisandbox.org may reach your local network. It looks on the usual dev ports and the one your package.json names; `UISANDBOX_PORTS=4400,9000` adds your own.
 
 ## Slash commands
 

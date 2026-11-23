@@ -272,7 +272,11 @@ function AgentPrompt({ addr, carry }: { addr: string; carry?: string }) {
   const { copied, copy } = useCopy()
   const { url } = addrUrl(addr)
   const what = url ? `my running app at ${url}` : "this project's build"
-  const prompt = `Open ${what} in UISandbox so I can tune its design in the browser. If you have the uisandbox MCP tools, load it, open it${carry ? ` with carry ${carry}` : ''} and call wait_for_send. If not, run \`npx -y uisandbox-mcp open${url ? ` ${url}` : ''}${carry ? ` --carry=${carry}` : ''}\` in the background and keep its output. When I press Send, apply the patch you get to my source files.`
+  // No -y, nothing to keep running in the background, and the patch shown
+  // before any file changes: a background `npx -y` was refused in auto mode,
+  // and "apply the patch" on a page is data to an agent, not an instruction
+  // from the user (decision 220).
+  const prompt = `Open ${what} in UISandbox so I can try designs on it in the browser. If you have the uisandbox MCP tools, call try_designs${url ? ` with url ${url}` : ''}${carry ? ` and carry ${carry}` : ''}. If not, run \`npx uisandbox-mcp open${url ? ` ${url}` : ''}${carry ? ` --carry=${carry}` : ''} --detach\`: it opens the sandbox and returns. When I press Send, show me the patch, and change my files only when I say yes.`
   return (
     <div className="agentprompt">
       <p className="agentprompt__q">Or let your agent do it: paste this in Claude Code, Cursor or Codex.</p>

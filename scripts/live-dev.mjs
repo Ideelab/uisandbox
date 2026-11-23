@@ -5,7 +5,8 @@
  * mcp/dist), the page it opens, What we found, a look picked, hot reload, and
  * the kit's knobs carried along in the line (--carry), on the stage and in
  * each of the six looks; then the same app through the MCP tools an agent
- * uses (load, set, verify, screenshot, export).
+ * uses (load, set, verify, screenshot, export, try_designs) and the helper
+ * uisandbox.org's Connect a running app asks.
  *
  *   pnpm mcp:build && node scripts/live-dev.mjs
  *
@@ -166,7 +167,7 @@ try {
     const tag = `${app.id}·mcp`
     const mcp = new Client({ name: 'live-dev', version: '1' })
     try {
-      await mcp.connect(new StdioClientTransport({ command: 'node', args: [cli] }))
+      await mcp.connect(new StdioClientTransport({ command: 'node', args: [cli, '--no-browser'], env: { ...process.env, UISANDBOX_PORTS: APPS.map((a) => a.port).join(',') } }))
       const text = (r) => r.content.filter((x) => x.type === 'text').map((x) => x.text).join('\n')
       const loaded = JSON.parse(text(await mcp.callTool({ name: 'load', arguments: { devUrl: url } })))
       const set = JSON.parse(text(await mcp.callTool({ name: 'set', arguments: { id: loaded.id, knobs: { cPrimary: '#e11d48', radius: 1.8 } } })))
@@ -177,6 +178,14 @@ try {
       const shot = await mcp.callTool({ name: 'screenshot', arguments: { id: loaded.id } })
       const png = shot.content.find((x) => x.type === 'image')
       check(tag, 'screenshot is an image of the app', !!png && png.data.length > 8000, png ? `${Math.round(png.data.length / 1365)} KB` : 'none')
+      // the one call an agent makes for "let me try some designs" (decision 220)
+      const tried = JSON.parse(text(await mcp.callTool({ name: 'try_designs', arguments: { url } })))
+      check(tag, 'try_designs opens it live', /live=1/.test(tried.opened ?? '') && !!tried.id, (tried.opened ?? JSON.stringify(tried)).slice(0, 70))
+      // the helper uisandbox.org asks: this app listed, a foreign site refused
+      const listed = await fetch('http://127.0.0.1:47319/apps', { headers: { origin: 'https://uisandbox.org' } }).then((r) => r.json()).catch(() => ({ apps: [] }))
+      check(tag, 'the helper lists it for uisandbox.org', listed.apps.some((a) => a.port === app.port), listed.apps.map((a) => a.port).join(' '))
+      const foreign = await fetch('http://127.0.0.1:47319/apps', { headers: { origin: 'https://example.com' } }).then((r) => r.status).catch(() => 0)
+      check(tag, 'and refuses another site', foreign === 403, String(foreign))
       const patch = text(await mcp.callTool({ name: 'export', arguments: { id: loaded.id, format: 'patch' } }))
       check(tag, 'export patch carries the brand', /→\s+#e11d48/.test(patch), patch.split('\n').find((l) => /^## /.test(l)) ?? patch.slice(0, 60))
     } catch (e) { check(tag, 'ran through', false, String(e.message).split('\n')[0]) }
