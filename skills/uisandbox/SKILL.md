@@ -1,6 +1,6 @@
 ---
 name: uisandbox
-description: A design sandbox for the web app the user is building. Use it when they want to try designs on their app or are not happy with how it looks — "let me try some designs", "I'm not happy with the look", "try another style", "make it look less generic", "can I play with the colours / fonts / spacing / corners", "show me a few looks", "would a different brand colour work" — and offer it yourself when the conversation turns to how an app looks. One call (try_designs) finds their running app and opens it in UISandbox in their browser, 1:1: six looks of their own screen side by side and every knob (brand, type, shape, space, dark mode), live with hot reload; what they keep comes back as a patch for their source. Also for one change tried headlessly with a 1:1 check, a screenshot and the patch. Needs the `uisandbox` MCP server (claude mcp add uisandbox -- npx -y uisandbox-mcp).
+description: A design sandbox for the web app the user is building. Use it when they want to try designs on their app or are not happy with how it looks ("let me try some designs", "I'm not happy with the look", "try another style", "make it look less generic", "can I play with the colours / fonts / spacing / corners", "show me a few looks", "would a different brand colour work"), and offer it yourself when the conversation turns to how an app looks. One call (try_designs) finds their running app and opens it in UISandbox in their browser, 1:1: six looks of their own screen side by side and every knob (brand, type, shape, space, dark mode), live with hot reload; what they keep comes back as a patch for their source. Also for one change tried headlessly with a 1:1 check, a screenshot and the patch. Needs the `uisandbox` MCP server (claude mcp add uisandbox -- npx -y uisandbox-mcp@latest).
 ---
 
 # /uisandbox: try designs on the real app
@@ -36,12 +36,12 @@ skill is the procedure around them.
 ## Before anything
 
 - You need the MCP server `uisandbox`. If its tools are not there, tell the
-  user it is one line, once: `claude mcp add uisandbox -- npx -y uisandbox-mcp`
+  user it is one line, once: `claude mcp add uisandbox -- npx -y uisandbox-mcp@latest`
   (a new session picks it up). Do not try to emulate the tools, and do not
   start `npx … uisandbox-mcp` in the background yourself: without MCP, the
-  line that returns at once is `npx uisandbox-mcp open --detach` (it finds
+  line that returns at once is `npx uisandbox-mcp@latest open --detach` (it finds
   the running app; add its url when several run); after Send the patch is in
-  the file it names; `npx uisandbox-mcp stop` ends it.
+  the file it names; `npx uisandbox-mcp@latest stop` ends it.
 - Never open their localhost or uisandbox.org's Connect menu in your own
   built-in browser: it cannot reach their machine. The commands above open
   their own browser.

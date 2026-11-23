@@ -37,7 +37,7 @@ something to turn before you bring anything.
    seven more kits one pick away (Tailwind CSS, daisyUI, Bootstrap, Material 3,
    Radix Themes, Mantine, Ant Design), each dressed as the same seven-screen
    invoicing app. Then *Try it on your own app*: run
-   `npx uisandbox-mcp open` next to your dev server, or tell
+   `npx uisandbox-mcp@latest open` next to your dev server, or tell
    your agent to open it, and your running app opens live, every screen, hot reload
    included. No terminal? Drag *Take this screen along* to your bookmarks bar and
    click it on any screen your browser shows (staging, behind a login, a Lovable or
@@ -111,15 +111,15 @@ which goes through uisandbox.org to fetch its zip. Nothing is stored.
 ## From your terminal, or from your agent
 
 ```bash
-npx uisandbox-mcp open                       # the app you are running, live, hot reload included (else this folder's build)
-npx uisandbox-mcp open http://localhost:3000 # that dev server, when more than one runs
+npx uisandbox-mcp@latest open                       # the app you are running, live, hot reload included (else this folder's build)
+npx uisandbox-mcp@latest open http://localhost:3000 # that dev server, when more than one runs
 ```
 
 The same engine runs as an MCP server ([`mcp/README.md`](mcp/README.md)): `load` a
 build, a zip or a running dev server, `open` the real sandbox in the user's browser,
 `wait_for_send` for what they turned, `set` knobs, `export` any format, `verify` the
 1:1 check and take a `screenshot`. Add it to any MCP client with
-`npx -y uisandbox-mcp`.
+`npx -y uisandbox-mcp@latest`.
 
 **Claude Code plugin** (skill and server in one):
 `/plugin marketplace add Ideelab/uisandbox`, then `/plugin install uisandbox@uisandbox`,

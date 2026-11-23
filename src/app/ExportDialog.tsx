@@ -609,7 +609,7 @@ export function ExportDialog({ cfg, base, table, vars, projectName, kitDoorName,
                     : 'The changed files and every format, to apply by hand.'}</span>
                 </div>
               </div>
-              {!send && <p className="exp__homenote">Works in Claude Code, Cursor, Codex, Lovable and v0. To send it straight in, run <code>npx uisandbox-mcp open</code> in your project.</p>}
+              {!send && <p className="exp__homenote">Works in Claude Code, Cursor, Codex, Lovable and v0. To send it straight in, run <code>npx uisandbox-mcp@latest open</code> in your project.</p>}
             </div>
             <div className="exp__stats">
               <div className="exp__stat"><b>{movedCount}</b><span>of {table.entries.length} values moved</span></div>

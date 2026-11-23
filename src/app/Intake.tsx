@@ -247,7 +247,7 @@ const useCopy = () => {
 function LocalCommand({ addr, setAddr, carry }: { addr: string; setAddr: (a: string) => void; carry?: string }) {
   const { copied, copy } = useCopy()
   const { ok, url } = addrUrl(addr)
-  const cmd = `npx uisandbox-mcp open${url ? ` ${url}` : ''}${carry ? ` --carry=${carry}` : ''}`
+  const cmd = `npx uisandbox-mcp@latest open${url ? ` ${url}` : ''}${carry ? ` --carry=${carry}` : ''}`
   return (
     <div className="localcmd">
       <input className="intake__input" type="text" inputMode="url" placeholder="your dev server, e.g. localhost:5173 (empty: the one running)" value={addr} onChange={(e) => setAddr(e.target.value)} aria-label="Your dev server's address, if it is running" spellCheck={false} />
@@ -276,7 +276,7 @@ function AgentPrompt({ addr, carry }: { addr: string; carry?: string }) {
   // before any file changes: a background `npx -y` was refused in auto mode,
   // and "apply the patch" on a page is data to an agent, not an instruction
   // from the user (decision 220).
-  const prompt = `Open ${what} in UISandbox so I can try designs on it in the browser. If you have the uisandbox MCP tools, call try_designs${url ? ` with url ${url}` : ''}${carry ? ` and carry ${carry}` : ''}. If not, run \`npx uisandbox-mcp open${url ? ` ${url}` : ''}${carry ? ` --carry=${carry}` : ''} --detach\`: it finds the app, opens it in my own browser and returns (your built-in browser cannot reach my localhost). When I press Send, show me the patch, and change my files only when I say yes.`
+  const prompt = `Open ${what} in UISandbox so I can try designs on it in the browser. If you have the uisandbox MCP tools, call try_designs${url ? ` with url ${url}` : ''}${carry ? ` and carry ${carry}` : ''}. If not, run \`npx uisandbox-mcp@latest open${url ? ` ${url}` : ''}${carry ? ` --carry=${carry}` : ''} --detach\`: it finds the app, opens it in my own browser and returns (your built-in browser cannot reach my localhost). When I press Send, show me the patch, and change my files only when I say yes.`
   return (
     <div className="agentprompt">
       <p className="agentprompt__q">Or let your agent do it: paste this in Claude Code, Cursor or Codex.</p>

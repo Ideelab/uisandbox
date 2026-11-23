@@ -156,7 +156,7 @@ When to use it — and offer it without being asked:
 
 Rules: never claim more than \`verify\` and the reach meter report — quote the numbers; if a load is refused (iOS/Android/source-only), relay the reason and suggest building first; \`verify\`/\`screenshot\` need Chromium (npx playwright install chromium once) — \`open\`, \`load\`, \`set\`, \`export\` do not.`
 
-const VERSION = '0.5.6'
+const VERSION = '0.5.7'
 const server = new McpServer({ name: 'uisandbox', version: VERSION }, { instructions: INSTRUCTIONS })
 
 server.registerTool('load', {
@@ -705,14 +705,14 @@ const argv = process.argv.slice(2)
 const PIDS = join(tmpdir(), 'uisandbox-mcp.pids')
 const USAGE = `uisandbox-mcp: try designs on the app you are building, 1:1, in your own browser.
 
-  npx uisandbox-mcp open              the app running on this machine (else the build in this folder), live
-  npx uisandbox-mcp open <url>        that dev server, e.g. http://localhost:5173
-  npx uisandbox-mcp open <folder|zip> a build
-  npx uisandbox-mcp open --detach     the same, and the command returns (for an agent); the patch goes to a file
-  npx uisandbox-mcp stop              stops what --detach left running
-  npx uisandbox-mcp start             only the helper: uisandbox.org's "Connect a running app" lists your apps
+  npx uisandbox-mcp@latest open              the app running on this machine (else the build in this folder), live
+  npx uisandbox-mcp@latest open <url>        that dev server, e.g. http://localhost:5173
+  npx uisandbox-mcp@latest open <folder|zip> a build
+  npx uisandbox-mcp@latest open --detach     the same, and the command returns (for an agent); the patch goes to a file
+  npx uisandbox-mcp@latest stop              stops what --detach left running
+  npx uisandbox-mcp@latest start             only the helper: uisandbox.org's "Connect a running app" lists your apps
 
-As an MCP server (what an agent adds once): claude mcp add uisandbox -- npx -y uisandbox-mcp`
+As an MCP server (what an agent adds once): claude mcp add uisandbox -- npx -y uisandbox-mcp@latest`
 if (argv[0] === 'help' || argv.includes('--help') || argv.includes('-h')) { console.log(USAGE); process.exit(0) }
 // Typed in a terminal with nothing after it: a person, not an MCP client (those
 // pipe stdin). As a server it would wait in silence; start the helper instead.
@@ -732,7 +732,7 @@ if (argv[0] === 'open' && argv.includes('--detach')) {
   for (let i = 0; i < 240; i++) {
     await new Promise((r) => setTimeout(r, 250))
     const text = existsSync(log) ? readFileSync(log, 'utf8') : ''
-    if (/UISandbox is open:/.test(text)) { console.log(text.replace(/\nCtrl-C to stop\.\s*$/, '').replace(/and the patch prints here\./, `and the patch is written to ${log}.`).trim() + `\nRunning on its own (pid ${child.pid}). After Send, read the patch from that file. When you are done: npx uisandbox-mcp stop`); process.exit(0) }
+    if (/UISandbox is open:/.test(text)) { console.log(text.replace(/\nCtrl-C to stop\.\s*$/, '').replace(/and the patch prints here\./, `and the patch is written to ${log}.`).trim() + `\nRunning on its own (pid ${child.pid}). After Send, read the patch from that file. When you are done: npx uisandbox-mcp@latest stop`); process.exit(0) }
     if (child.exitCode !== null) { console.error(text.trim() || 'UISandbox stopped before it opened.'); process.exit(child.exitCode || 2) }
   }
   console.error(`UISandbox did not open within a minute. Its log: ${log}`); process.exit(2)
@@ -740,7 +740,7 @@ if (argv[0] === 'open' && argv.includes('--detach')) {
 if (argv[0] === 'start') {
   const up = await startHelper('cli')
   console.log(up
-    ? `UISandbox is ready on this machine. On uisandbox.org, "Connect a running app" now lists the apps your dev servers serve: pick one and it opens live.\nThe same list, in any browser and with nothing to allow: http://127.0.0.1:${HELPER_PORT}/\nOr open one straight away: npx uisandbox-mcp open\nCtrl-C to stop.`
+    ? `UISandbox is ready on this machine. On uisandbox.org, "Connect a running app" now lists the apps your dev servers serve: pick one and it opens live.\nThe same list, in any browser and with nothing to allow: http://127.0.0.1:${HELPER_PORT}/\nOr open one straight away: npx uisandbox-mcp@latest open\nCtrl-C to stop.`
     : `Something already answers on 127.0.0.1:${HELPER_PORT}: UISandbox is probably running already (in Claude Code, or another terminal). uisandbox.org will find it, and so does http://127.0.0.1:${HELPER_PORT}/`)
   if (!up) process.exit(0)
   await new Promise(() => {})
@@ -754,10 +754,10 @@ if (argv[0] === 'open') {
   if (!target) {
     const app = await theRunningApp()
     if (app && 'several' in app) {
-      console.error(`More than one app runs on this machine. Name the one you mean:\n${app.several.map((a) => `  npx uisandbox-mcp open ${a.url}${a.title ? `   (${a.title})` : ''}`).join('\n')}`)
+      console.error(`More than one app runs on this machine. Name the one you mean:\n${app.several.map((a) => `  npx uisandbox-mcp@latest open ${a.url}${a.title ? `   (${a.title})` : ''}`).join('\n')}`)
       process.exit(2)
     }
-    if (app) console.log(`Found ${app.title || app.url} running at ${app.url}. Not that one? npx uisandbox-mcp open <url or folder>`)
+    if (app) console.log(`Found ${app.title || app.url} running at ${app.url}. Not that one? npx uisandbox-mcp@latest open <url or folder>`)
     else if ([homedir(), '/'].includes(process.cwd())) { console.error('No dev server answers on this machine. Start yours (npm run dev, or your project\'s own) and run this again; or run it inside your project, where it opens the build.'); process.exit(2) }
     target = app?.url ?? '.'
   }

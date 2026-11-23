@@ -46,7 +46,7 @@ function CopyLine({ cmd, carry }: { cmd: string; carry?: string }) {
  *  keep) and tried the site in its built-in browser, which never reaches localhost (decision 221). */
 function AgentLine({ carry }: { carry?: string }) {
   const { copied, copy } = useCopy()
-  const prompt = `Open my running app in UISandbox so I can try designs on it. If you have the uisandbox MCP tools, call try_designs${carry ? ` with carry ${carry}` : ''}. If not, run \`npx uisandbox-mcp open${carry ? ` --carry=${carry}` : ''} --detach\`: it finds the app, opens it in my own browser and returns (your built-in browser cannot reach my localhost). When I press Send, show me the patch, and change my files only when I say yes.`
+  const prompt = `Open my running app in UISandbox so I can try designs on it. If you have the uisandbox MCP tools, call try_designs${carry ? ` with carry ${carry}` : ''}. If not, run \`npx uisandbox-mcp@latest open${carry ? ` --carry=${carry}` : ''} --detach\`: it finds the app, opens it in my own browser and returns (your built-in browser cannot reach my localhost). When I press Send, show me the patch, and change my files only when I say yes.`
   return (
     <div className="agentprompt__box connect__agent">
       <p className="agentprompt__text">{short(prompt, carry)}</p>
@@ -114,12 +114,12 @@ export function ConnectMenu({ carry, onOther }: { carry?: string; onOther: () =>
             <div className="mcp__head">
               <b>Open your app from your machine</b>
               <span>A web page cannot see your localhost. One line in a terminal finds the app you are running and opens it, live, in a new tab:</span>
-              <CopyLine cmd={`npx uisandbox-mcp open${carry ? ` --carry=${carry}` : ''}`} carry={carry} />
+              <CopyLine cmd={`npx uisandbox-mcp@latest open${carry ? ` --carry=${carry}` : ''}`} carry={carry} />
               <span>Or let your agent do it (Claude Code, Cursor, Codex): paste this.</span>
               <AgentLine carry={carry} />
               <span>Claude Code? Add it once, and from then on "let me try some designs" is enough:</span>
-              <CopyLine cmd="claude mcp add uisandbox -- npx -y uisandbox-mcp" />
-              <span className="connect__fine">To pick from this menu instead, run <code>npx uisandbox-mcp start</code> and keep it open; Chrome asks once whether this site may reach your local network. Running and nothing shows (Safari does not let a site ask)? <a href={`${HELPER}/${carry ? `?carry=${carry}` : ''}`} target="_blank" rel="noopener">Open your apps from your machine</a>.</span>
+              <CopyLine cmd="claude mcp add uisandbox -- npx -y uisandbox-mcp@latest" />
+              <span className="connect__fine">To pick from this menu instead, run <code>npx uisandbox-mcp@latest start</code> and keep it open; Chrome asks once whether this site may reach your local network. Running and nothing shows (Safari does not let a site ask)? <a href={`${HELPER}/${carry ? `?carry=${carry}` : ''}`} target="_blank" rel="noopener">Open your apps from your machine</a>.</span>
             </div>
           )}
           {state.at === 'opening' && <p className="connect__note"><RefreshCw size={13} className="connect__spin" /> Opening {state.url}…</p>}

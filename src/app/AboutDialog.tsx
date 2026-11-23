@@ -47,7 +47,7 @@ export function AboutDialog({ section, onClose }: { section?: string; onClose: (
           <section className="landing__sec">
             <h2>How it works</h2>
             <ol className="steps4">
-              <li><b>Bring your app.</b> Run one line next to your dev server: <code>npx uisandbox-mcp open</code>.</li>
+              <li><b>Bring your app.</b> Run one line next to your dev server: <code>npx uisandbox-mcp@latest open</code>.</li>
               <li><b>Pick a look.</b> See your screen six ways and pick the one that fits.</li>
               <li><b>Tune it.</b> Colour, Type, Shape and Space. Hold Space to see your original.</li>
               <li><b>Take it home.</b> Copy it for your AI, or send it to your agent.</li>
@@ -64,7 +64,7 @@ export function AboutDialog({ section, onClose }: { section?: string; onClose: (
             {/* the same four as above, said in full, in the same 2x2: as
                 .steps it took the top bar's flex row and ran four across */}
             <ol className="steps4 steps4--long">
-              <li><b>Bring your app.</b> The editor opens on a kit, shadcn/ui as it ships with seven more one pick away, so there is something to turn before you bring anything. Then <em>Try it on your own app</em>: run <code>npx uisandbox-mcp open http://localhost:3000</code> in your project, or tell your agent to open it, and your running app opens live, every screen, hot reload included. No terminal? Click the bookmark on any screen your browser shows, or bring a zip, a folder or a public repo. What you turned on the kit comes along if you want it to.</li>
+              <li><b>Bring your app.</b> The editor opens on a kit, shadcn/ui as it ships with seven more one pick away, so there is something to turn before you bring anything. Then <em>Try it on your own app</em>: run <code>npx uisandbox-mcp@latest open http://localhost:3000</code> in your project, or tell your agent to open it, and your running app opens live, every screen, hot reload included. No terminal? Click the bookmark on any screen your browser shows, or bring a zip, a folder or a public repo. What you turned on the kit comes along if you want it to.</li>
               <li><b>Pick a look.</b> 6 over the screen shows it six ways, side by side: Classic, Compact, Soft, Sharp, Airy and Bold. They differ in corners, spacing, depth and type, never in colour, so you compare the style and not the paint. Open one full size, then <em>Pick this one</em>. The same six are the Preset list on the left.</li>
               <li><b>Tune it.</b> One knob moves every place a value is used: a colour used 144 times moves once. Colour, Type, Shape and Space come first, the rest is under More, and every dial has <em>×1 = as in your code</em> at its centre. It is your actual app and not a preview of one. Every CSS literal becomes a variable with the same value, and <em>Check 1:1</em> proves the page renders as it was. Hold Space to see it.</li>
               <li><b>Take it home.</b> <em>Copy for your AI</em> puts the design system and how to apply it in one paste. On a kit, the zip keeps the design system and a <code>SKILL.md</code> in your repo, in the kit's own names; on your own app, you get your files patched in place, or tokens for CSS, Tailwind, shadcn, Swift and Android. <em>Copy link</em> shares the same build with the same knobs. Or close the tab, and nothing happened.</li>
@@ -122,7 +122,7 @@ export function AboutDialog({ section, onClose }: { section?: string; onClose: (
           </section>
           <section className="landing__sec">
             <h2 id="agents">From your terminal, or from your agent</h2>
-            <p>The same engine runs as an MCP server and as a <b>Claude Code skill</b>, <code>/uisandbox</code>. Say <em>"open this app in UISandbox"</em> and it opens the real sandbox in your browser; <em>Send to your agent</em> hands what you turned back. Any MCP client (Cursor, Claude Desktop, Codex) gets the server and its <code>/uisandbox:open</code> prompt. Or run <code>npx uisandbox-mcp open</code> in your project, without an agent.</p>
+            <p>The same engine runs as an MCP server and as a <b>Claude Code skill</b>, <code>/uisandbox</code>. Say <em>"open this app in UISandbox"</em> and it opens the real sandbox in your browser; <em>Send to your agent</em> hands what you turned back. Any MCP client (Cursor, Claude Desktop, Codex) gets the server and its <code>/uisandbox:open</code> prompt. Or run <code>npx uisandbox-mcp@latest open</code> in your project, without an agent.</p>
             <InstallLine />
             <p className="landing__more"><b>Or a link.</b> <code>uisandbox.org/?load=</code> followed by a public GitHub or GitLab repo, or a <code>.zip</code> that allows CORS, opens straight into the sandbox: <a href="https://uisandbox.org/?load=https://github.com/edwardtufte/tufte-css" target="_blank" rel="noopener">uisandbox.org/?load=https://github.com/edwardtufte/tufte-css</a>.</p>
           </section>

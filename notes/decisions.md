@@ -4105,3 +4105,10 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     in this run because a 0.5.4 `start` from the other session held port
     47319 (it does not know the port ranges of 0.5.5); not a regression.
     uisandbox-mcp 0.5.6.
+    Addendum (same day): every line a person or an agent copies says
+    `uisandbox-mcp@latest` (the site, the kit pages, the READMEs, llms.txt,
+    the skill, the CLI's own messages, the plugin's MCP config). Without a
+    version npx runs whatever copy it fetched first: Alexander's other
+    session ran a 0.5.4 `start` after 0.5.5 was published, which did not
+    know the port ranges and listed one app of eight. Code comments keep the
+    plain name. uisandbox-mcp 0.5.7.

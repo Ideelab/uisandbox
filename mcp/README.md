@@ -3,8 +3,8 @@
 Play with your app's design, right in the browser, from your agent or your terminal. The same engine [uisandbox.org](https://uisandbox.org) runs, as tools: no second implementation. Open the real sandbox with your app in it, let the user turn the knobs, and get back what they turned and the patch.
 
 ```bash
-npx uisandbox-mcp                          # the published package (stdio); add it to your client as below
-UISANDBOX_URL=http://localhost:5190 npx uisandbox-mcp   # render tools against a local app instead of uisandbox.org
+npx uisandbox-mcp@latest                          # the published package (stdio); add it to your client as below
+UISANDBOX_URL=http://localhost:5190 npx uisandbox-mcp@latest   # render tools against a local app instead of uisandbox.org
 
 # from a clone of the repo:
 pnpm mcp                                   # stdio server straight from the sources (tsx)
@@ -31,17 +31,19 @@ npx tsx mcp/smoke.ts fixtures/x.zip        # load → set → export → verify 
 
 `load`/`set`/`export`/`state` are pure Node. `open` serves the bundled app on 127.0.0.1 and opens the browser; nothing leaves the machine. `verify`/`screenshot` drive the app in headless Chromium (the bundled one on 127.0.0.1; `UISANDBOX_URL` to point elsewhere) with the archive served from a route inside the browser, so the number an agent gets is the number a visitor gets.
 
-The conversation this is built for: *"Let me try some designs on this"* → the agent calls `try_designs`, which finds your running app and opens it; you pick one of six looks or turn the knobs and press **Send to your agent**; the agent gets what you turned and the patch, shows it to you, and applies it when you say yes. (Or come back and say *"export what I did"* → `state` → `export`.) Opened from the terminal with `npx uisandbox-mcp open`, the button is **Send to the terminal** and prints the same there.
+The conversation this is built for: *"Let me try some designs on this"* → the agent calls `try_designs`, which finds your running app and opens it; you pick one of six looks or turn the knobs and press **Send to your agent**; the agent gets what you turned and the patch, shows it to you, and applies it when you say yes. (Or come back and say *"export what I did"* → `state` → `export`.) Opened from the terminal with `npx uisandbox-mcp@latest open`, the button is **Send to the terminal** and prints the same there.
 
 ## Without an agent
 
 ```bash
-npx uisandbox-mcp open                         # the app running on this machine, live (else the build in this folder); hot reload included
-npx uisandbox-mcp open http://localhost:3000   # that dev server, when more than one runs (a folder or zip works too)
-npx uisandbox-mcp open --detach                # opens it and returns at once (for an agent without MCP); the patch goes to a file; `stop` ends it
-npx uisandbox-mcp start                        # only the helper: on uisandbox.org, "Connect a running app" lists your running apps
-npx uisandbox-mcp                              # typed in a terminal: the same as start (an MCP client pipes stdin and gets the server)
+npx uisandbox-mcp@latest open                         # the app running on this machine, live (else the build in this folder); hot reload included
+npx uisandbox-mcp@latest open http://localhost:3000   # that dev server, when more than one runs (a folder or zip works too)
+npx uisandbox-mcp@latest open --detach                # opens it and returns at once (for an agent without MCP); the patch goes to a file; `stop` ends it
+npx uisandbox-mcp@latest start                        # only the helper: on uisandbox.org, "Connect a running app" lists your running apps
+npx uisandbox-mcp@latest                              # typed in a terminal: the same as start (an MCP client pipes stdin and gets the server)
 ```
+
+`@latest` has npx check for the newest version; without it, npx keeps running the copy it fetched the first time.
 
 An agent without the MCP tools runs `open --detach`: one command that finishes, and the sandbox opens in the user's own browser. An agent's built-in browser cannot reach the user's localhost from uisandbox.org (no local network permission there), so the site's Connect menu is for the user's own browser.
 
@@ -56,12 +58,12 @@ Where the client shows MCP prompts (Claude Desktop, Claude Code): `/uisandbox:op
 ```json
 {
   "mcpServers": {
-    "uisandbox": { "command": "npx", "args": ["-y", "uisandbox-mcp"] }
+    "uisandbox": { "command": "npx", "args": ["-y", "uisandbox-mcp@latest"] }
   }
 }
 ```
 
-Claude Code: `claude mcp add uisandbox -- npx -y uisandbox-mcp`
+Claude Code: `claude mcp add uisandbox -- npx -y uisandbox-mcp@latest`
 
 ## Publishing (maintainer)
 

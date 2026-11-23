@@ -140,7 +140,7 @@ export function kitPage(door) {
 <p>Export writes ${esc(name)}'s design system in ${esc(name)}'s own names, starting from what you see:</p>
 <ul class="kp__files">${files.map((f) => fileLine(f, name)).join('')}</ul>
 <h2>On your own app</h2>
-<p>If your app runs on ${esc(name)}, the sandbox recognises it from the rendered page and writes the design system in ${esc(name)}'s names from your app's own values. What you turned on the kit comes with you. The quickest way in is the one where nothing leaves your machine: run <code>npx uisandbox-mcp open</code> in your project, or ask your agent to "open this app in UISandbox". <a href="/about">How it works</a>.</p>
+<p>If your app runs on ${esc(name)}, the sandbox recognises it from the rendered page and writes the design system in ${esc(name)}'s names from your app's own values. What you turned on the kit comes with you. The quickest way in is the one where nothing leaves your machine: run <code>npx uisandbox-mcp@latest open</code> in your project, or ask your agent to "open this app in UISandbox". <a href="/about">How it works</a>.</p>
 ` + footer()
 }
 
