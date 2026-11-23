@@ -4169,3 +4169,21 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     154 ok, no regressions against holdouts.expect.json; live-dev.mjs 78 of
     82, the four the helper check that a 0.5.6 `start` in another session
     holds port 47319 for. uisandbox-mcp 0.5.9.
+
+223. The sandbox on a fixed port when it is free (2026-11-23). Alexander's
+    other session got Cartful running in Claude desktop's pane, then wrote
+    what 0.5.8 had said: the launch.json entry must name this session's
+    port, and the port was new every run, so the entry went stale with each
+    restart. The roadmap item of an hour earlier (the helper serving the
+    sandbox on 47319) was weighed as too costly for a niche; this is the
+    small form of it: the sandbox's server listens on 47320 first and on a
+    free port when another UISandbox holds it, nothing else changes. The
+    `ownPane` hint says the entry keeps working, or, on the fallback, that
+    47320 was taken. Measured: first `open --detach` on 47320, a second at
+    once on a free port with the note; in the pane, an entry for
+    http://127.0.0.1:47320 attached with preview_start ran the shadcn kit
+    (worker controlling, 7 screens, 119 values), and after `stop` and a new
+    session (the Bootstrap kit, again on 47320) the same tab and entry ran
+    it without a change. live-dev.mjs 78 of 82, the four helper checks a
+    `start` in another session holds 47319 for. The roadmap item is gone.
+    uisandbox-mcp 0.5.10.

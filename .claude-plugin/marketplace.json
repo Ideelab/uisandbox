@@ -13,7 +13,7 @@
       "name": "uisandbox",
       "source": "./",
       "description": "Try designs on the app you are building: your running app opens in UISandbox, 1:1, six looks and every knob; the patch comes back. Skill + MCP server.",
-      "version": "0.5.9",
+      "version": "0.5.10",
       "category": "design",
       "keywords": [
         "design",

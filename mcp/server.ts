@@ -156,7 +156,7 @@ When to use it — and offer it without being asked:
 
 Rules: never claim more than \`verify\` and the reach meter report — quote the numbers; if a load is refused (iOS/Android/source-only), relay the reason and suggest building first; \`verify\`/\`screenshot\` need Chromium (npx playwright install chromium once) — \`open\`, \`load\`, \`set\`, \`export\` do not.`
 
-const VERSION = '0.5.9'
+const VERSION = '0.5.10'
 const server = new McpServer({ name: 'uisandbox', version: VERSION }, { instructions: INSTRUCTIONS })
 
 server.registerTool('load', {
@@ -360,7 +360,14 @@ async function localServer(): Promise<{ port: number }> {
     res.end(readFileSync(file))
   })
   server.on('upgrade', (req, socket, head) => proxyUpgrade(req, socket, head))
-  await new Promise<void>((r) => server.listen(0, '127.0.0.1', r))
+  // A fixed port first, a free one when another UISandbox holds it: an agent's
+  // own browser (Claude desktop's pane) runs the sandbox only on a preview it
+  // attached by origin, so one launch.json entry keeps working (decision 223).
+  await new Promise<void>((r) => {
+    const elsewhere = () => server.listen(0, '127.0.0.1', r)
+    server.once('error', elsewhere)
+    server.listen(SANDBOX_PORT, '127.0.0.1', () => { server.off('error', elsewhere); r() })
+  })
   const port = (server.address() as { port: number }).port
   local = { server, port }
   return local
@@ -472,7 +479,7 @@ async function sandboxUrlFor(p: Loaded, opts: { screen?: string; carry?: string 
 
 /** Opened in an agent's own browser instead of the user's (decision 221): Claude desktop's pane
  *  runs the sandbox's service worker only for a preview it attached, not after a plain navigate. */
-const paneHint = (url: string) => { const u = new URL(url); return `To show it in your own built-in browser instead (Claude desktop app): add {"name": "uisandbox", "url": "${u.origin}", "port": ${u.port}} to .claude/launch.json and preview_start it, then navigate that tab to the full address; a plain navigate cannot start its service worker.` }
+const paneHint = (url: string) => { const u = new URL(url); return `To show it in your own built-in browser instead (Claude desktop app): add {"name": "uisandbox", "url": "${u.origin}", "port": ${u.port}} to .claude/launch.json and preview_start it, then navigate that tab to the full address; a plain navigate cannot start its service worker.${Number(u.port) === SANDBOX_PORT ? ` The sandbox takes port ${SANDBOX_PORT} whenever it is free, so the entry keeps working next time.` : ` Port ${SANDBOX_PORT}, which the sandbox takes when free, was held by another UISandbox: this session's port is ${u.port}.`}` }
 
 server.registerTool('try_designs', {
   title: 'Try designs on the user\'s app',
@@ -506,6 +513,8 @@ server.registerTool('try_designs', {
  * `npx uisandbox-mcp start` (or open). Chrome asks the user once whether
  * uisandbox.org may reach the local network. */
 const HELPER_PORT = 47319
+/** The sandbox's own port, when free (decision 223). */
+const SANDBOX_PORT = 47320
 const HELPER_ORIGIN = /^(https:\/\/(www\.)?uisandbox\.org|http:\/\/(localhost|127\.0\.0\.1)(:\d+)?)$/
 /** A secret per process for the helper's own page: its links open an app, and a site elsewhere cannot guess them. */
 const HELPER_TOKEN = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2)

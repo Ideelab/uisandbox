@@ -155,20 +155,6 @@ traffic page and the registry counts, never from a script on the page.
   ramp when a status pick changes would recolour every use of that ramp,
   decorative ones too: decide whether a ramp used only on status-like
   elements (badges, alerts) should follow, and measure it on real builds.
-- **One fixed address for the local sandbox** (decision 221, Alexander
-  2026-11-23; weighed, not built). The sandbox a CLI or MCP process serves
-  sits on a new random port each time (`127.0.0.1:61735`), the helper on a
-  fixed one (47319). Claude desktop's browser pane starts a service worker
-  only on a preview it attached, so an agent that shows the sandbox in its
-  own pane has to attach that session's port (0.5.8 tells it how:
-  `ownPane`). A launch.json entry on 47319 opens the list but not the
-  sandbox a click leads to (measured). The helper could serve the sandbox
-  itself on 47319, so one launch.json line works every day. For a person
-  it changes nothing: the line opens their own browser, any port works
-  there, they never see it. Cost: the list and the sandbox share `/`
-  (split on `?load=`), and a second process cannot have 47319 and falls
-  back to a random port. Worth it only if showing the sandbox inside an
-  agent's own browser becomes a common way in.
 - **"Use in AI" and a Claude Desktop extension** (Alexander, 2026-10-22;
   researched, not built). The top bar's MCP button only shows before a
   project is loaded, so in the editor nobody sees it. In its place, a button

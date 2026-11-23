@@ -46,7 +46,8 @@ skill is the procedure around them.
   Connect menu cannot reach their machine from your built-in browser. To
   show the sandbox in your own pane (Claude desktop app), attach it as a
   preview: `ownPane` in try_designs' answer (and the line --detach prints)
-  says how; a plain navigate cannot start its service worker.
+  says how; a plain navigate cannot start its service worker. The sandbox
+  takes port 47320 when free, so that launch.json entry keeps working.
 - `verify` / `screenshot` need Chromium once (`npx playwright install chromium`).
 
 ## One change, tried headlessly ("try brand #e11d48 on this")
