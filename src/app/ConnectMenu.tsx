@@ -1,5 +1,5 @@
 /**
- * Try it on your app (decisions 220, 225; was Connect a running app): top right, one click to the apps that
+ * Open your local app (decisions 220, 225, 226; was Connect a running app, then Try it on your app): top right, one click to the apps that
  * run on this machine. A page on uisandbox.org cannot read localhost itself,
  * so it asks the UISandbox helper (mcp/server.ts startHelper, 127.0.0.1:47319):
  * which dev servers answer, and open one, live, served from the helper's own
@@ -95,10 +95,10 @@ export function ConnectMenu({ carry, onOther }: { carry?: string; onOther: () =>
   return (
     <div className="mcp connect" ref={ref}>
       <button type="button" className={`btn btn--primary btn--sm app__try ${open ? 'connect__btn--on' : ''}`} onClick={() => setOpen((v) => !v)} aria-expanded={open} aria-haspopup="dialog">
-        <Plug size={14} strokeWidth={2} /><span className="app__try-long">Try it on your app</span><span className="app__try-short">Your app</span><ChevronDown size={12} />
+        <Plug size={14} strokeWidth={2} /><span className="app__try-long">Open your local app</span><span className="app__try-short">Local app</span><ChevronDown size={12} />
       </button>
       {open && (
-        <div className="card mcp__pop connect__pop" role="dialog" aria-label="Try it on your app">
+        <div className="card mcp__pop connect__pop" role="dialog" aria-label="Open your local app">
           {state.at === 'looking' && <p className="connect__note"><RefreshCw size={13} className="connect__spin" /> Looking for apps running on this machine…</p>}
           {state.at === 'apps' && (state.apps.length ? (
             <>
@@ -153,8 +153,8 @@ export function YourAppStrip({ kit, carry }: { kit: string; carry?: string }) {
   if (closed) return null
   const close = () => { setClosed(true); try { localStorage.setItem(STRIP_KEY, '1') } catch { /* closed for this visit */ } }
   return (
-    <div className="yourapp" role="region" aria-label="Try it on your app">
-      <span className="yourapp__lead">This is {kit}. <b>Your own app, live:</b></span>
+    <div className="yourapp" role="region" aria-label="Open your local app">
+      <span className="yourapp__lead">This is {kit}. <b>Your local app, live:</b></span>
       <span className="install__pill yourapp__cmd">
         <span className="install__prompt" aria-hidden>$</span>
         <code className="install__cmd">{short(openCmd(carry), carry)}</code>

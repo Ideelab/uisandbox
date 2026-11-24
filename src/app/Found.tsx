@@ -47,7 +47,7 @@ export function Found({ facts, carry, onDone }: {
         <div className="door">
           <div className="card intake__card door__card">
             <div className="door__bar">
-              <h2>Try it on your app</h2>
+              <h2>Open your app</h2>
               <BringSteps at={2} />
               <button type="button" className="btn btn--ghost btn--icon" onClick={() => onDone(bring, false)} aria-label="Close" title="To the editor"><X size={15} /></button>
             </div>

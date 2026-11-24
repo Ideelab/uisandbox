@@ -4256,3 +4256,14 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     kits:gates. Not yet: what an agent reads from the live site after the
     deploy (the bare run of decision 224, again). In uisandbox-mcp 0.5.11,
     with the fixed port of decision 223.
+
+226. **The button is "Open your local app" (was "Try it on your app").**
+    Alexander found "Connect a running app" clearer than "Try it on your
+    app": the new label did not say where your app comes from. "Local" is
+    the developer's own word for what runs on localhost, "running" also
+    reads as the live site, and "Open" says what the click does where
+    "Connect" sounds like linking an account or setting up a key. Short
+    form "Local app"; the strip over a kit reads "Your local app, live:".
+    The two door dialogs, which also take a zip, a folder or a repo, are
+    titled "Open your app". Same words on the kit pages, in llms.txt, the
+    READMEs, /about and the CLI's messages. In uisandbox-mcp 0.5.12.

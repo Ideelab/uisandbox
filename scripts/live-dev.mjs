@@ -6,7 +6,7 @@
  * the kit's knobs carried along in the line (--carry), on the stage and in
  * each of the six looks; then the same app through the MCP tools an agent
  * uses (load, set, verify, screenshot, export, try_designs) and the helper
- * uisandbox.org's Connect a running app asks.
+ * uisandbox.org's Open your local app asks.
  *
  *   pnpm mcp:build && node scripts/live-dev.mjs
  *

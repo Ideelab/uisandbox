@@ -42,7 +42,7 @@ hot reload kept. Or tell your agent to open it. No app at hand?
 
 1. **Bring your app.** Run `npx uisandbox-mcp@latest open` next to your dev
    server, or tell your agent to open it, and your running app opens live, every
-   screen, hot reload included (*Try it on your app*, top right on the site, has
+   screen, hot reload included (*Open your local app*, top right on the site, has
    the line and a prompt for your agent). No app at hand? The editor opens on
    shadcn/ui as it ships, six ways, with seven more kits one pick away (Tailwind
    CSS, daisyUI, Bootstrap, Material 3, Radix Themes, Mantine, Ant Design), each
