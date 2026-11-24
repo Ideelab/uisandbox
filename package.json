@@ -8,6 +8,7 @@
     "dev": "vite",
     "build": "tsc -p tsconfig.json && vite build && node scripts/about-static.mjs",
     "preview": "vite preview",
+    "indexnow": "node scripts/indexnow.mjs",
     "test": "vitest run && node --test src/audit/__tests__/*.test.mjs && pnpm test:kits",
     "test:watch": "vitest",
     "typecheck": "tsc -p tsconfig.json",

@@ -19,6 +19,7 @@ Your own screen six ways, every knob on its own values, then a patch your agent 
 <p align="center">
   <img alt="MIT" src="https://img.shields.io/badge/license-MIT-black">
   <img alt="npm" src="https://img.shields.io/npm/v/uisandbox-mcp?label=uisandbox-mcp&color=black">
+  <a href="https://glama.ai/mcp/servers/Ideelab/uisandbox"><img alt="uisandbox-mcp on Glama" src="https://glama.ai/mcp/servers/Ideelab/uisandbox/badges/score.svg" height="20"></a>
 </p>
 
 Your app looks like every other app an AI helped build, and you cannot say why.

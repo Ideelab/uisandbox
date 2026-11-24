@@ -169,3 +169,62 @@ export is useless."**
 > http://localhost:3000` puts your dev server in the sandbox, hot reload
 > included. A static build that needs its server renders as a shell, and the
 > tool says "this looks like a shell, not the app" rather than letting it pass.
+
+## Directories and lists (decision 231)
+
+Each in the list's own format, checked against its rules on 2026-11-24. Where a list does not fit, it says why.
+
+### Glama (listed already)
+
+Glama lists the server at glama.ai/mcp/servers/Ideelab/uisandbox and rates it B. The README carries its badge, which is the backlink awesome-mcp-servers asks for. To edit the listing yourself, claim it on that page.
+
+### mcp.so (mcp.so/submit)
+
+Name: UISandbox
+URL: https://github.com/Ideelab/uisandbox
+Description: Opens the web app you are running live in your browser, with every colour, font, radius and spacing in its CSS as a knob. Your agent calls try_designs, you turn the knobs and press Send, and it gets back a patch for your files, or tokens for CSS, Tailwind, shadcn, Swift and Android. verify checks the render 1:1. Nothing leaves your machine.
+Server config:
+
+```json
+{ "mcpServers": { "uisandbox": { "command": "npx", "args": ["-y", "uisandbox-mcp@latest"] } } }
+```
+
+### PulseMCP (pulsemcp.com/submit)
+
+PulseMCP reads the official registry, where the server is listed as io.github.Ideelab/uisandbox, so it may show up without a submission. If not, the form wants the repo URL and one line:
+
+Try designs on the web app you are running: it opens live in your browser with every CSS value as a knob, and your agent gets the patch.
+
+### Smithery
+
+Smithery lists servers it can run or install from its own config. UISandbox is a local stdio server that opens a browser tab on your machine, so check smithery.ai/new before spending time on it: if it only takes a hosted URL, it does not fit.
+
+### awesome-mcp-servers (pull request, section Architecture & Design, alphabetical)
+
+```markdown
+- [Ideelab/uisandbox](https://github.com/Ideelab/uisandbox) [![Ideelab/uisandbox MCP server](https://glama.ai/mcp/servers/Ideelab/uisandbox/badges/score.svg)](https://glama.ai/mcp/servers/Ideelab/uisandbox) 📇 🏠 🍎 - Opens the web app you are running live in the browser with every colour, font, radius and spacing as a knob, shows the screen six ways and hands the agent a patch or tokens (CSS, Tailwind, shadcn, Swift, Android); `verify` checks the render 1:1. `npx -y uisandbox-mcp@latest`
+```
+
+PR title: Add Ideelab/uisandbox
+PR description: Adds UISandbox to Architecture & Design. Glama listing: https://glama.ai/mcp/servers/Ideelab/uisandbox, backlinked from the badge in the repo's README.
+
+🍎 only, because macOS is the platform it was tested on; add 🪟 and 🐧 once someone has run it there.
+
+### awesome-shadcn-ui (the form at awesomeshadcn.dev, section Colors and Customizations)
+
+Name: uisandbox
+Link: https://uisandbox.org/kits/shadcn/
+
+```markdown
+| uisandbox | Free, MIT theme editor that opens shadcn/ui as it ships, or your own running shadcn app, turns brand, type, spacing and corners on the real components, and exports components.json, theme.css and a SKILL.md in shadcn's own variable names. | [Link](https://uisandbox.org/kits/shadcn/) |
+```
+
+No date cell: their workflow adds it.
+
+### awesome-tailwindcss
+
+Not drafted here. The list takes no submission written or drafted with an AI, and closes them unread. If you want UISandbox in its Tools section (🌍🔧, pointing at uisandbox.org/kits/tailwind/), write the line and the PR template yourself.
+
+### awesome-design-systems
+
+Skipped: it lists design systems that organisations publish (Atlassian, Backpack, Blueprint), not tools for making one.

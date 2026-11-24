@@ -4334,3 +4334,24 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     New test: `guidePages.test.ts` (pages current, no em-dash, every guide in
     the footer, the sitemap and llms.txt). `live-check.mjs` expects the new
     title.
+
+231. **Telling the engines, and being listed where people look.** After the
+    sitemap went to Search Console, the gap was not technical (robots.txt
+    allows everything; GPTBot, ClaudeBot, PerplexityBot, OAI-SearchBot,
+    Googlebot and bingbot all get the pages) but that nothing links here.
+    - IndexNow: `public/<key>.txt` holds its own name, and
+      `scripts/indexnow.mjs` (`pnpm indexnow`, after a deploy) sends the
+      sitemap's URLs, or the paths given, to api.indexnow.org, which passes
+      them to Bing (and so ChatGPT search and Copilot), Yandex, Seznam and
+      Naver. The key is public by design; the script first checks that the
+      live site serves it, because the SPA fallback answers 200 with the app
+      for a file that is not deployed yet.
+    - The README carries the Glama badge: Glama already lists the server
+      (rated B), and awesome-mcp-servers takes a server only with that
+      backlink.
+    - `brand/marketing/copy.md` gains the texts for mcp.so, PulseMCP,
+      awesome-mcp-servers and awesome-shadcn-ui, each in its list's format.
+      awesome-tailwindcss refuses submissions drafted with an AI, so that one
+      is the maker's to write; awesome-design-systems lists organisations'
+      design systems, not tools, so it is skipped.
+    New test in guidePages.test.ts: exactly one key file, holding its name.
