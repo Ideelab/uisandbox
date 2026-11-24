@@ -4280,3 +4280,14 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     `scripts/og/social-preview.html`) puts that line and the command next
     to the shot; GitHub takes it only by hand, under Settings. The site's
     own link card (`public/og.png`) stays the kit six ways for now.
+
+228. **The site's link card is the running app too.** `public/og.png`
+    was the kit's Dashboard six ways (from `og-from-site.mjs`); it is now
+    the social preview of decision 227 at 1200×630: "Try designs on the app
+    you are running.", the command, and Ledgerly from localhost:5173 six
+    ways. `scripts/og/og-local.mjs` writes all three (the GitHub preview,
+    `brand/marketing/og-local-light.png`, `public/og.png`);
+    `og-from-site.mjs` no longer copies onto `public/og.png`, so a rerun
+    for the kit stills cannot put the kit card back. The og:image:alt says
+    what is on it. The npm package carries the old card until the next
+    release, which only matters to a local sandbox's own page.

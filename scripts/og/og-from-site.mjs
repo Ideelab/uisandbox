@@ -4,11 +4,9 @@
 //   node scripts/og/og-from-site.mjs [base]       dev server on :5190 by default
 //
 // Writes brand/marketing/og-site-light.png and og-site-dark.png (1200×630, the
-// six looks: the one picture that says what this is) and copies the light one
-// to public/og.png; and brand/marketing/site-hero-light-1440.png (the editor
+// six looks of a kit; public/og.png is the running app now, from og-local.mjs); and brand/marketing/site-hero-light-1440.png (the editor
 // at 1440, for the README header and posts).
 import { chromium } from 'playwright'
-import { copyFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -43,7 +41,7 @@ for (const scheme of ['light', 'dark']) {
   await p.screenshot({ path: join(out, `og-site-${scheme}.png`) })
   await p.context().close()
 }
-copyFileSync(join(out, 'og-site-light.png'), join(root, 'public', 'og.png'))
+// public/og.png comes from scripts/og/og-local.mjs since decision 228: the running app.
 
 // the hero is the one screen the six open on
 const hero = await open(1440, 900, 'light')
