@@ -4291,3 +4291,15 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     for the kit stills cannot put the kit card back. The og:image:alt says
     what is on it. The npm package carries the old card until the next
     release, which only matters to a local sandbox's own page.
+
+229. **A kit as it ships puts nothing in the URL.** A fresh visit to
+    uisandbox.org got `#v2:` and 573 characters at once. writeHash only left
+    the hash out when the config equalled DEFAULT_CONFIG (Inter, cobalt),
+    and the editor opens on shadcn/ui as it ships (Geist, #171717, subtle,
+    compact): nothing turned, yet not the default. The comparison now takes
+    where what is loaded starts, the config of the last reset (a kit's
+    baseline, an app as read), next to the default. Measured on a build:
+    fresh visit 0 characters; Round, 560; undo, 0 again; the 560-character
+    link opened in a new tab turns Round on and keeps its hash. New test in
+    hash.test.ts: a kit's own start writes nothing, a turn writes, back to
+    the start clears it.

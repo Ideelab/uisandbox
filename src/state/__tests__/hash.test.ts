@@ -81,6 +81,18 @@ describe('the URL only carries a kit once there is one', () => {
     expect(new URL(document.location.href).hash).not.toBe('')
   })
 
+  // decision 229: a kit's own start is not the default (shadcn/ui ships Geist and
+  // #171717), and a fresh visit wrote 573 characters describing nothing turned.
+  it('writes nothing for a kit as it ships, against its own start', () => {
+    const kit: Config = { ...DEFAULT_CONFIG, cPrimary: '#171717' as Config['cPrimary'], fontBody: 'Custom: Geist Variable', radius: 'subtle' }
+    writeHash(kit, kit)
+    expect(new URL(document.location.href).hash).toBe('')
+    writeHash({ ...kit, radius: 'round' }, kit)
+    expect(new URL(document.location.href).hash).not.toBe('')
+    writeHash(kit, kit)
+    expect(new URL(document.location.href).hash).toBe('')
+  })
+
   it('keeps the tuned kit fully recoverable', () => {
     const tuned: Config = { ...DEFAULT_CONFIG, radius: 'round' }
     expect(decode(encode(tuned))).toEqual(tuned)

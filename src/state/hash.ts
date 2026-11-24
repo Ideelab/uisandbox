@@ -50,20 +50,26 @@ export function readHash(): Config | null {
  *  represents is exactly what counts as "unchanged". */
 const DEFAULT_ENCODED = encode(DEFAULT_CONFIG)
 
-export function writeHash(cfg: Config): void {
+/** `base` is where what is loaded starts: a kit as it ships, an app as read
+ *  (decision 229). Untouched against that, the URL carries nothing. Without it
+ *  the default stands in, as before anything is loaded. */
+export function writeHash(cfg: Config, base?: Config): void {
   if (typeof window === 'undefined') return
 
   // An untouched kit gets NO hash. Encoding the default meant the very first URL
   // a visitor saw was already 700 characters of state describing nothing they
-  // had chosen — unshareable, and it rode along to every other page.
-  if (encode(cfg) === DEFAULT_ENCODED) {
+  // had chosen, unshareable, and it rode along to every other page. The kit's
+  // own start (shadcn/ui: Geist, #171717) is not the default either, so a
+  // fresh visit got 573 characters until the comparison took the loaded base.
+  const now = encode(cfg)
+  if (now === DEFAULT_ENCODED || (base && now === encode(base))) {
     if (window.location.hash) {
       history.replaceState(null, '', window.location.pathname + window.location.search)
     }
     return
   }
 
-  const next = '#' + encode(cfg)
+  const next = '#' + now
   if (window.location.hash !== next) {
     history.replaceState(null, '', next)
   }

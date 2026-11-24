@@ -30,12 +30,14 @@ export function useConfig(): UseConfigResult {
   const [hist, dispatch] = useReducer(historyReducer, undefined, () => initHistory(initFromHash()))
   const cfg = hist.present
   const writeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Where what is loaded starts (the last reset): untouched against it, no hash.
+  const base = useRef<Config | undefined>(undefined)
 
   // sync to URL hash with debounce
   useEffect(() => {
     if (writeTimer.current) clearTimeout(writeTimer.current)
     writeTimer.current = setTimeout(() => {
-      writeHash(cfg)
+      writeHash(cfg, base.current)
     }, HASH_DEBOUNCE_MS)
     return () => {
       if (writeTimer.current) clearTimeout(writeTimer.current)
@@ -58,6 +60,7 @@ export function useConfig(): UseConfigResult {
   const reset = useCallback((next: Config) => {
     if (writeTimer.current) clearTimeout(writeTimer.current)
     if (window.location.hash) history.replaceState(null, '', window.location.pathname + window.location.search)
+    base.current = next
     dispatch({ type: 'RESET', cfg: next })
   }, [])
   const redo = useCallback(() => dispatch({ type: 'REDO' }), [])
