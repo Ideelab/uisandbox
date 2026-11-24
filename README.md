@@ -1,12 +1,12 @@
 <p align="center">
-  <a href="https://uisandbox.org"><img src="brand/marketing/site-hero-light-1440.png" alt="UISandbox: the editor open on shadcn/ui's Dashboard, the knobs on the left" width="880"></a>
+  <a href="https://uisandbox.org"><img src="brand/marketing/local-app-six-1440.png" alt="UISandbox with a running app from localhost:5173 opened by npx uisandbox-mcp open: its home screen six ways, Classic, Compact, Soft, Sharp, Airy and Bold, the knobs on the left and Send to the terminal top right" width="880"></a>
 </p>
 
 <h1 align="center">UISandbox</h1>
 
-<p align="center"><b>Play with your app's design. Right in the browser.</b><br>
-Bring your app, pick a look, tune it, take it home.<br>
-<sub>Your own app runs 1:1 in the tab, nothing is sent to a server, and closing the tab undoes all of it.</sub></p>
+<p align="center"><b>Try designs on the app you are running.</b><br>
+Your own screen six ways, every knob on its own values, then a patch your agent applies.<br>
+<sub>Your app runs 1:1 in the tab, nothing is sent to a server, and closing the tab undoes all of it.</sub></p>
 
 <p align="center">
   <a href="https://uisandbox.org">uisandbox.org</a> ·

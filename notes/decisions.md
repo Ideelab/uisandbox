@@ -4267,3 +4267,16 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     The two door dialogs, which also take a zip, a folder or a repo, are
     titled "Open your app". Same words on the kit pages, in llms.txt, the
     READMEs, /about and the CLI's messages. In uisandbox-mcp 0.5.12.
+
+227. **The README header and the GitHub social preview show a running app.**
+    The header was the editor on shadcn/ui's Dashboard, a kit; since
+    decision 225 the first use is the app you are running. The new shot is
+    one: Ledgerly on localhost:5173 (the dash fixture of the live-app
+    checks), opened by `open --detach`, See it six ways, 1440×900 at 2x.
+    Its foot reads localhost-5173 and its top right Send to the terminal,
+    so the picture says where the app came from without a caption. The
+    README's claim is now "Try designs on the app you are running." The
+    social preview (`brand/marketing/social-preview-1280.png`, from
+    `scripts/og/social-preview.html`) puts that line and the command next
+    to the shot; GitHub takes it only by hand, under Settings. The site's
+    own link card (`public/og.png`) stays the kit six ways for now.
