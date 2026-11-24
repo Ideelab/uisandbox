@@ -4303,3 +4303,34 @@ react-virtualized 100/100/100 (180 el., all runtime inline styles tokenised).
     link opened in a new tab turns Round on and keeps its hash. New test in
     hash.test.ts: a kit's own start writes nothing, a turn writes, back to
     the start clears it.
+
+230. **Being found on the question, not only on the name.** The homepage is
+    the editor, so a search engine or a language model that runs no
+    JavaScript read one paragraph at `/` and the same paragraph at `/about`.
+    - Four guides, static like the kit pages and built by
+      `scripts/guide-pages.mjs` from the kit pages' own head, footer and
+      styles: `/try-designs-on-your-app/`, `/design-in-the-browser/` (for
+      "on a canvas": what the browser shows that a mock-up does not, and when
+      a canvas is still the better tool), `/why-your-app-looks-ai-generated/`
+      (the eight tells of `tells.ts` in a table, which a knob fixes) and
+      `/mcp/` (the install lines and the tools). Each has questions with a
+      FAQPage and a TechArticle in JSON-LD, and links to the others. `/guides/`
+      lists them. Every claim is one the app measures; the frameworks named
+      live are the two measured (decisions 202 and 204).
+    - A Guides column in the footer (`links.json`): the editor's More sheet
+      and every kit page link to all four; the top bar of the static pages
+      gains Guides. The pre-mount block of `index.html` links them too.
+    - `/about` gets its own text for a crawler: `scripts/about-static.mjs`,
+      run by `pnpm build`, writes `dist/about.html` (the built index.html with
+      /about's title, description, canonical and the dialog's text in the
+      pre-mount block). Cloudflare serves it at `/about`; the app boots from
+      it and opens the dialog as before (checked on `wrangler dev`: /about 200
+      with its own title, the dialog opens, Close goes to `/`).
+    - Titles and descriptions say what people type: the homepage is
+      "UISandbox · Try designs on your running app, in the browser" (the app
+      sets the same), descriptions are cut to about 160 characters, the kit
+      pages read "An Ant Design" and "Radix Themes' own", and the JSON-LD
+      gains `sameAs` (GitHub, npm). Sitemap and llms.txt list the guides.
+    New test: `guidePages.test.ts` (pages current, no em-dash, every guide in
+    the footer, the sitemap and llms.txt). `live-check.mjs` expects the new
+    title.

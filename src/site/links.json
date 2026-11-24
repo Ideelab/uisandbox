@@ -7,6 +7,13 @@
    { "label": "MCP server", "href": "https://www.npmjs.com/package/uisandbox-mcp" },
    { "label": "llms.txt", "href": "/llms.txt" }
   ] },
+  { "title": "Guides", "links": [
+   { "label": "Try designs on your app", "href": "/try-designs-on-your-app/" },
+   { "label": "Design in the browser", "href": "/design-in-the-browser/" },
+   { "label": "Why apps look AI-generated", "href": "/why-your-app-looks-ai-generated/" },
+   { "label": "Design MCP server", "href": "/mcp/" },
+   { "label": "All guides", "href": "/guides/" }
+  ] },
   { "title": "Kits", "links": "kits" },
   { "title": "Open source", "links": [
    { "label": "Source", "href": "https://github.com/Ideelab/uisandbox" },

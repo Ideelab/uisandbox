@@ -5,7 +5,7 @@
 .sitefoot { background: #18191d; color: #a3a3ad; font-size: 13px; line-height: 1.5; margin-top: 48px; }
 .sitefoot a { color: #d6d6de; text-decoration: none; }
 .sitefoot a:hover { color: #ffffff; text-decoration: underline; text-underline-offset: 2px; }
-.sitefoot__inner { max-width: 1080px; margin: 0 auto; padding: 40px 24px 28px; display: grid; grid-template-columns: 1.4fr repeat(3, 1fr); gap: 32px; }
+.sitefoot__inner { max-width: 1080px; margin: 0 auto; padding: 40px 24px 28px; display: grid; grid-template-columns: 1.4fr repeat(4, 1fr); gap: 32px; }
 .sitefoot__brand p { margin: 10px 0 0; max-width: 30ch; }
 .sitefoot__mark { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; color: #ececf1 !important; font-size: 14px; }
 .sitefoot__col h2 { margin: 0 0 10px; font-size: 12px; font-weight: 600; color: #ececf1; letter-spacing: 0; }
@@ -21,6 +21,8 @@
 .kp__top nav { margin-left: auto; display: flex; gap: 16px; color: var(--app-fg-muted); }
 .kp__top nav a { color: var(--app-fg-muted); }
 .kp__top nav a:hover { color: var(--app-fg); }
+.kp__top nav a { white-space: nowrap; }
+@media (max-width: 480px) { .kp__top { padding: 0 14px; gap: 10px; } .kp__top nav { gap: 12px; } }
 .kp main { flex: 1; width: 100%; max-width: 860px; margin: 0 auto; padding: 48px 24px 0; font-size: 15px; line-height: 1.6; }
 .kp main h1 { font-size: clamp(30px, 5vw, 44px); line-height: 1.08; letter-spacing: -0.03em; margin: 0 0 14px; }
 .kp main h2 { font-size: 19px; letter-spacing: -0.01em; margin: 40px 0 10px; }
@@ -44,6 +46,15 @@
 .kp__kits a:hover { border-color: var(--app-fg-muted); }
 .kp__kits b { display: block; font-size: 15px; margin-bottom: 4px; }
 .kp__kits span { color: var(--app-fg-muted); font-size: 13px; }
+/* A guide page (scripts/guide-pages.mjs): the line to run, a table of what is measured, the questions. */
+.kp main pre.kp__cmd { margin: 0 0 14px; padding: 12px 14px; border: 1px solid var(--app-border); border-radius: 10px; background: var(--app-surface-2); overflow-x: auto; }
+.kp main pre.kp__cmd code { background: none; border: 0; padding: 0; font-size: 14px; }
+.kp__table { width: 100%; border-collapse: collapse; margin: 4px 0 14px; font-size: 14px; }
+.kp__table th, .kp__table td { text-align: left; vertical-align: top; padding: 8px 10px 8px 0; border-bottom: 1px solid var(--app-border); }
+.kp__table th { color: var(--app-fg-muted); font-weight: 600; font-size: 12.5px; }
+.kp__faq h3 { font-size: 15.5px; margin: 22px 0 6px; }
+.kp main ul.kp__list { margin: 0 0 14px; padding-left: 18px; }
+.kp main ul.kp__list li { margin: 4px 0; }
 
 /* The Star on GitHub button, on the dark footers (the editor's line and the
    site's columns). Complete here, because the static pages have no chrome.css. */

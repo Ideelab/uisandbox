@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A design MCP server for Claude Code, Cursor and Codex · UISandbox</title>
+<meta name="description" content="An MCP server for Claude Code, Cursor and Codex: it opens your running app in a design sandbox, waits while you turn the knobs, and returns a patch. Free, MIT.">
+<link rel="canonical" href="https://uisandbox.org/mcp/">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<meta name="color-scheme" content="light dark">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="UISandbox">
+<meta property="og:url" content="https://uisandbox.org/mcp/">
+<meta property="og:title" content="A design MCP server for Claude Code, Cursor and Codex · UISandbox">
+<meta property="og:description" content="An MCP server for Claude Code, Cursor and Codex: it opens your running app in a design sandbox, waits while you turn the knobs, and returns a patch. Free, MIT.">
+<meta property="og:image" content="https://uisandbox.org/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/site.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Try designs from your agent: the UISandbox MCP server","description":"An MCP server for Claude Code, Cursor and Codex: it opens your running app in a design sandbox, waits while you turn the knobs, and returns a patch. Free, MIT.","url":"https://uisandbox.org/mcp/","image":"https://uisandbox.org/og.png","author":{"@type":"Person","name":"Alexander Kaan","url":"https://github.com/AlexanderKaan"},"publisher":{"@type":"Organization","name":"Ideelab","url":"https://ideelab.nl/"},"about":{"@type":"SoftwareApplication","name":"UISandbox","url":"https://uisandbox.org/","applicationCategory":"DesignApplication","operatingSystem":"Web","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"}}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Does it send my code anywhere?","acceptedAnswer":{"@type":"Answer","text":"No. The server runs on your machine and serves the sandbox from 127.0.0.1. Nothing is uploaded, and there are no analytics."}},{"@type":"Question","name":"Does the agent change my files on its own?","acceptedAnswer":{"@type":"Answer","text":"No. After you press Send, the agent gets the patch with your own file names and shows it to you first. The skill tells it to change files only when you say yes."}}]}</script>
+</head>
+<body>
+<div class="kp">
+<header class="kp__top"><a class="kp__brand" href="/"><img src="/favicon.svg" width="16" height="16" alt=""> UISandbox</a><nav><a href="/kits/">Kits</a><a href="/guides/">Guides</a><a href="/about">How it works</a><a href="https://github.com/Ideelab/uisandbox">Source</a></nav></header>
+<main>
+<h1>Try designs from your agent: the UISandbox MCP server</h1>
+<p class="kp__lead">Say &quot;let me try some designs&quot; to your agent. It opens your running app in UISandbox in your own browser, waits while you pick a look and turn the knobs, and gets back what you turned with a patch for your source. It shows you the patch before it changes a file.</p>
+<div class="kp__ctas"><a class="kp__btn kp__btn--primary" href="https://www.npmjs.com/package/uisandbox-mcp" rel="noopener">uisandbox-mcp on npm</a><a class="kp__btn" href="https://github.com/Ideelab/uisandbox/blob/main/mcp/README.md" rel="noopener">Setup for every client</a></div>
+<h2>Add it once</h2>
+<p>Claude Code:</p>
+<pre class="kp__cmd"><code>claude mcp add uisandbox -- npx -y uisandbox-mcp@latest</code></pre>
+<p>Or as a Claude Code plugin, the skill and the server in one: <code>/plugin marketplace add Ideelab/uisandbox</code>, then <code>/plugin install uisandbox@uisandbox</code>. Any other MCP client (Cursor, Codex, Claude Desktop) runs <code>npx -y uisandbox-mcp@latest</code> over stdio. It is listed on the <a href="https://registry.modelcontextprotocol.io/v0/servers?search=uisandbox" rel="noopener">MCP registry</a>.</p>
+<h2>The tools</h2>
+<table class="kp__table">
+<thead><tr><th>Tool</th><th>What it does</th></tr></thead>
+<tbody>
+<tr><td><code>try_designs</code></td><td>Finds the app you are running and opens it live in your browser. No arguments.</td></tr>
+<tr><td><code>wait_for_send</code></td><td>Returns when you press <em>Send to your agent</em>: what you turned, and the patch.</td></tr>
+<tr><td><code>load</code>, <code>open</code></td><td>Load a build, a zip or a dev server, and open the real sandbox with it.</td></tr>
+<tr><td><code>set</code>, <code>state</code>, <code>screens</code></td><td>Turn knobs from the agent, read where they stand, list the screens.</td></tr>
+<tr><td><code>export</code></td><td>A patch, CSS or JSON tokens, Tailwind, shadcn, Swift or Android.</td></tr>
+<tr><td><code>verify</code>, <code>screenshot</code></td><td>The 1:1 check and a render, in headless Chromium.</td></tr>
+</tbody>
+</table>
+<h2>Without the MCP server</h2>
+<p>An agent with only a shell runs the same thing and gets control back at once:</p>
+<pre class="kp__cmd"><code>npx uisandbox-mcp@latest open --detach</code></pre>
+<p>It finds the dev server, opens the sandbox in your own browser and returns. Your agent's built-in browser cannot reach your localhost, so the sandbox opens in yours.</p>
+<section class="kp__faq"><h2>Questions</h2>
+<h3>Does it send my code anywhere?</h3>
+<p>No. The server runs on your machine and serves the sandbox from 127.0.0.1. Nothing is uploaded, and there are no analytics.</p>
+<h3>Does the agent change my files on its own?</h3>
+<p>No. After you press Send, the agent gets the patch with your own file names and shows it to you first. The skill tells it to change files only when you say yes.</p>
+</section>
+<h2>More guides</h2>
+<ul class="kp__list"><li><a href="/try-designs-on-your-app/">Try a new design on the app you are running</a></li><li><a href="/design-in-the-browser/">Design on the app itself, not on a canvas</a></li><li><a href="/why-your-app-looks-ai-generated/">Why your app looks AI-generated</a></li><li><a href="/kits/">Theme editors for eight UI kits</a></li></ul>
+</main>
+<footer class="sitefoot" aria-label="About UISandbox">
+<div class="sitefoot__inner">
+<div class="sitefoot__brand"><a href="/" class="sitefoot__mark"><img src="/favicon.svg" width="18" height="18" alt=""> UISandbox Design System Generator</a><p>Try designs on the app you are running, in your browser. Your files never leave it.</p><a class="star" href="https://github.com/Ideelab/uisandbox" target="_blank" rel="noopener" aria-label="Star UISandbox on GitHub"><span class="star__main"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg> Star on GitHub</span></a></div>
+<nav class="sitefoot__col" aria-label="Product"><h2>Product</h2><ul><li><a href="/">The editor</a></li><li><a href="/about">How it works</a></li><li><a href="/about#agents">Run it on your machine</a></li><li><a href="https://www.npmjs.com/package/uisandbox-mcp" target="_blank" rel="noopener">MCP server</a></li><li><a href="/llms.txt">llms.txt</a></li></ul></nav>
+<nav class="sitefoot__col" aria-label="Guides"><h2>Guides</h2><ul><li><a href="/try-designs-on-your-app/">Try designs on your app</a></li><li><a href="/design-in-the-browser/">Design in the browser</a></li><li><a href="/why-your-app-looks-ai-generated/">Why apps look AI-generated</a></li><li><a href="/mcp/">Design MCP server</a></li><li><a href="/guides/">All guides</a></li></ul></nav>
+<nav class="sitefoot__col" aria-label="Kits"><h2>Kits</h2><ul><li><a href="/kits/tailwind/">Tailwind CSS</a></li><li><a href="/kits/daisyui/">daisyUI</a></li><li><a href="/kits/shadcn/">shadcn/ui</a></li><li><a href="/kits/bootstrap/">Bootstrap</a></li><li><a href="/kits/material/">Material 3</a></li><li><a href="/kits/radix/">Radix Themes</a></li><li><a href="/kits/mantine/">Mantine</a></li><li><a href="/kits/antd/">Ant Design</a></li><li><a href="/kits/">All kits</a></li></ul></nav>
+<nav class="sitefoot__col" aria-label="Open source"><h2>Open source</h2><ul><li><a href="https://github.com/Ideelab/uisandbox" target="_blank" rel="noopener">Source</a></li><li><a href="https://github.com/Ideelab/uisandbox/blob/main/notes/decisions.md" target="_blank" rel="noopener">Decisions</a></li><li><a href="https://github.com/Ideelab/uisandbox/discussions" target="_blank" rel="noopener">Discussions</a></li><li><a href="https://github.com/Ideelab/uisandbox/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Contributing</a></li><li><a href="https://github.com/Ideelab/uisandbox/blob/main/notes/security.md" target="_blank" rel="noopener">Privacy and security</a></li></ul></nav>
+</div>
+<div class="sitefoot__base">Made by <a href="https://github.com/AlexanderKaan" target="_blank" rel="noopener author">Alexander Kaan</a> at <a href="https://ideelab.nl/" target="_blank" rel="noopener">Ideelab</a> · © 2026 Ideelab · <a href="https://github.com/Ideelab/uisandbox/blob/main/LICENSE" target="_blank" rel="noopener license">MIT</a></div>
+</footer>
+</div>
+</body>
+</html>

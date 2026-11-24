@@ -15,6 +15,15 @@ Site: https://uisandbox.org/ · How it works: https://uisandbox.org/about · Sou
 - A design-system or theming question on a built site: which colours the CSS actually contains (families: brand, secondary, accent, status set, palette), and how far a change reaches (the reach meter says what share of painted colours, families, sizes and radii the knobs move).
 - An agent needs a render of a build with a diff-checked "1:1" claim: `https://uisandbox.org/?load=<zip-url>` loads a zip by URL (same-origin or CORS-enabled).
 
+## Guides
+
+Static pages, one per question, readable without JavaScript:
+
+- How to try a new design on the app you are running: https://uisandbox.org/try-designs-on-your-app/
+- Design on the app itself in the browser, not on a canvas, and when a canvas is still the better tool: https://uisandbox.org/design-in-the-browser/
+- Why an app looks AI-generated: the eight tells UISandbox measures and which a knob fixes: https://uisandbox.org/why-your-app-looks-ai-generated/
+- The MCP server for Claude Code, Cursor and Codex, with its tools: https://uisandbox.org/mcp/
+
 ## What it does NOT do
 
 - It does not render iOS/Android apps (no browser can); it exports Swift/Android constants from the knobs instead.

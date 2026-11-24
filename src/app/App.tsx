@@ -251,8 +251,8 @@ function Editor() {
   // One place sets it, so How it works (open over the editor) keeps its own.
   const aboutOpen = !!aboutDialog.about
   useEffect(() => {
-    document.title = aboutOpen ? "How UISandbox works · Play with your app's design, right in the browser"
-      : loaded && !loaded.kit ? `UISandbox · ${loaded.project.name}` : "UISandbox · Play with your app's design. Right in the browser"
+    document.title = aboutOpen ? "How UISandbox works · Try designs on your running app, in the browser"
+      : loaded && !loaded.kit ? `UISandbox · ${loaded.project.name}` : "UISandbox · Try designs on your running app, in the browser"
   }, [loaded, aboutOpen])
   // Each direction on the knobs as they stand, with the dials a look turns
   // put back to the app's own first, so one look never inherits another's.

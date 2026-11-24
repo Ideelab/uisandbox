@@ -21,7 +21,7 @@ export function SiteColumns() {
     <div className="sitefoot__inner">
       <div className="sitefoot__brand">
         <a href="/" className="sitefoot__mark"><Mark size={18} /> UISandbox Design System Generator</a>
-        <p>Play with your app's design, right in the browser. Your files never leave it.</p>
+        <p>Try designs on the app you are running, in your browser. Your files never leave it.</p>
         <StarButton label="Star on GitHub" />
       </div>
       {siteColumns().map((c) => (

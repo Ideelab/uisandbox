@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Why your app looks AI-generated, and what fixes it · UISandbox</title>
+<meta name="description" content="The generic AI look is measurable: Inter or Geist, an indigo brand, gradients and frosted glass. See which tells are on your screen and which a knob fixes.">
+<link rel="canonical" href="https://uisandbox.org/why-your-app-looks-ai-generated/">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<meta name="color-scheme" content="light dark">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="UISandbox">
+<meta property="og:url" content="https://uisandbox.org/why-your-app-looks-ai-generated/">
+<meta property="og:title" content="Why your app looks AI-generated, and what fixes it · UISandbox">
+<meta property="og:description" content="The generic AI look is measurable: Inter or Geist, an indigo brand, gradients and frosted glass. See which tells are on your screen and which a knob fixes.">
+<meta property="og:image" content="https://uisandbox.org/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/site.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Why your app looks AI-generated","description":"The generic AI look is measurable: Inter or Geist, an indigo brand, gradients and frosted glass. See which tells are on your screen and which a knob fixes.","url":"https://uisandbox.org/why-your-app-looks-ai-generated/","image":"https://uisandbox.org/og.png","author":{"@type":"Person","name":"Alexander Kaan","url":"https://github.com/AlexanderKaan"},"publisher":{"@type":"Organization","name":"Ideelab","url":"https://ideelab.nl/"},"about":{"@type":"SoftwareApplication","name":"UISandbox","url":"https://uisandbox.org/","applicationCategory":"DesignApplication","operatingSystem":"Web","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"}}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Is Inter a bad font?","acceptedAnswer":{"@type":"Answer","text":"No. It is a good font that nearly every generated app now uses, so it reads as a default rather than a choice. Any font you picked on purpose fixes the tell."}},{"@type":"Question","name":"Will my agent keep the new look?","acceptedAnswer":{"@type":"Answer","text":"Copy for your AI gives it the design system and how to apply it in one paste. On a UI kit the export adds a SKILL.md, so Claude Code, Cursor or Codex build the next screen in the kit's own classes."}}]}</script>
+</head>
+<body>
+<div class="kp">
+<header class="kp__top"><a class="kp__brand" href="/"><img src="/favicon.svg" width="16" height="16" alt=""> UISandbox</a><nav><a href="/kits/">Kits</a><a href="/guides/">Guides</a><a href="/about">How it works</a><a href="https://github.com/Ideelab/uisandbox">Source</a></nav></header>
+<main>
+<h1>Why your app looks AI-generated</h1>
+<p class="kp__lead">A model reaches for the safest default every time, and the defaults are the same for everyone. That is why so many apps an AI helped build look alike. The good news is that most of it can be measured, and some of it is one knob away.</p>
+<div class="kp__ctas"><a class="kp__btn kp__btn--primary" href="/try-designs-on-your-app/">Check your own app</a><a class="kp__btn" href="/">Open the editor</a></div>
+<h2>The tells UISandbox measures</h2>
+<p>Only what the computed style of your screen can show, the way Adrian Krebs measured 1,590 Show HN pages for <a href="https://adriankrebs.ch/blog/design-slop" rel="noopener">design slop</a>: from the DOM, with no model judging a screenshot.</p>
+<table class="kp__table">
+<thead><tr><th>Tell</th><th>When it counts</th><th>A knob fixes it</th></tr></thead>
+<tbody>
+<tr><td>The default font</td><td>Inter, Geist, Space Grotesk or Instrument Serif as the body or heading font</td><td>Yes, Type</td></tr>
+<tr><td>The default accent</td><td>An indigo or violet brand colour</td><td>Yes, Colour</td></tr>
+<tr><td>shadcn as it ships</td><td>A near-black brand with Geist</td><td>Yes</td></tr>
+<tr><td>Gradients as decoration</td><td>On two or more elements</td><td>No</td></tr>
+<tr><td>Frosted glass</td><td>Any element with a backdrop filter</td><td>No</td></tr>
+<tr><td>Coloured left borders</td><td>On two or more blocks</td><td>No</td></tr>
+<tr><td>Emoji as icons</td><td>Two or more, in headings, list items, buttons, links or cards</td><td>No</td></tr>
+<tr><td>Dark mode only</td><td>A dark page with no light scheme</td><td>No</td></tr>
+</tbody>
+</table>
+<p>When you open your app, UISandbox lists which of these are on your screen, and which of them a knob fixes.</p>
+<h2>What no knob can fix</h2>
+<p>Layout reads as generic too: a centred hero with a small badge above the headline, three or four identical cards each with an icon in a tinted square, numbered 1-2-3 steps on a landing page. These are not reliably measured on an app screen, where a row of figures is often the point, so UISandbox does not claim them as findings. It passes them to your agent as things to avoid when it builds the next screen.</p>
+<h2>See it on your own screen</h2>
+<pre class="kp__cmd"><code>npx uisandbox-mcp@latest open</code></pre>
+<p>Run it next to your dev server, then press <em>6</em>: your own screen in six styles side by side. Pick one, change the font and the brand colour, and keep it as a design system your agent follows on every screen after this one.</p>
+<section class="kp__faq"><h2>Questions</h2>
+<h3>Is Inter a bad font?</h3>
+<p>No. It is a good font that nearly every generated app now uses, so it reads as a default rather than a choice. Any font you picked on purpose fixes the tell.</p>
+<h3>Will my agent keep the new look?</h3>
+<p><em>Copy for your AI</em> gives it the design system and how to apply it in one paste. On a UI kit the export adds a SKILL.md, so Claude Code, Cursor or Codex build the next screen in the kit's own classes.</p>
+</section>
+<h2>More guides</h2>
+<ul class="kp__list"><li><a href="/try-designs-on-your-app/">Try a new design on the app you are running</a></li><li><a href="/design-in-the-browser/">Design on the app itself, not on a canvas</a></li><li><a href="/mcp/">Try designs from your agent: the UISandbox MCP server</a></li><li><a href="/kits/">Theme editors for eight UI kits</a></li></ul>
+</main>
+<footer class="sitefoot" aria-label="About UISandbox">
+<div class="sitefoot__inner">
+<div class="sitefoot__brand"><a href="/" class="sitefoot__mark"><img src="/favicon.svg" width="18" height="18" alt=""> UISandbox Design System Generator</a><p>Try designs on the app you are running, in your browser. Your files never leave it.</p><a class="star" href="https://github.com/Ideelab/uisandbox" target="_blank" rel="noopener" aria-label="Star UISandbox on GitHub"><span class="star__main"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg> Star on GitHub</span></a></div>
+<nav class="sitefoot__col" aria-label="Product"><h2>Product</h2><ul><li><a href="/">The editor</a></li><li><a href="/about">How it works</a></li><li><a href="/about#agents">Run it on your machine</a></li><li><a href="https://www.npmjs.com/package/uisandbox-mcp" target="_blank" rel="noopener">MCP server</a></li><li><a href="/llms.txt">llms.txt</a></li></ul></nav>
+<nav class="sitefoot__col" aria-label="Guides"><h2>Guides</h2><ul><li><a href="/try-designs-on-your-app/">Try designs on your app</a></li><li><a href="/design-in-the-browser/">Design in the browser</a></li><li><a href="/why-your-app-looks-ai-generated/">Why apps look AI-generated</a></li><li><a href="/mcp/">Design MCP server</a></li><li><a href="/guides/">All guides</a></li></ul></nav>
+<nav class="sitefoot__col" aria-label="Kits"><h2>Kits</h2><ul><li><a href="/kits/tailwind/">Tailwind CSS</a></li><li><a href="/kits/daisyui/">daisyUI</a></li><li><a href="/kits/shadcn/">shadcn/ui</a></li><li><a href="/kits/bootstrap/">Bootstrap</a></li><li><a href="/kits/material/">Material 3</a></li><li><a href="/kits/radix/">Radix Themes</a></li><li><a href="/kits/mantine/">Mantine</a></li><li><a href="/kits/antd/">Ant Design</a></li><li><a href="/kits/">All kits</a></li></ul></nav>
+<nav class="sitefoot__col" aria-label="Open source"><h2>Open source</h2><ul><li><a href="https://github.com/Ideelab/uisandbox" target="_blank" rel="noopener">Source</a></li><li><a href="https://github.com/Ideelab/uisandbox/blob/main/notes/decisions.md" target="_blank" rel="noopener">Decisions</a></li><li><a href="https://github.com/Ideelab/uisandbox/discussions" target="_blank" rel="noopener">Discussions</a></li><li><a href="https://github.com/Ideelab/uisandbox/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Contributing</a></li><li><a href="https://github.com/Ideelab/uisandbox/blob/main/notes/security.md" target="_blank" rel="noopener">Privacy and security</a></li></ul></nav>
+</div>
+<div class="sitefoot__base">Made by <a href="https://github.com/AlexanderKaan" target="_blank" rel="noopener author">Alexander Kaan</a> at <a href="https://ideelab.nl/" target="_blank" rel="noopener">Ideelab</a> · © 2026 Ideelab · <a href="https://github.com/Ideelab/uisandbox/blob/main/LICENSE" target="_blank" rel="noopener license">MIT</a></div>
+</footer>
+</div>
+</body>
+</html>

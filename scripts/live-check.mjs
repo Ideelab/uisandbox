@@ -26,7 +26,7 @@ const html = await root.text()
 ok('page 200', root.status === 200, `${root.status}`)
 ok('HSTS', /max-age=\d{7,}/.test(root.headers.get('strict-transport-security') ?? ''), root.headers.get('strict-transport-security') ?? 'absent')
 ok('nosniff', root.headers.get('x-content-type-options') === 'nosniff', root.headers.get('x-content-type-options') ?? 'absent')
-ok('title is current', /Play with your app's design/.test(html), (html.match(/<title>([^<]*)/) ?? [])[1] ?? '')
+ok('title is current', /Try designs on your running app/.test(html), (html.match(/<title>([^<]*)/) ?? [])[1] ?? '')
 ok('no "free forever" in the document', !/free forever/i.test(html))
 
 // 2 — the assets the new page needs
